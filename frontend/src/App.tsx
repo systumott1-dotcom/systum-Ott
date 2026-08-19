@@ -5,7 +5,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { useProducts } from './hooks/useProducts';
 import { useRouter } from './hooks/useRouter';
 import type { CategoryId } from './types';
-import { AnnouncementBar } from './components/AnnouncementBar';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { CategoryBrowser } from './components/CategoryBrowser';
@@ -62,8 +61,6 @@ function Storefront() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-brand-500 selection:text-white">
-      <AnnouncementBar />
-
       <Navbar
         products={products}
         activeCategory={activeCategory}
