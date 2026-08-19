@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Check, X } from 'lucide-react';
 
 interface PurchaseItem {
@@ -6,61 +6,138 @@ interface PurchaseItem {
   name: string;
   product: string;
   plan: string;
-  timeAgo: string;
-  city?: string;
+  timestamp: number; // Unix timestamp in milliseconds for real-time calculation
 }
 
-const RECENT_PURCHASES: PurchaseItem[] = [
-  { id: '1', name: 'Sneha', product: 'Spotify Premium', plan: '6M', timeAgo: '2 hr ago', city: 'Mumbai' },
-  { id: '2', name: 'Ishaan', product: 'Spotify Premium', plan: '1Y', timeAgo: '52 min ago', city: 'Delhi NCR' },
-  { id: '3', name: 'Aarav', product: 'Netflix 4K UHD', plan: '3M', timeAgo: '7 min ago', city: 'Bangalore' },
-  { id: '4', name: 'Pooja', product: 'Canva Pro Edu', plan: '1Y', timeAgo: '18 min ago', city: 'Pune' },
-  { id: '5', name: 'Rohan', product: 'YouTube Premium', plan: '1Y', timeAgo: '34 min ago', city: 'Hyderabad' },
-  { id: '6', name: 'Ananya', product: 'Disney+ Hotstar', plan: '1Y', timeAgo: '1 hr ago', city: 'Kolkata' },
-  { id: '7', name: 'Karan', product: 'ChatGPT Plus 4o', plan: '1M', timeAgo: '12 min ago', city: 'Jaipur' },
-  { id: '8', name: 'Priya', product: 'Prime Video 4K', plan: '6M', timeAgo: '1 hr 15 min ago', city: 'Ahmedabad' },
-  { id: '9', name: 'Vikram', product: 'Adobe Creative Cloud', plan: '1Y', timeAgo: '42 min ago', city: 'Chandigarh' },
-  { id: '10', name: 'Ayush', product: 'SonyLIV + Zee5 Combo', plan: '1Y', timeAgo: '1 hr 45 min ago', city: 'Lucknow' },
-  { id: '11', name: 'Neha', product: 'MS Office 365 Pro', plan: 'Lifetime', timeAgo: '26 min ago', city: 'Indore' },
-  { id: '12', name: 'Aditya', product: 'Netflix 4K Screen PIN', plan: '1M', timeAgo: '4 min ago', city: 'Chennai' },
+// Fallback pool with relative minute offsets within the last 2 hours (2m to 110m ago)
+const SEED_OFFSETS = [
+  { name: 'Sneha', product: 'Spotify Premium', plan: '6M', offsetMins: 112 },
+  { name: 'Ishaan', product: 'Spotify Premium', plan: '1Y', offsetMins: 48 },
+  { name: 'Aarav', product: 'Netflix 4K UHD', plan: '3M', offsetMins: 6 },
+  { name: 'Pooja', product: 'Canva Pro', plan: '1Y', offsetMins: 19 },
+  { name: 'Rohan', product: 'YouTube Premium', plan: '1Y', offsetMins: 32 },
+  { name: 'Ananya', product: 'Disney+ Hotstar', plan: '1Y', offsetMins: 58 },
+  { name: 'Karan', product: 'ChatGPT Plus 4o', plan: '1M', offsetMins: 11 },
+  { name: 'Priya', product: 'Prime Video 4K', plan: '6M', offsetMins: 74 },
+  { name: 'Vikram', product: 'Adobe Creative Cloud', plan: '1Y', offsetMins: 39 },
+  { name: 'Ayush', product: 'SonyLIV + Zee5 Combo', plan: '1Y', offsetMins: 95 },
+  { name: 'Neha', product: 'MS Office 365 Pro', plan: 'Lifetime', offsetMins: 23 },
+  { name: 'Aditya', product: 'Netflix 4K Screen PIN', plan: '1M', offsetMins: 3 },
 ];
 
+// Helper to compute exact real-time relative time ago
+const formatRealTimeAgo = (timestamp: number): string => {
+  const now = Date.now();
+  const diffMs = Math.max(0, now - timestamp);
+  const diffMins = Math.floor(diffMs / 60000);
+
+  if (diffMins < 1) {
+    return 'Just now';
+  }
+  if (diffMins === 1) {
+    return '1 min ago';
+  }
+  if (diffMins < 60) {
+    return `${diffMins} min ago`;
+  }
+  
+  const hours = Math.floor(diffMins / 60);
+  const remMins = diffMins % 60;
+  if (hours === 1) {
+    return remMins > 0 ? `1 hr ${remMins}m ago` : '1 hr ago';
+  }
+  return `${hours} hr ago`;
+};
+
 export const LivePurchasePopup: React.FC = () => {
+  const [realOrders, setRealOrders] = useState<PurchaseItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
-  useEffect(() => {
-    if (isDismissed) return;
+  // Initialize seed timestamps based on current clock time
+  const seedPurchases = useMemo<PurchaseItem[]>(() => {
+    const baseTime = Date.now();
+    return SEED_OFFSETS.map((item, idx) => ({
+      id: `seed-${idx}`,
+      name: item.name,
+      product: item.product,
+      plan: item.plan,
+      timestamp: baseTime - item.offsetMins * 60 * 1000,
+    }));
+  }, []);
 
-    // Initial popup after 2 seconds
+  // Fetch real order activity from backend & local storage
+  useEffect(() => {
+    const fetchRecentActivity = async () => {
+      try {
+        const res = await fetch('/api/orders/recent-activity');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.orders) && data.orders.length > 0) {
+          const apiOrders: PurchaseItem[] = data.orders.map((o: any, idx: number) => ({
+            id: o.id || `real-${idx}`,
+            name: o.name || 'Customer',
+            product: o.product || 'Subscription',
+            plan: o.plan || 'Plan',
+            timestamp: typeof o.timestamp === 'number' ? o.timestamp : new Date(o.createdAt || Date.now()).getTime(),
+          }));
+
+          setRealOrders(apiOrders);
+        }
+      } catch {
+        // Fallback gracefully
+      }
+    };
+
+    fetchRecentActivity();
+  }, []);
+
+  // Combined pool prioritizing real orders
+  const activePool = useMemo(() => {
+    if (realOrders.length > 0) {
+      return [...realOrders, ...seedPurchases];
+    }
+    return seedPurchases;
+  }, [realOrders, seedPurchases]);
+
+  // Timed popup sequence: Visible for 5s, delayed 15s before next popup
+  useEffect(() => {
+    if (isDismissed || activePool.length === 0) return;
+
+    // Initial popup 4 seconds after page load
     const initialTimer = setTimeout(() => {
       setIsVisible(true);
-    }, 2000);
+    }, 4000);
 
-    // Show popup every 5.5 seconds (Visible for 4s, hidden for 1.5s)
-    const interval = setInterval(() => {
+    let delayTimer: ReturnType<typeof setTimeout> | null = null;
+
+    // When popup becomes visible, auto-hide after 5 seconds
+    // Then wait 15 seconds before triggering the next one
+    const intervalTimer = setInterval(() => {
       setIsVisible(false);
 
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % RECENT_PURCHASES.length);
+      // 15 seconds delay before showing the next popup
+      delayTimer = setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % activePool.length);
         setIsVisible(true);
-      }, 1500);
-    }, 6000);
+      }, 15000);
+    }, 20000); // Total cycle: 5s display + 15s delay = 20s
 
     return () => {
       clearTimeout(initialTimer);
-      clearInterval(interval);
+      if (delayTimer) clearTimeout(delayTimer);
+      clearInterval(intervalTimer);
     };
-  }, [isDismissed]);
+  }, [isDismissed, activePool.length]);
 
-  if (isDismissed) return null;
+  if (isDismissed || activePool.length === 0) return null;
 
-  const current = RECENT_PURCHASES[currentIndex];
+  const current = activePool[currentIndex % activePool.length];
+  const liveTimeAgo = formatRealTimeAgo(current.timestamp);
 
   return (
     <div
-      className={`fixed bottom-20 sm:bottom-6 left-4 sm:left-6 z-30 max-w-[290px] sm:max-w-[320px] transition-all duration-500 ease-out transform ${
+      className={`fixed bottom-20 sm:bottom-6 left-4 sm:left-6 z-30 max-w-[290px] sm:max-w-[320px] transition-all duration-700 ease-out transform ${
         isVisible
           ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
           : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
@@ -83,7 +160,7 @@ export const LivePurchasePopup: React.FC = () => {
               Bought {current.product}
             </p>
             <span className="text-[10px] text-slate-400 font-semibold block mt-0.5 leading-tight">
-              {current.plan} · {current.timeAgo}
+              {current.plan} · {liveTimeAgo}
             </span>
           </div>
         </div>

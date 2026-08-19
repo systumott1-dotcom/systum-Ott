@@ -258,6 +258,46 @@ ordersRouter.get('/user/:phoneOrEmail', async (req, res) => {
   }
 });
 
+// GET /api/orders/recent-activity - public recent purchases feed with real-time timestamps
+ordersRouter.get('/recent-activity', async (_req, res) => {
+  try {
+    const isDbConnected = mongoose.connection.readyState === 1;
+    let rawOrders: any[] = [];
+
+    if (isDbConnected) {
+      rawOrders = await Order.find()
+        .sort({ createdAt: -1 })
+        .limit(15)
+        .select('customerName items createdAt totalAmount')
+        .lean();
+    } else {
+      rawOrders = inMemoryOrders.slice(-15).reverse();
+    }
+
+    const realOrders = rawOrders
+      .filter((o) => o.items && o.items.length > 0)
+      .map((o) => {
+        const fullName = o.customerName || o.name || 'Customer';
+        const firstName = fullName.split(' ')[0];
+        const item = o.items?.[0] || {};
+        return {
+          id: o.id || o._id?.toString() || Math.random().toString(),
+          name: firstName,
+          product: item.productTitle || item.title || 'Subscription Access',
+          plan: item.planName || item.plan || item.validity || '30 Days',
+          timestamp: new Date(o.createdAt || Date.now()).getTime(),
+        };
+      });
+
+    res.json({
+      success: true,
+      orders: realOrders,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to load activity' });
+  }
+});
+
 // GET /api/orders/:id - retrieve order by numeric ID
 ordersRouter.get('/:id', async (req, res) => {
   try {
