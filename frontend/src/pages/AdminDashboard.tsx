@@ -16,7 +16,8 @@ import {
   ArrowLeft, 
   LogOut, 
   DollarSign,
-  Mail
+  Mail,
+  UploadCloud
 } from 'lucide-react';
 import type { Product, ProductPlan } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../data/products';
@@ -941,14 +942,68 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Cloudinary Image URL / Asset Link (Optional)</label>
-                <input
-                  type="text"
-                  value={productForm.imageUrl}
-                  onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
-                  placeholder="https://res.cloudinary.com/... or leave blank for dynamic icon"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-brand-500"
-                />
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Product Image (Cloudinary Upload or Paste URL)
+                </label>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={productForm.imageUrl}
+                      onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
+                      placeholder="https://res.cloudinary.com/... or upload below"
+                      className="flex-1 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:bg-white focus:border-brand-500"
+                    />
+                    <label className="px-3.5 py-2 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-700 rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-colors shrink-0">
+                      <UploadCloud className="w-4 h-4" />
+                      <span>Upload File</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+
+                          const reader = new FileReader();
+                          reader.onloadend = async () => {
+                            const base64 = reader.result as string;
+                            try {
+                              const res = await fetch('/api/admin/upload-image', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                                body: JSON.stringify({ imageBase64: base64, folder: 'systum_ott_products' }),
+                              });
+                              const d = await res.json();
+                              if (d.success && d.imageUrl) {
+                                setProductForm((prev) => ({ ...prev, imageUrl: d.imageUrl }));
+                                alert('✅ Image uploaded to Cloudinary successfully!');
+                              } else {
+                                alert('❌ Upload failed: ' + (d.message || 'Error'));
+                              }
+                            } catch (err) {
+                              alert('Upload failed. Check backend connection.');
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {productForm.imageUrl && (
+                    <div className="flex items-center gap-3 p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                      <img
+                        src={productForm.imageUrl}
+                        alt="Preview"
+                        className="w-10 h-10 object-cover rounded-lg border border-slate-200"
+                      />
+                      <span className="text-[11px] text-emerald-600 font-bold truncate">
+                        Cloudinary Image Attached
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
