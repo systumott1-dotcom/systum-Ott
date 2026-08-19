@@ -281,3 +281,9 @@ export const REVIEWS = [
     verified: true,
   }
 ];
+
+export const COUPONS = [
+  { code: 'EXTRA10', type: 'percentage', value: 10, minOrderValue: 0, isActive: true },
+  { code: 'SUPER50', type: 'flat', value: 50, minOrderValue: 500, isActive: true },
+  { code: 'SYSTUM20', type: 'percentage', value: 20, minOrderValue: 200, isActive: true },
+];
