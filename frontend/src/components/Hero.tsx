@@ -4,14 +4,12 @@ import {
   BadgeCheck, 
   Headphones, 
   RotateCcw, 
-  MessageCircle, 
   ArrowRight, 
   Star, 
-  Flame, 
-  Zap, 
-  CheckCircle2 
+  Flame
 } from 'lucide-react';
 import { WHATSAPP_PHONE } from '../context/CartContext';
+import { WhatsAppIcon } from './WhatsAppIcon';
 
 interface HeroProps {
   onExploreClick: () => void;
@@ -52,24 +50,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
               <strong className="text-slate-900 font-bold"> Instant WhatsApp delivery</strong> with <strong className="text-brand-700 font-bold">100% full-term replacement warranty</strong>.
             </p>
 
-            {/* Key Value Points */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 max-w-lg mx-auto lg:mx-0 text-left">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
-                <Zap className="w-4 h-4 text-amber-500 shrink-0" />
-                <span>Instant Delivery (5 Min)</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-white p-3 rounded-2xl border border-slate-200 shadow-xs">
-                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Replacement Warranty</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-white p-3 rounded-2xl border border-slate-200 shadow-xs col-span-2 sm:col-span-1">
-                <CheckCircle2 className="w-4 h-4 text-cyan-600 shrink-0" />
-                <span>UPI & GPay Accepted</span>
-              </div>
-            </div>
-
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 pt-4 justify-center lg:justify-start">
+            <div className="flex flex-col sm:flex-row items-center gap-4 pt-2 justify-center lg:justify-start">
               <button
                 onClick={onExploreClick}
                 className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-700 hover:from-brand-500 hover:to-indigo-600 text-white font-extrabold text-base shadow-xl shadow-brand-600/25 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2 group"
@@ -85,7 +67,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
                 className="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold text-base transition-all duration-300 flex items-center justify-center gap-2.5 shadow-sm group"
               >
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <MessageCircle className="w-5 h-5 text-emerald-600 group-hover:scale-110 transition-transform" />
+                <WhatsAppIcon className="w-5 h-5 text-[#25D366] fill-[#25D366] group-hover:scale-110 transition-transform" />
                 <span>Chat on WhatsApp</span>
               </a>
             </div>
