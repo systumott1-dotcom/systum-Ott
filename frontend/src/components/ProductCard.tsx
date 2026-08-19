@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import type { Product, ProductPlan } from '../types';
-import { useCart } from '../context/CartContext';
 import { 
   Zap, 
   Heart,
@@ -56,7 +55,6 @@ const ICON_COMPONENTS: Record<string, React.ElementType> = {
 };
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { buyNow } = useCart();
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   // Default to popular plan or first plan
@@ -75,7 +73,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const handleBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
-    buyNow(product, selectedPlan);
+    const slug = product.slug || product.id;
+    window.history.pushState({}, '', `/product/${slug}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleToggleWishlist = (e: React.MouseEvent) => {

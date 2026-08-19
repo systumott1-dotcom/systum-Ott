@@ -63,22 +63,34 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
     ? [
         {
           title: checkoutItem.product.title,
-          plan: `${checkoutItem.plan.name} (${checkoutItem.plan.validity})`,
+          category: checkoutItem.product.category,
+          plan: checkoutItem.plan.name,
+          validity: checkoutItem.plan.validity,
           price: checkoutItem.plan.discountedPrice,
           originalPrice: checkoutItem.plan.originalPrice,
           quantity: 1,
           accountType: checkoutItem.product.accountType,
           imageUrl: checkoutItem.product.imageUrl,
+          features: checkoutItem.product.features,
+          compatibility: checkoutItem.product.compatibility,
+          warrantyType: checkoutItem.product.warrantyType || 'Full-Term Replacement Warranty',
+          warrantyDays: checkoutItem.product.warrantyDays,
         },
       ]
     : cart.map((item) => ({
         title: item.productTitle,
-        plan: `${item.planName} (${item.validity})`,
+        category: item.category,
+        plan: item.planName,
+        validity: item.validity,
         price: item.price,
         originalPrice: item.originalPrice,
         quantity: item.quantity,
         accountType: item.accountType,
         imageUrl: undefined,
+        features: ['Instant WhatsApp Dispatch', 'PIN Security', 'Replacement Warranty'],
+        compatibility: ['Mobile', 'Smart TV', 'PC', 'Tablet'],
+        warrantyType: 'Full-Term Replacement Warranty',
+        warrantyDays: 30,
       }));
 
   const finalAmount = isDirectBuy ? checkoutItem.plan.discountedPrice : totalAmount;
@@ -614,36 +626,89 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
               </h3>
 
               {/* Items List */}
-              <div className="divide-y divide-slate-100 space-y-3">
-                {items.map((item, idx) => (
-                  <div key={idx} className="pt-3 first:pt-0 flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
-                      {item.imageUrl ? (
-                        <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <ShoppingBag className="w-5 h-5 text-brand-600" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 truncate">
-                        {item.title}
-                      </h4>
-                      <span className="text-[11px] text-slate-500 block truncate">
-                        {item.plan}
-                      </span>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="text-xs sm:text-sm font-black text-slate-900 block">
-                        ₹{item.price * item.quantity}
-                      </span>
-                      {item.originalPrice > item.price && (
-                        <span className="text-[10px] text-slate-400 line-through">
-                          ₹{item.originalPrice * item.quantity}
+              <div className="space-y-3.5">
+                {items.map((item, idx) => {
+                  const savings = Math.max(0, item.originalPrice - item.price);
+                  const discountPct = item.originalPrice > item.price
+                    ? Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)
+                    : 0;
+
+                  return (
+                    <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-14 h-14 rounded-xl bg-slate-900 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center relative shadow-xs">
+                          {item.imageUrl ? (
+                            <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <ShoppingBag className="w-6 h-6 text-brand-400" />
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-[9px] font-extrabold uppercase tracking-wider text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                              {item.category?.toUpperCase() || 'OTT'}
+                            </span>
+                            {discountPct > 0 && (
+                              <span className="text-[9px] font-black text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                                {discountPct}% OFF
+                              </span>
+                            )}
+                          </div>
+
+                          <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 leading-snug">
+                            {item.title}
+                          </h4>
+                          <span className="text-xs text-slate-600 font-semibold block mt-0.5">
+                            {item.plan} {item.validity && !item.plan.includes(item.validity) ? `· ${item.validity}` : ''}
+                          </span>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="text-base font-black text-slate-900 block">
+                            ₹{item.price * item.quantity}
+                          </span>
+                          {item.originalPrice > item.price && (
+                            <span className="text-xs text-slate-400 line-through block">
+                              ₹{item.originalPrice * item.quantity}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Detail Badges Row */}
+                      <div className="flex flex-wrap gap-1.5 text-[10px] font-bold">
+                        <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 flex items-center gap-1">
+                          <Lock className="w-3 h-3 text-brand-600" />
+                          <span>{item.accountType}</span>
                         </span>
+
+                        <span className="px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-1">
+                          <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                          <span>{item.warrantyType}</span>
+                        </span>
+
+                        {savings > 0 && (
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-100/70 text-emerald-900 border border-emerald-300">
+                            🏷️ You save ₹{savings * item.quantity}!
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Inclusions Highlights */}
+                      {item.features && item.features.length > 0 && (
+                        <div className="pt-2 border-t border-slate-200/60 text-[11px] text-slate-600 space-y-1">
+                          {item.features.slice(0, 3).map((feat, fIdx) => (
+                            <div key={fIdx} className="flex items-center gap-1.5 font-medium">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                              <span className="truncate">{feat}</span>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Coupon Engine */}

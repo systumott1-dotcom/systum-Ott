@@ -8,7 +8,7 @@ interface ComboHighlightsProps {
 }
 
 export const ComboHighlights: React.FC<ComboHighlightsProps> = ({ products }) => {
-  const { buyNow, addToCart } = useCart();
+  const { addToCart } = useCart();
   const comboProducts = products.filter((p) => p.category === 'combo');
 
   if (comboProducts.length === 0) return null;
@@ -115,7 +115,12 @@ export const ComboHighlights: React.FC<ComboHighlightsProps> = ({ products }) =>
                       Add to Cart
                     </button>
                     <button
-                      onClick={() => buyNow(combo, defaultPlan)}
+                      onClick={() => {
+                        const slug = combo.slug || combo.id;
+                        window.history.pushState({}, '', `/product/${slug}`);
+                        window.dispatchEvent(new PopStateEvent('popstate'));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
                       className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-extrabold shadow-md shadow-brand-600/25 transition-all flex items-center justify-center gap-1 group"
                     >
                       <span>Buy Now</span>
