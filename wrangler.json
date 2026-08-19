@@ -1,7 +1,9 @@
 {
   "name": "systum-ott",
+  "main": "frontend/src/worker.ts",
   "compatibility_date": "2026-08-19",
   "assets": {
-    "directory": "./frontend/dist"
+    "directory": "./frontend/dist",
+    "binding": "ASSETS"
   }
 }
