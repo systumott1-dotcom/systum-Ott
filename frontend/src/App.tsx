@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { PRODUCTS } from './data/products';
+import { useProducts } from './hooks/useProducts';
 import type { CategoryId } from './types';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { Navbar } from './components/Navbar';
@@ -26,6 +26,7 @@ import { AdminDashboard } from './pages/AdminDashboard';
 
 function Storefront() {
   const { isAdmin, setIsAuthModalOpen, setAuthModalTab } = useAuth();
+  const { products, loading: productsLoading } = useProducts();
   const [activeCategory, setActiveCategory] = useState<CategoryId>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activePolicy, setActivePolicy] = useState<PolicyType>(null);
@@ -40,7 +41,6 @@ function Storefront() {
 
   if (currentView === 'admin') {
     if (!isAdmin) {
-      // Prompt admin login
       setAuthModalTab('admin');
       setIsAuthModalOpen(true);
       setCurrentView('store');
@@ -51,10 +51,8 @@ function Storefront() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-brand-500 selection:text-white">
-      {/* Top Announcement Bar */}
       <AnnouncementBar />
 
-      {/* Sticky Header / Navbar */}
       <Navbar
         activeCategory={activeCategory}
         onSelectCategory={setActiveCategory}
@@ -64,52 +62,37 @@ function Storefront() {
         onOpenAdmin={() => setCurrentView('admin')}
       />
 
-      {/* Main Content Area */}
       <main className="flex-grow">
-        {/* Hero Section */}
         <Hero onExploreClick={handleExploreShop} />
 
-        {/* Category Icon Browser */}
         <CategoryBrowser
           activeCategory={activeCategory}
           onSelectCategory={setActiveCategory}
         />
 
-        {/* Super Combo Deals Spotlight */}
-        <ComboHighlights />
+        <ComboHighlights products={products} />
 
-        {/* Main Product Grid with Instant Filter, Search & Sorting */}
         <ProductGrid
-          products={PRODUCTS}
+          products={products}
+          loading={productsLoading}
           activeCategory={activeCategory}
           onSelectCategory={setActiveCategory}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
         />
 
-        {/* Legal & Reseller/Seller Sourcing Disclosure Banner */}
         <LegalDisclosureBanner onOpenPolicy={(policy) => setActivePolicy(policy)} />
-
-        {/* How It Works (3-Step Seamless Process) */}
         <HowItWorks />
-
-        {/* Why Choose Us & Trust Badges */}
         <TrustFeatures />
-
-        {/* Verified Customer Reviews */}
         <ReviewsSection />
-
-        {/* Interactive FAQs */}
         <FAQSection />
       </main>
 
-      {/* Global Footer with Disclaimer & Links */}
       <Footer
         onSelectCategory={setActiveCategory}
         onOpenPolicy={(policy) => setActivePolicy(policy)}
       />
 
-      {/* Interactive Overlays & Modals */}
       <ProductQuickViewModal />
       <CartDrawer />
       <CheckoutModal />

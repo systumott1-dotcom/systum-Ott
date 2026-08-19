@@ -12,6 +12,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export const CheckoutModal: React.FC = () => {
   const {
@@ -23,6 +24,8 @@ export const CheckoutModal: React.FC = () => {
     totalAmount,
     clearCart,
   } = useCart();
+
+  useBodyScrollLock(isCheckoutOpen);
 
   const [name, setName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');

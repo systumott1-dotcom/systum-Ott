@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Zap
 } from 'lucide-react';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export const CartDrawer: React.FC = () => {
   const {
@@ -30,6 +31,8 @@ export const CartDrawer: React.FC = () => {
     generateWhatsAppOrderUrl,
     setIsCheckoutOpen,
   } = useCart();
+
+  useBodyScrollLock(isCartOpen);
 
   const [promoInput, setPromoInput] = useState('');
   const [promoError, setPromoError] = useState('');

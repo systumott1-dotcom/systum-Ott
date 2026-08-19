@@ -1,11 +1,15 @@
 import React from 'react';
 import { PackagePlus, Flame, CheckCircle2, ArrowRight } from 'lucide-react';
-import { PRODUCTS } from '../data/products';
+import type { Product } from '../types';
 import { useCart } from '../context/CartContext';
 
-export const ComboHighlights: React.FC = () => {
+interface ComboHighlightsProps {
+  products: Product[];
+}
+
+export const ComboHighlights: React.FC<ComboHighlightsProps> = ({ products }) => {
   const { buyNow, addToCart } = useCart();
-  const comboProducts = PRODUCTS.filter((p) => p.category === 'combo');
+  const comboProducts = products.filter((p) => p.category === 'combo');
 
   if (comboProducts.length === 0) return null;
 

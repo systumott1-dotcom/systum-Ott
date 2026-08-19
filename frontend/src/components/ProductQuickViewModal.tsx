@@ -12,9 +12,11 @@ import {
   Lock
 } from 'lucide-react';
 import type { ProductPlan } from '../types';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export const ProductQuickViewModal: React.FC = () => {
   const { quickViewProduct, setQuickViewProduct, addToCart, buyNow } = useCart();
+  useBodyScrollLock(Boolean(quickViewProduct));
   const [selectedPlanIndex, setSelectedPlanIndex] = useState(0);
 
   if (!quickViewProduct) return null;

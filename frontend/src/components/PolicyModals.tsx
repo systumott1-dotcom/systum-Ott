@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, FileText, AlertCircle, RefreshCw, ShoppingCart } from 'lucide-react';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export type PolicyType = 'terms' | 'refund' | 'privacy' | 'dmca' | 'reseller' | 'how-it-works' | null;
 
@@ -9,6 +10,8 @@ interface PolicyModalsProps {
 }
 
 export const PolicyModals: React.FC<PolicyModalsProps> = ({ activePolicy, onClose }) => {
+  useBodyScrollLock(Boolean(activePolicy));
+
   if (!activePolicy) return null;
 
   return (

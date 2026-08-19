@@ -2,10 +2,11 @@ import React, { useMemo, useState } from 'react';
 import type { Product, CategoryId } from '../types';
 import { CATEGORIES } from '../data/products';
 import { ProductCard } from './ProductCard';
-import { Search, Tag, ArrowUpDown, X } from 'lucide-react';
+import { Search, Tag, ArrowUpDown, X, Loader2, Package } from 'lucide-react';
 
 interface ProductGridProps {
   products: Product[];
+  loading?: boolean;
   activeCategory: CategoryId;
   onSelectCategory: (id: CategoryId) => void;
   searchQuery: string;
@@ -16,6 +17,7 @@ type SortOption = 'popular' | 'price-asc' | 'price-desc' | 'discount';
 
 export const ProductGrid: React.FC<ProductGridProps> = ({
   products,
+  loading = false,
   activeCategory,
   onSelectCategory,
   searchQuery,
@@ -27,12 +29,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   const filteredProducts = useMemo(() => {
     return products
       .filter((product) => {
-        // Category check
         if (activeCategory !== 'all' && product.category !== activeCategory) {
           return false;
         }
-
-        // Search query check
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase();
           const matchTitle = product.title.toLowerCase().includes(q);
@@ -41,7 +40,6 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
           const matchType = product.accountType.toLowerCase().includes(q);
           return matchTitle || matchDesc || matchFeatures || matchType;
         }
-
         return true;
       })
       .sort((a, b) => {
@@ -55,16 +53,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             )
           );
 
-        if (sortBy === 'price-asc') {
-          return getMinPrice(a) - getMinPrice(b);
-        }
-        if (sortBy === 'price-desc') {
-          return getMinPrice(b) - getMinPrice(a);
-        }
-        if (sortBy === 'discount') {
-          return getMaxDiscount(b) - getMaxDiscount(a);
-        }
-        // default 'popular': ratings * reviewsCount
+        if (sortBy === 'price-asc') return getMinPrice(a) - getMinPrice(b);
+        if (sortBy === 'price-desc') return getMinPrice(b) - getMinPrice(a);
+        if (sortBy === 'discount') return getMaxDiscount(b) - getMaxDiscount(a);
         return b.rating * b.reviewsCount - a.rating * a.reviewsCount;
       });
   }, [products, activeCategory, searchQuery, sortBy]);
@@ -87,7 +78,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                 : activeCategoryObj?.name || 'Subscriptions'}
             </h2>
             <p className="text-sm text-slate-500 mt-1">
-              Showing {filteredProducts.length} verified digital plans with instant WhatsApp delivery
+              {loading ? 'Loading products...' : `Showing ${filteredProducts.length} verified digital plans with instant WhatsApp delivery`}
             </p>
           </div>
 
@@ -175,12 +166,29 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
           </div>
         )}
 
-        {/* Product Cards Grid */}
-        {filteredProducts.length > 0 ? (
+        {/* Loading State */}
+        {loading ? (
+          <div className="text-center py-20">
+            <Loader2 className="w-10 h-10 animate-spin text-brand-600 mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-slate-700">Loading products...</h3>
+            <p className="text-xs text-slate-400 mt-1">Fetching the latest subscriptions for you</p>
+          </div>
+        ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
+          </div>
+        ) : products.length === 0 ? (
+          /* Empty Catalog State */
+          <div className="text-center py-20 white-card rounded-3xl border border-slate-200 p-8 max-w-md mx-auto space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-brand-50 border border-brand-200 flex items-center justify-center mx-auto text-brand-600">
+              <Package className="w-7 h-7" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">Products coming soon!</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Our catalog is being curated. Check back soon for premium digital subscriptions at unbeatable prices.
+            </p>
           </div>
         ) : (
           /* Empty Search State */

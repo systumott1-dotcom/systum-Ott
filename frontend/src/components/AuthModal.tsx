@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { X, Lock, Mail, User as UserIcon, Phone, ShieldCheck, ArrowRight, AlertCircle } from 'lucide-react';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export const AuthModal: React.FC = () => {
   const { isAuthModalOpen, setIsAuthModalOpen, authModalTab, setAuthModalTab, login, signup } = useAuth();
+  useBodyScrollLock(isAuthModalOpen);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
