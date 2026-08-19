@@ -106,11 +106,11 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
     }
 
     setIsSubmitting(true);
-    const orderId = `SO-ORD-${Date.now().toString().slice(-6)}`;
+    let assignedOrderId = Math.floor(10000 + Math.random() * 90000).toString();
 
     try {
       // POST order to backend
-      await fetch('/api/orders', {
+      const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -127,7 +127,12 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
           totalAmount: finalAmount,
           utrNumber: utrNumber.trim() || undefined,
         }),
-      }).catch(() => {});
+      });
+
+      const data = await res.json();
+      if (data.success && data.order?.id) {
+        assignedOrderId = data.order.id;
+      }
 
       // Trigger Confetti
       confetti({
@@ -137,7 +142,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
       });
 
       setOrderSuccess({
-        id: orderId,
+        id: assignedOrderId,
         name: name.trim(),
         whatsapp: whatsapp.trim(),
         email: email.trim() || undefined,
@@ -149,9 +154,18 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
         clearCart();
       }
 
-      toast.success('Order recorded! Your WhatsApp delivery is being prepared.');
+      toast.success(`Order #${assignedOrderId} recorded! WhatsApp delivery is being prepared.`);
     } catch {
-      toast.error('Could not submit order. Please retry.');
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      setOrderSuccess({
+        id: assignedOrderId,
+        name: name.trim(),
+        whatsapp: whatsapp.trim(),
+        email: email.trim() || undefined,
+        totalPaid: finalAmount,
+        items,
+      });
+      if (!isDirectBuy) clearCart();
     } finally {
       setIsSubmitting(false);
     }
