@@ -10,12 +10,11 @@ import {
   Laptop, 
   PackagePlus, 
   Music, 
-  Bot, 
-  GraduationCap, 
+  Flame, 
+  Sparkles, 
   User, 
   Sliders,
-  ArrowRight,
-  Gamepad2
+  ArrowRight
 } from 'lucide-react';
 import { useCart, WHATSAPP_PHONE } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -94,12 +93,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navCategories = [
     { id: 'all' as CategoryId, label: 'All Products', icon: Store },
     { id: 'ott' as CategoryId, label: 'OTT Apps', icon: Tv },
-    { id: 'software' as CategoryId, label: 'Software & Tools', icon: Laptop },
-    { id: 'combo' as CategoryId, label: 'Mega Combos', icon: PackagePlus },
-    { id: 'music' as CategoryId, label: 'Music Streaming', icon: Music },
-    { id: 'ai-social' as CategoryId, label: 'AI & Social', icon: Bot },
-    { id: 'education' as CategoryId, label: 'Education', icon: GraduationCap },
-    { id: 'gaming' as CategoryId, label: 'Gaming Passes', icon: Gamepad2 },
+    { id: 'software' as CategoryId, label: 'SOFTWARES', icon: Laptop },
+    { id: 'combo' as CategoryId, label: 'COMBO', icon: PackagePlus },
+    { id: 'music' as CategoryId, label: 'Music', icon: Music },
+    { id: 'adult' as CategoryId, label: 'Adult', icon: Flame },
+    { id: 'other' as CategoryId, label: 'Other', icon: Sparkles },
   ];
 
   const handleCategoryClick = (catId: CategoryId) => {
@@ -139,7 +137,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   Systum <span className="text-brand-600">OTT</span>
                 </span>
                 <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200/80">
-                  Reseller
+                  Seller
                 </span>
               </div>
             </a>

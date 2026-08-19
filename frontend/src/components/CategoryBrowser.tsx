@@ -7,13 +7,9 @@ import {
   Laptop, 
   PackagePlus, 
   Music, 
-  Bot, 
-  GraduationCap, 
-  ArrowRight, 
-  Clapperboard,
-  Gamepad2,
-  ShieldCheck,
-  Code2
+  Flame, 
+  Sparkles, 
+  ArrowRight
 } from 'lucide-react';
 
 interface CategoryBrowserProps {
@@ -27,12 +23,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Laptop,
   PackagePlus,
   Music,
-  Bot,
-  GraduationCap,
-  Clapperboard,
-  Gamepad2,
-  ShieldCheck,
-  Code2,
+  Flame,
+  Sparkles,
 };
 
 export const CategoryBrowser: React.FC<CategoryBrowserProps> = ({
@@ -52,11 +44,11 @@ export const CategoryBrowser: React.FC<CategoryBrowserProps> = ({
             Browse by <span className="gradient-text">Category</span>
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 font-medium">
-            From streaming to productivity tools — explore 9 curated subscription categories.
+            From OTT entertainment to professional tools — explore our 6 verified subscription categories.
           </p>
         </div>
 
-        {/* 3x3 Cards Grid (Always 3 Columns across all screens) */}
+        {/* 3-Cards Per Row Grid (Row 1: OTT, SOFTWARES, COMBO | Row 2: Music, Adult, Other) */}
         <div className="grid grid-cols-3 gap-2 sm:gap-3.5 md:gap-5">
           {CATEGORIES.filter((c) => c.id !== 'all').map((category) => {
             const Icon = ICON_MAP[category.icon] || Store;

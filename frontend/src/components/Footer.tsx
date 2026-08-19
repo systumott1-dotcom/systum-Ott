@@ -90,7 +90,7 @@ export const Footer: React.FC<FooterProps> = ({ onSelectCategory, onOpenPolicy }
                   onClick={() => onSelectCategory('ott')}
                   className="hover:text-brand-300 transition-colors"
                 >
-                  OTT Subscriptions
+                  OTT Apps
                 </button>
               </li>
               <li>
@@ -98,7 +98,7 @@ export const Footer: React.FC<FooterProps> = ({ onSelectCategory, onOpenPolicy }
                   onClick={() => onSelectCategory('software')}
                   className="hover:text-brand-300 transition-colors"
                 >
-                  Software Licenses
+                  SOFTWARES
                 </button>
               </li>
               <li>
@@ -106,7 +106,7 @@ export const Footer: React.FC<FooterProps> = ({ onSelectCategory, onOpenPolicy }
                   onClick={() => onSelectCategory('combo')}
                   className="hover:text-brand-300 transition-colors"
                 >
-                  Mega Combo Deals
+                  COMBO
                 </button>
               </li>
               <li>
@@ -114,23 +114,23 @@ export const Footer: React.FC<FooterProps> = ({ onSelectCategory, onOpenPolicy }
                   onClick={() => onSelectCategory('music')}
                   className="hover:text-brand-300 transition-colors"
                 >
-                  Music Streaming
+                  Music
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onSelectCategory('ai-social')}
+                  onClick={() => onSelectCategory('adult')}
                   className="hover:text-brand-300 transition-colors"
                 >
-                  AI & Social Tools
+                  Adult
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onSelectCategory('education')}
+                  onClick={() => onSelectCategory('other')}
                   className="hover:text-brand-300 transition-colors"
                 >
-                  Education & Learning
+                  Other Tools & Utilities
                 </button>
               </li>
             </ul>
