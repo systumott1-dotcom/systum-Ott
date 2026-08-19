@@ -553,7 +553,7 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
                   className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-emerald-600/20 transition-all transform hover:-translate-y-0.5 active:scale-98 flex items-center justify-center gap-2"
                 >
                   <MessageCircle className="w-5 h-5" />
-                  <span>{isSubmitting ? 'Recording Order...' : `Confirm Payment & Get WhatsApp Access · ₹${finalAmount}`}</span>
+                  <span>{isSubmitting ? 'Recording Order...' : `Confirm Payment & Get Delivered to Your WhatsApp · ₹${finalAmount}`}</span>
                 </button>
 
               </div>
