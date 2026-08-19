@@ -13,10 +13,11 @@ import {
   ShoppingBag, 
   Sparkles,
   User,
-  BadgeCheck,
   Users,
   ExternalLink,
-  PhoneCall
+  PhoneCall,
+  Lock,
+  Headphones
 } from 'lucide-react';
 
 interface CheckoutPageProps {
@@ -663,26 +664,67 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
 
             </div>
 
-            {/* Trust Assurance Card */}
-            <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
-              <div className="flex items-center gap-2.5 text-xs font-extrabold text-slate-900">
-                <BadgeCheck className="w-5 h-5 text-emerald-600" />
-                <span>Systum OTT WhatsApp Guarantee</span>
+            {/* 2x2 Trust Cards under Order */}
+            <div className="grid grid-cols-2 gap-3 text-left">
+              {/* WhatsApp Delivery */}
+              <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                  <Zap className="w-4 h-4 fill-amber-500 text-amber-500" />
+                </div>
+                <div className="min-w-0">
+                  <h5 className="font-extrabold text-slate-900 text-xs leading-tight truncate">
+                    WhatsApp Delivery
+                  </h5>
+                  <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
+                    Secure & direct
+                  </p>
+                </div>
               </div>
-              <ul className="space-y-2 text-[11px] text-slate-600">
-                <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>Direct WhatsApp dispatch within 5–15 minutes.</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>100% Replacement Warranty for full validity duration.</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>One-on-one live assistance for setup & login PIN.</span>
-                </li>
-              </ul>
+
+              {/* Full Warranty */}
+              <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div className="min-w-0">
+                  <h5 className="font-extrabold text-slate-900 text-xs leading-tight truncate">
+                    Full Warranty
+                  </h5>
+                  <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
+                    Duration covered
+                  </p>
+                </div>
+              </div>
+
+              {/* Secure Payment */}
+              <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                  <Lock className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div className="min-w-0">
+                  <h5 className="font-extrabold text-slate-900 text-xs leading-tight truncate">
+                    Secure Payment
+                  </h5>
+                  <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
+                    UPI / QR Code
+                  </p>
+                </div>
+              </div>
+
+              {/* WhatsApp Support */}
+              <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 shrink-0">
+                  <Headphones className="w-4 h-4 text-brand-600" />
+                </div>
+                <div className="min-w-0">
+                  <h5 className="font-extrabold text-slate-900 text-xs leading-tight truncate">
+                    WhatsApp Support
+                  </h5>
+                  <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
+                    We're here to help
+                  </p>
+                </div>
+              </div>
             </div>
 
           </div>

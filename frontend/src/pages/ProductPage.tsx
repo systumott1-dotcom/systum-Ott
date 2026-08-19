@@ -9,18 +9,22 @@ import {
   Check, 
   ShoppingBag, 
   ArrowLeft, 
-  Star, 
   MessageCircle, 
   Tv, 
   Smartphone, 
   Laptop, 
   Tablet, 
   Flame, 
-  RotateCcw,
   BadgeCheck,
   ChevronRight,
   Package,
-  Heart
+  Heart,
+  HelpCircle,
+  TrendingUp,
+  Lock,
+  Headphones,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react';
 
 interface ProductPageProps {
@@ -67,7 +71,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-8">
         <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin mb-4" />
-        <p className="text-sm font-bold text-slate-600">Loading product details...</p>
+        <p className="text-sm font-bold text-slate-600">Loading subscription details...</p>
       </div>
     );
   }
@@ -104,6 +108,12 @@ export const ProductPage: React.FC<ProductPageProps> = ({
     ? Math.round(((selectedPlan.originalPrice - selectedPlan.discountedPrice) / selectedPlan.originalPrice) * 100)
     : 0;
 
+  const savingsAmount = Math.max(0, selectedPlan.originalPrice - selectedPlan.discountedPrice);
+
+  // Better value alternative plan (if another longer plan exists)
+  const nextBetterPlanIndex = product.plans.findIndex((_, idx) => idx > selectedPlanIndex);
+  const betterPlan = nextBetterPlanIndex !== -1 ? product.plans[nextBetterPlanIndex] : null;
+
   const handleAddToCart = () => {
     addToCart(product, selectedPlan);
     setIsAdded(true);
@@ -115,7 +125,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
     buyNow(product, selectedPlan);
   };
 
-  // Related products from same category or others
+  // Related products from same category
   const relatedProducts = products
     .filter((p) => p.id !== product.id && (p.category === product.category || product.category === 'all'))
     .slice(0, 4);
@@ -159,12 +169,12 @@ export const ProductPage: React.FC<ProductPageProps> = ({
         {/* Main Product Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           
-          {/* LEFT COLUMN: Product Image & Trust Proof (5 cols) */}
+          {/* LEFT COLUMN: Product Poster Image + Devices (5 cols) */}
           <div className="lg:col-span-5 space-y-6">
             
             {/* Poster Card */}
             <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-sm relative overflow-hidden group">
-              <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-slate-900 border border-slate-100">
+              <div className="relative w-full aspect-[4/3] sm:aspect-square rounded-2xl overflow-hidden bg-slate-900 border border-slate-100">
                 {product.imageUrl ? (
                   <img
                     src={product.imageUrl}
@@ -218,27 +228,8 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                 <span className="text-slate-400">·</span>
                 <div className="flex items-center gap-1 font-semibold">
                   <Zap className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Instant Delivery</span>
+                  <span>Instant WhatsApp Delivery</span>
                 </div>
-              </div>
-            </div>
-
-            {/* Trust Highlights Cards */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs space-y-1">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
-                  <RotateCcw className="w-4 h-4" />
-                </div>
-                <h4 className="font-extrabold text-xs text-slate-900">Replacement Warranty</h4>
-                <p className="text-[11px] text-slate-500 font-medium leading-tight">Full validity term peace of mind guarantee</p>
-              </div>
-
-              <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs space-y-1">
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-                  <MessageCircle className="w-4 h-4" />
-                </div>
-                <h4 className="font-extrabold text-xs text-slate-900">WhatsApp Support</h4>
-                <p className="text-[11px] text-slate-500 font-medium leading-tight">Instant setup help & prompt response</p>
               </div>
             </div>
 
@@ -269,56 +260,62 @@ export const ProductPage: React.FC<ProductPageProps> = ({
 
           </div>
 
-          {/* RIGHT COLUMN: Product Plan Details, Pricing & Buy Actions (7 cols) */}
+          {/* RIGHT COLUMN: Plan Selector, Pricing, About & 2x2 Trust Cards (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
             
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
               
-              {/* Category & Badge Header */}
+              {/* Category, Discount & In Stock Pills */}
               <div>
-                <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <span className="inline-block text-[11px] font-extrabold uppercase tracking-wider text-brand-700 bg-brand-50 px-3 py-1 rounded-full border border-brand-200">
-                    {product.category} Apps
+                <div className="flex items-center gap-2 mb-2.5 flex-wrap">
+                  <span className="inline-block text-[11px] font-extrabold uppercase tracking-wider text-[#9C7A4A] bg-[#FAF5EE] px-3 py-1 rounded-full border border-[#EFE3CF]">
+                    🎬 {product.category.toUpperCase()} APPS
                   </span>
-                  <span className="text-[11px] font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-                    {product.accountType}
+                  {discountPercent > 0 && (
+                    <span className="text-[11px] font-black text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
+                      {discountPercent}% OFF
+                    </span>
+                  )}
+                  <span className="text-[11px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                    IN STOCK
                   </span>
                   {product.badge && (
-                    <span className="text-[11px] font-bold text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200 flex items-center gap-1">
-                      <Flame className="w-3 h-3 text-amber-500" />
+                    <span className="text-[11px] font-bold text-brand-700 bg-brand-50 px-2.5 py-1 rounded-full border border-brand-200 flex items-center gap-1">
+                      <Flame className="w-3 h-3 text-brand-600" />
                       {product.badge}
                     </span>
                   )}
                 </div>
 
-                <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight leading-snug">
                   {product.title}
                 </h1>
 
-                {/* Rating Row */}
-                <div className="flex items-center gap-3 mt-2.5">
-                  <div className="flex items-center text-amber-500 font-bold text-sm">
-                    <Star className="w-4 h-4 fill-amber-400 mr-1" />
-                    <span>{product.rating || 5.0}</span>
-                  </div>
-                  <span className="text-slate-300">•</span>
-                  <span className="text-xs font-semibold text-slate-500">
-                    {product.reviewsCount || 15}+ verified customer reviews
+                {/* Price Display */}
+                <div className="flex items-baseline gap-2.5 mt-3 flex-wrap">
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900">
+                    ₹{selectedPlan.discountedPrice}
                   </span>
+                  {selectedPlan.originalPrice > selectedPlan.discountedPrice && (
+                    <span className="text-sm text-slate-400 line-through">
+                      ₹{selectedPlan.originalPrice}
+                    </span>
+                  )}
+                  {savingsAmount > 0 && (
+                    <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      🏷️ You save ₹{savingsAmount}!
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Short Description */}
-              <p className="text-sm text-slate-600 leading-relaxed">
-                {product.shortDescription}
-              </p>
-
-              {/* Select Validity Plan */}
+              {/* SELECT PLAN - Pill Buttons Selector */}
               <div className="space-y-3 pt-2">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 block">
-                  Select Validity & Plan:
+                <label className="text-xs font-extrabold uppercase tracking-widest text-slate-500 block">
+                  SELECT PLAN
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                
+                <div className="flex flex-wrap gap-2.5">
                   {product.plans.map((plan, idx) => {
                     const isSelected = selectedPlanIndex === idx;
                     const planDiscount = plan.originalPrice > plan.discountedPrice
@@ -330,89 +327,64 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                         key={plan.name}
                         type="button"
                         onClick={() => setSelectedPlanIndex(idx)}
-                        className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
+                        className={`px-4 py-2.5 rounded-2xl border text-center transition-all ${
                           isSelected
-                            ? 'bg-gradient-to-b from-brand-50/80 to-indigo-50/40 border-brand-500 ring-2 ring-brand-500/20 shadow-md scale-[1.01]'
-                            : 'bg-white hover:bg-slate-50 border-slate-200 shadow-2xs'
+                            ? 'bg-[#FAF5EE] border-[#D4AF37] ring-2 ring-[#D4AF37]/30 shadow-sm scale-105'
+                            : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div>
-                            <span className="font-extrabold text-sm text-slate-900 block">
-                              {plan.name}
-                            </span>
-                            <span className="text-xs text-slate-500 font-semibold">
-                              Validity: {plan.validity}
-                            </span>
-                          </div>
-                          {planDiscount > 0 && (
-                            <span className="text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
-                              Save {planDiscount}%
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-baseline gap-2 mt-2 pt-2 border-t border-slate-100">
-                          <span className="text-xl font-black text-slate-900">
-                            ₹{plan.discountedPrice}
+                        <span className="font-extrabold text-xs text-slate-900 block uppercase">
+                          {plan.validity || plan.name}
+                        </span>
+                        {planDiscount > 0 && (
+                          <span className={`text-[10px] font-bold block ${isSelected ? 'text-emerald-700' : 'text-slate-500'}`}>
+                            {planDiscount}% off
                           </span>
-                          {plan.originalPrice > plan.discountedPrice && (
-                            <span className="text-xs text-slate-400 line-through">
-                              ₹{plan.originalPrice}
-                            </span>
-                          )}
-                        </div>
+                        )}
                       </button>
                     );
                   })}
                 </div>
-              </div>
 
-              {/* Key Features Checklist */}
-              <div className="space-y-3 pt-2">
-                <label className="text-xs font-extrabold uppercase tracking-wider text-slate-700 block">
-                  Included Features & Benefits:
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {product.features.map((feat, i) => (
-                    <div key={i} className="flex items-start gap-2 text-xs font-semibold text-slate-700">
-                      <div className="w-4 h-4 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-200">
-                        <Check className="w-3 h-3" />
+                {/* Better Value Available Upsell Card */}
+                {betterPlan && (
+                  <div className="mt-3 p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-center justify-between gap-3 text-left animate-in fade-in duration-200">
+                    <div>
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+                        <TrendingUp className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Better Value Available</span>
                       </div>
-                      <span>{feat}</span>
+                      <p className="text-xs font-extrabold text-slate-900 mt-0.5">
+                        Upgrade to {betterPlan.validity || betterPlan.name} — only ₹{betterPlan.discountedPrice}
+                      </p>
+                      <span className="text-[10px] font-bold text-emerald-700">
+                        Save ₹{betterPlan.originalPrice - betterPlan.discountedPrice} more!
+                      </span>
                     </div>
-                  ))}
-                </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPlanIndex(nextBetterPlanIndex)}
+                      className="px-4 py-2 bg-amber-400 hover:bg-amber-500 text-slate-900 font-extrabold text-xs rounded-xl shadow-xs transition-colors shrink-0"
+                    >
+                      Switch
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Price Row & Action Buttons */}
-              <div className="pt-4 border-t border-slate-100 space-y-4">
-                <div className="flex items-baseline justify-between">
-                  <div>
-                    <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block">
-                      Total Price ({selectedPlan.validity})
-                    </span>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-black text-slate-900">
-                        ₹{selectedPlan.discountedPrice}
-                      </span>
-                      {selectedPlan.originalPrice > selectedPlan.discountedPrice && (
-                        <span className="text-sm text-slate-400 line-through">
-                          MRP ₹{selectedPlan.originalPrice}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
-                      <Zap className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" /> Instant Activation
-                    </span>
-                  </div>
-                </div>
-
-                {/* Primary CTA Buttons */}
+              {/* Primary Action Buttons */}
+              <div className="pt-2 space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={handleBuyNow}
+                    className="py-3.5 px-5 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-sm font-extrabold shadow-lg shadow-brand-600/25 transition-all transform hover:-translate-y-0.5 active:scale-98 flex items-center justify-center gap-2"
+                  >
+                    <Zap className="w-4 h-4 fill-white" />
+                    <span>Buy Now · ₹{selectedPlan.discountedPrice}</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={handleAddToCart}
@@ -434,41 +406,139 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                       </>
                     )}
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={handleBuyNow}
-                    className="py-3.5 px-5 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-sm font-extrabold shadow-lg shadow-brand-600/25 transition-all transform hover:-translate-y-0.5 active:scale-98 flex items-center justify-center gap-2"
-                  >
-                    <Zap className="w-4 h-4 fill-white" />
-                    <span>Buy Now · ₹{selectedPlan.discountedPrice}</span>
-                  </button>
                 </div>
               </div>
 
-              {/* Delivery Guide Accordion / Notice */}
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2.5">
-                <div className="flex items-center gap-2 text-xs font-extrabold text-slate-800">
-                  <ShieldCheck className="w-4 h-4 text-brand-600" />
-                  <span>How You Receive Access:</span>
+              {/* ABOUT THIS PLAN SECTION */}
+              <div className="pt-6 border-t border-slate-100 space-y-5 text-left">
+                <h3 className="text-base font-extrabold text-slate-900">
+                  About This Plan
+                </h3>
+
+                {/* Features Checklist */}
+                <div className="space-y-2.5 text-xs sm:text-sm text-slate-700">
+                  <div className="flex items-center gap-2 font-bold text-slate-900">
+                    <Lock className="w-4 h-4 text-brand-600 shrink-0" />
+                    <span>{product.title} – {product.accountType}</span>
+                  </div>
+
+                  {product.features.map((feat, i) => (
+                    <div key={i} className="flex items-start gap-2.5 font-medium">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>{feat}</span>
+                    </div>
+                  ))}
+
+                  <div className="flex items-start gap-2.5 font-medium">
+                    <Smartphone className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />
+                    <span>Compatible with all devices – Mobile, Smart TV, Laptop, Tablet</span>
+                  </div>
+
+                  <div className="flex items-start gap-2.5 font-medium">
+                    <Tv className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />
+                    <span>2 Device Login Access – use on any one device at a time</span>
+                  </div>
+
+                  <div className="flex items-start gap-2.5 font-medium">
+                    <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span>Full 100% WhatsApp support provided for any access-related inquiry</span>
+                  </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-center pt-1">
-                  <div className="p-2 rounded-xl bg-white border border-slate-100 space-y-0.5">
-                    <span className="w-5 h-5 rounded-full bg-brand-50 text-brand-700 text-[10px] font-black mx-auto flex items-center justify-center">1</span>
-                    <span className="text-[10px] font-bold text-slate-700 block">Complete UPI</span>
+
+                {/* FAQs - Quick Answers */}
+                <div className="pt-4 border-t border-slate-100 space-y-3">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
+                    <HelpCircle className="w-4 h-4 text-brand-600" />
+                    <span>FAQs – Quick Answers</span>
+                  </h4>
+
+                  <div className="space-y-3 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <div>
+                      <strong className="text-slate-900 block mb-0.5">Q1. Can I use on multiple devices?</strong>
+                      <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                        <Check className="w-3.5 h-3.5" /> Yes, login allowed on multiple devices, usable on one device at a time.
+                      </span>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-200">
+                      <strong className="text-slate-900 block mb-0.5">Q2. Will I face screen limit or profile access issues?</strong>
+                      <span className="text-slate-600 font-semibold flex items-center gap-1">
+                        <XCircle className="w-3.5 h-3.5 text-rose-500" /> No. This plan is verified and designed to be issue-free with full replacement warranty.
+                      </span>
+                    </div>
                   </div>
-                  <div className="p-2 rounded-xl bg-white border border-slate-100 space-y-0.5">
-                    <span className="w-5 h-5 rounded-full bg-brand-50 text-brand-700 text-[10px] font-black mx-auto flex items-center justify-center">2</span>
-                    <span className="text-[10px] font-bold text-slate-700 block">Auto Verify</span>
+                </div>
+
+              </div>
+
+              {/* 2 ROWS x 2 COLUMNS TRUST CARDS (Under every product/order!) */}
+              <div className="pt-4 border-t border-slate-100">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 text-left">
+                  
+                  {/* Card 1: WhatsApp Delivery */}
+                  <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                      <Zap className="w-4 h-4 fill-amber-500 text-amber-500" />
+                    </div>
+                    <div className="min-w-0">
+                      <h5 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight truncate">
+                        WhatsApp Delivery
+                      </h5>
+                      <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-tight mt-0.5">
+                        Secure & direct
+                      </p>
+                    </div>
                   </div>
-                  <div className="p-2 rounded-xl bg-white border border-slate-100 space-y-0.5">
-                    <span className="w-5 h-5 rounded-full bg-brand-50 text-brand-700 text-[10px] font-black mx-auto flex items-center justify-center">3</span>
-                    <span className="text-[10px] font-bold text-slate-700 block">WhatsApp Access</span>
+
+                  {/* Card 2: Full Warranty */}
+                  <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <h5 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight truncate">
+                        Full Warranty
+                      </h5>
+                      <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-tight mt-0.5">
+                        Duration covered
+                      </p>
+                    </div>
                   </div>
+
+                  {/* Card 3: Secure Payment */}
+                  <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                      <Lock className="w-4 h-4 text-indigo-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <h5 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight truncate">
+                        Secure Payment
+                      </h5>
+                      <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-tight mt-0.5">
+                        UPI / QR Code
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Card 4: WhatsApp Support */}
+                  <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 shrink-0">
+                      <Headphones className="w-4 h-4 text-brand-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <h5 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight truncate">
+                        WhatsApp Support
+                      </h5>
+                      <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-tight mt-0.5">
+                        We're here to help
+                      </p>
+                    </div>
+                  </div>
+
                 </div>
               </div>
 
-              {/* WhatsApp Support Banner */}
+              {/* Direct WhatsApp Inquiry Banner */}
               <a
                 href={`https://wa.me/${WHATSAPP_PHONE}?text=Hello!+I+have+a+question+about+${encodeURIComponent(product.title)}+subscription.`}
                 target="_blank"
@@ -479,7 +549,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                   <MessageCircle className="w-5 h-5 text-emerald-600 group-hover:scale-110 transition-transform" />
                   <div>
                     <span className="text-xs font-extrabold block">Have questions about this plan?</span>
-                    <span className="text-[11px] text-emerald-700 font-medium">Chat directly with our support team on WhatsApp</span>
+                    <span className="text-[11px] text-emerald-700 font-medium">Chat directly with our team on WhatsApp</span>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-emerald-600 group-hover:translate-x-0.5 transition-transform" />
