@@ -3,11 +3,11 @@ import { useToast } from '../context/ToastContext';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { WHATSAPP_PHONE } from '../context/CartContext';
 import type { OrderHistoryItem } from '../types';
+import { WhatsAppIcon } from './WhatsAppIcon';
 import { 
   X, 
   ShoppingBag, 
   Search, 
-  MessageCircle, 
   Copy, 
   Check, 
   Key, 
@@ -252,7 +252,7 @@ export const OrderHistoryModal: React.FC<OrderHistoryModalProps> = ({ isOpen, on
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 hover:text-emerald-800 hover:underline"
                   >
-                    <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                    <WhatsAppIcon className="w-3.5 h-3.5 fill-[#25D366]" />
                     <span>WhatsApp Support for this Order</span>
                   </a>
                 </div>

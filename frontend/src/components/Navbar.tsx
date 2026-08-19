@@ -4,7 +4,6 @@ import {
   Search, 
   Menu, 
   X, 
-  MessageCircle, 
   Shield, 
   ChevronDown, 
   Store, 
@@ -21,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useCart, WHATSAPP_PHONE } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { WhatsAppIcon } from './WhatsAppIcon';
 import type { CategoryId, Product } from '../types';
 
 interface NavbarProps {
@@ -414,7 +414,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 text-xs font-bold transition-all shadow-xs group"
             >
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <MessageCircle className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
+              <WhatsAppIcon className="w-4 h-4 text-[#25D366] fill-[#25D366] group-hover:scale-110 transition-transform" />
               <span>WhatsApp Chat</span>
             </a>
 
@@ -593,10 +593,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               href={`https://wa.me/${WHATSAPP_PHONE}?text=Hello!+I+want+to+inquire+about+a+subscription.`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-sm shadow-md shadow-emerald-600/20"
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-sm shadow-md shadow-emerald-600/20"
             >
-              <MessageCircle className="w-4 h-4" />
-              Chat on WhatsApp Support
+              <WhatsAppIcon className="w-4 h-4 fill-white" />
+              <span>Chat on WhatsApp Support</span>
             </a>
           </div>
         </div>

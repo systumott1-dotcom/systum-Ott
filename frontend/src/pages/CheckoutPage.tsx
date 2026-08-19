@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCart, WHATSAPP_PHONE } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
+import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import confetti from 'canvas-confetti';
 import { 
   ArrowLeft, 
@@ -330,9 +331,9 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
             href={`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(formattedReceiptText)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full py-4 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2"
+            className="w-full py-4 px-5 rounded-2xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2"
           >
-            <MessageCircle className="w-5 h-5" />
+            <WhatsAppIcon className="w-5 h-5 fill-white" />
             <span>Send Order on WhatsApp to Expedite Delivery ⚡</span>
           </a>
 
@@ -604,9 +605,9 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-emerald-600/20 transition-all transform hover:-translate-y-0.5 active:scale-98 flex items-center justify-center gap-2"
+                  className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-[#25D366] to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-emerald-600/20 transition-all transform hover:-translate-y-0.5 active:scale-98 flex items-center justify-center gap-2"
                 >
-                  <MessageCircle className="w-5 h-5" />
+                  <WhatsAppIcon className="w-5 h-5 fill-white" />
                   <span>{isSubmitting ? 'Recording Order...' : `Confirm Payment & Get Delivered to Your WhatsApp · ₹${finalAmount}`}</span>
                 </button>
 

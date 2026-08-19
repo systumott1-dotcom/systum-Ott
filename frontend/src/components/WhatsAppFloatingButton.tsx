@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { MessageCircle, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { WHATSAPP_PHONE } from '../context/CartContext';
+import { WhatsAppIcon } from './WhatsAppIcon';
 
 export const WhatsAppFloatingButton: React.FC = () => {
   const [showTooltip, setShowTooltip] = useState(true);
@@ -27,11 +28,11 @@ export const WhatsAppFloatingButton: React.FC = () => {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat on WhatsApp"
-        className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white flex items-center justify-center shadow-2xl shadow-emerald-500/40 hover:scale-110 active:scale-95 transition-all duration-300 relative group"
+        className="w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white flex items-center justify-center shadow-2xl shadow-emerald-500/40 hover:scale-110 active:scale-95 transition-all duration-300 relative group"
       >
         {/* Pulsing ring */}
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-30"></span>
-        <MessageCircle className="w-7 h-7 text-white group-hover:rotate-12 transition-transform duration-300" />
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#25D366] opacity-30"></span>
+        <WhatsAppIcon className="w-7 h-7 text-white fill-white group-hover:rotate-6 transition-transform duration-300" />
       </a>
     </div>
   );
