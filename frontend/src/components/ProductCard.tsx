@@ -56,7 +56,7 @@ const ICON_COMPONENTS: Record<string, React.ElementType> = {
 };
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { buyNow, setQuickViewProduct } = useCart();
+  const { buyNow } = useCart();
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   // Default to popular plan or first plan
@@ -83,9 +83,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     setIsWishlisted((prev) => !prev);
   };
 
+  const handleCardClick = () => {
+    const slug = product.slug || product.id;
+    window.history.pushState({}, '', `/product/${slug}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div
-      onClick={() => setQuickViewProduct(product)}
+      onClick={handleCardClick}
       className="group white-card rounded-3xl p-3 sm:p-4 border border-slate-200 shadow-xs hover:shadow-xl hover:border-brand-300 flex flex-col justify-between cursor-pointer relative overflow-hidden transition-all duration-300 bg-white"
     >
       {/* Top Image Poster Container */}

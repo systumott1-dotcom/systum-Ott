@@ -3,6 +3,7 @@ import { ToastProvider } from './context/ToastContext';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useProducts } from './hooks/useProducts';
+import { useRouter } from './hooks/useRouter';
 import type { CategoryId } from './types';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { Navbar } from './components/Navbar';
@@ -16,7 +17,6 @@ import { LegalDisclosureBanner } from './components/LegalDisclosureBanner';
 import { ReviewsSection } from './components/ReviewsSection';
 import { FAQSection } from './components/FAQSection';
 import { Footer } from './components/Footer';
-import { ProductQuickViewModal } from './components/ProductQuickViewModal';
 import { CartDrawer } from './components/CartDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
 import { PolicyModals } from './components/PolicyModals';
@@ -24,29 +24,37 @@ import type { PolicyType } from './components/PolicyModals';
 import { WhatsAppFloatingButton } from './components/WhatsAppFloatingButton';
 import { AuthModal } from './components/AuthModal';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { ProductPage } from './pages/ProductPage';
 
 function Storefront() {
   const { isAdmin, setIsAuthModalOpen, setAuthModalTab } = useAuth();
   const { products, loading: productsLoading } = useProducts();
+  const router = useRouter();
+
   const [activeCategory, setActiveCategory] = useState<CategoryId>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activePolicy, setActivePolicy] = useState<PolicyType>(null);
-  const [currentView, setCurrentView] = useState<'store' | 'admin'>('store');
 
   const handleExploreShop = () => {
-    const shop = document.getElementById('shop-section');
-    if (shop) {
-      shop.scrollIntoView({ behavior: 'smooth' });
+    if (router.route !== 'home') {
+      router.navigate('/');
+      setTimeout(() => {
+        const shop = document.getElementById('shop-section');
+        if (shop) shop.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else {
+      const shop = document.getElementById('shop-section');
+      if (shop) shop.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  if (currentView === 'admin') {
+  if (router.route === 'admin') {
     if (!isAdmin) {
       setAuthModalTab('admin');
       setIsAuthModalOpen(true);
-      setCurrentView('store');
+      router.navigate('/');
     } else {
-      return <AdminDashboard onBackToStore={() => setCurrentView('store')} />;
+      return <AdminDashboard onBackToStore={() => router.navigate('/')} />;
     }
   }
 
@@ -57,45 +65,69 @@ function Storefront() {
       <Navbar
         products={products}
         activeCategory={activeCategory}
-        onSelectCategory={setActiveCategory}
+        onSelectCategory={(cat) => {
+          setActiveCategory(cat);
+          if (router.route !== 'home') router.navigate('/');
+        }}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onOpenPolicy={(policy) => setActivePolicy(policy)}
-        onOpenAdmin={() => setCurrentView('admin')}
+        onOpenAdmin={() => {
+          if (!isAdmin) {
+            setAuthModalTab('admin');
+            setIsAuthModalOpen(true);
+          } else {
+            router.navigate('/admin');
+          }
+        }}
       />
 
       <main className="flex-grow">
-        <Hero onExploreClick={handleExploreShop} />
+        {router.route === 'product' && router.productIdOrSlug ? (
+          <ProductPage
+            productIdOrSlug={router.productIdOrSlug}
+            products={products}
+            loading={productsLoading}
+            onBackToHome={() => router.navigate('/')}
+            onNavigateProduct={(slugOrId) => router.navigate(`/product/${slugOrId}`)}
+          />
+        ) : (
+          <>
+            <Hero onExploreClick={handleExploreShop} />
 
-        <CategoryBrowser
-          activeCategory={activeCategory}
-          onSelectCategory={setActiveCategory}
-        />
+            <CategoryBrowser
+              activeCategory={activeCategory}
+              onSelectCategory={setActiveCategory}
+            />
 
-        <ComboHighlights products={products} />
+            <ComboHighlights products={products} />
 
-        <ProductGrid
-          products={products}
-          loading={productsLoading}
-          activeCategory={activeCategory}
-          onSelectCategory={setActiveCategory}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
+            <ProductGrid
+              products={products}
+              loading={productsLoading}
+              activeCategory={activeCategory}
+              onSelectCategory={setActiveCategory}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
 
-        <LegalDisclosureBanner onOpenPolicy={(policy) => setActivePolicy(policy)} />
-        <HowItWorks />
-        <TrustFeatures />
-        <ReviewsSection />
-        <FAQSection />
+            <LegalDisclosureBanner onOpenPolicy={(policy) => setActivePolicy(policy)} />
+            <HowItWorks />
+            <TrustFeatures />
+            <ReviewsSection />
+            <FAQSection />
+          </>
+        )}
       </main>
 
       <Footer
-        onSelectCategory={setActiveCategory}
+        onSelectCategory={(cat) => {
+          setActiveCategory(cat);
+          if (router.route !== 'home') router.navigate('/');
+        }}
         onOpenPolicy={(policy) => setActivePolicy(policy)}
       />
 
-      <ProductQuickViewModal />
       <CartDrawer />
       <CheckoutModal />
       <AuthModal />

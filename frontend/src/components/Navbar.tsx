@@ -42,7 +42,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenPolicy,
   onOpenAdmin,
 }) => {
-  const { totalItems, setIsCartOpen, setQuickViewProduct } = useCart();
+  const { totalItems, setIsCartOpen } = useCart();
   const { user, isAdmin, setIsAuthModalOpen, setAuthModalTab, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categoriesDropdownOpen, setCategoriesDropdownOpen] = useState(false);
@@ -84,7 +84,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [products, searchQuery]);
 
   const handleSelectProduct = (product: Product) => {
-    setQuickViewProduct(product);
+    const slug = product.slug || product.id;
+    window.history.pushState({}, '', `/product/${slug}`);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setIsSearchOpen(false);
     onSearchChange('');
   };
