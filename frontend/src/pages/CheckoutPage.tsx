@@ -10,11 +10,13 @@ import {
   MessageCircle, 
   Zap, 
   CheckCircle2, 
-  Clock, 
   ShoppingBag, 
   Sparkles,
   User,
-  BadgeCheck
+  BadgeCheck,
+  Users,
+  ExternalLink,
+  PhoneCall
 } from 'lucide-react';
 
 interface CheckoutPageProps {
@@ -41,6 +43,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
   const [utrNumber, setUtrNumber] = useState('');
   const [couponInput, setCouponInput] = useState('');
   const [copiedUPI, setCopiedUPI] = useState(false);
+  const [copiedReceipt, setCopiedReceipt] = useState(false);
+  const [copiedPhone, setCopiedPhone] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<{
     id: string;
@@ -48,6 +52,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
     whatsapp: string;
     email?: string;
     totalPaid: number;
+    purchaseDate: string;
+    expiryDate: string;
     items: Array<{ title: string; plan: string; price: number; quantity: number }>;
   } | null>(null);
 
@@ -86,6 +92,13 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
     setTimeout(() => setCopiedUPI(false), 2000);
   };
 
+  const handleCopyPhoneNumber = () => {
+    navigator.clipboard.writeText('+91 93060 22703');
+    setCopiedPhone(true);
+    toast.success('Phone number +91 93060 22703 copied! 📞');
+    setTimeout(() => setCopiedPhone(false), 2000);
+  };
+
   const handleApplyCoupon = (e: React.FormEvent) => {
     e.preventDefault();
     if (!couponInput.trim()) return;
@@ -107,6 +120,11 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
 
     setIsSubmitting(true);
     let assignedOrderId = Math.floor(10000 + Math.random() * 90000).toString();
+
+    const now = new Date();
+    const purchaseDate = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    const expiry = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const expiryDate = expiry.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
     try {
       // POST order to backend
@@ -147,6 +165,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
         whatsapp: whatsapp.trim(),
         email: email.trim() || undefined,
         totalPaid: finalAmount,
+        purchaseDate,
+        expiryDate,
         items,
       });
 
@@ -163,6 +183,8 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
         whatsapp: whatsapp.trim(),
         email: email.trim() || undefined,
         totalPaid: finalAmount,
+        purchaseDate,
+        expiryDate,
         items,
       });
       if (!isDirectBuy) clearCart();
@@ -173,82 +195,144 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
 
   // POST-PAYMENT SUCCESS SCREEN
   if (orderSuccess) {
-    return (
-      <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-2xl mx-auto bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-xl space-y-6 text-center animate-in zoom-in-95 duration-200">
-          
-          {/* Check Badge */}
-          <div className="w-20 h-20 rounded-3xl bg-emerald-50 border-2 border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
-            <CheckCircle2 className="w-10 h-10" />
-          </div>
+    const productListStr = orderSuccess.items.map((i) => `${i.title} - ${i.plan}`).join(', ');
+    const formattedReceiptText = `*🎉 Thank You for Your Order!*
 
-          <div className="space-y-2">
+📦 Order Details
+Order ID: #${orderSuccess.id}
+📨 Email / Number - ${orderSuccess.email ? `${orderSuccess.email} / ` : ''}+91 ${orderSuccess.whatsapp}
+Product: ${productListStr}
+💰 Amount: ₹${orderSuccess.totalPaid}
+📅 Purchase Date: ${orderSuccess.purchaseDate}
+⏳ Expiry Date: ${orderSuccess.expiryDate}
+📲 Device Name: Smart TV / Mobile / PC
+
+*Let us know if u want any other OTT or SOFTWARE in lowest price 😊*
+
+Don’t forget to join our community for latest updates, offers, and support 👉
+https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
+
+    const handleCopyFullReceipt = () => {
+      navigator.clipboard.writeText(formattedReceiptText);
+      setCopiedReceipt(true);
+      toast.success('Order receipt copied to clipboard! 📋');
+      setTimeout(() => setCopiedReceipt(false), 2000);
+    };
+
+    return (
+      <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-2xl mx-auto bg-white rounded-3xl p-6 sm:p-9 border border-slate-200 shadow-xl space-y-6 animate-in zoom-in-95 duration-200">
+          
+          {/* Header Badge */}
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 rounded-3xl bg-emerald-50 border-2 border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto shadow-md">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-black uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" /> Payment Submitted Successfully
+              <Sparkles className="w-3.5 h-3.5" /> Order Placed Successfully
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
               Thank You, {orderSuccess.name}!
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 font-medium">
-              Order Reference: <strong className="font-mono text-slate-800 font-black">#{orderSuccess.id}</strong>
+              Order ID: <strong className="font-mono text-brand-700 font-black">#{orderSuccess.id}</strong>
             </p>
           </div>
 
-          {/* WhatsApp Delivery Notification Box */}
-          <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/50 to-brand-50/40 border border-emerald-200 text-left space-y-3">
-            <div className="flex items-center gap-2 text-xs font-extrabold text-emerald-900">
-              <Clock className="w-4 h-4 text-emerald-600 animate-spin" />
-              <span>Delivering Shortly via WhatsApp</span>
+          {/* Formatted Order Details Receipt Box */}
+          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 text-left space-y-3 relative group">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+              <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                <span>📦</span> Order Details
+              </span>
+              <button
+                type="button"
+                onClick={handleCopyFullReceipt}
+                className="px-2.5 py-1 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-[11px] font-bold text-slate-700 flex items-center gap-1 transition-colors shadow-2xs"
+              >
+                {copiedReceipt ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedReceipt ? 'Copied Receipt' : 'Copy Receipt'}</span>
+              </button>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-emerald-100 flex items-start gap-3 shadow-2xs">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
-                <MessageCircle className="w-5 h-5" />
-              </div>
-              <div className="text-xs text-slate-700 space-y-1">
-                <strong className="block text-slate-900 text-sm">WhatsApp Delivery in Progress:</strong>
-                <p className="leading-relaxed">
-                  Your login credentials, activation details, and warranty pass will be sent directly to your WhatsApp number{' '}
-                  <strong className="text-emerald-700">+91 {orderSuccess.whatsapp}</strong> shortly (typically within 5–15 minutes).
-                </p>
-              </div>
+            <div className="space-y-2 text-xs font-mono text-slate-800">
+              <div><strong className="text-slate-500 font-sans">Order ID:</strong> #{orderSuccess.id}</div>
+              <div><strong className="text-slate-500 font-sans">📨 Email / Number:</strong> {orderSuccess.email ? `${orderSuccess.email} / ` : ''}+91 {orderSuccess.whatsapp}</div>
+              <div><strong className="text-slate-500 font-sans">Product:</strong> {productListStr}</div>
+              <div><strong className="text-slate-500 font-sans">💰 Amount:</strong> ₹{orderSuccess.totalPaid}</div>
+              <div><strong className="text-slate-500 font-sans">📅 Purchase Date:</strong> {orderSuccess.purchaseDate}</div>
+              <div><strong className="text-slate-500 font-sans">⏳ Expiry Date:</strong> {orderSuccess.expiryDate}</div>
+              <div><strong className="text-slate-500 font-sans">📲 Device Name:</strong> Smart TV / Mobile / PC</div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-200 text-[11px] text-slate-500 italic">
+              Let us know if u want any other OTT or SOFTWARE in lowest price 😊
             </div>
           </div>
 
-          {/* Purchased Items Summary */}
-          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-left space-y-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Purchased Subscriptions:
-            </h4>
-            <div className="divide-y divide-slate-200">
-              {orderSuccess.items.map((item, i) => (
-                <div key={i} className="py-2 flex items-center justify-between text-xs">
-                  <div>
-                    <strong className="text-slate-900 block">{item.title}</strong>
-                    <span className="text-slate-500">{item.plan}</span>
-                  </div>
-                  <span className="font-bold text-slate-900">₹{item.price * item.quantity}</span>
-                </div>
-              ))}
-            </div>
-            <div className="pt-2 border-t border-slate-200 flex items-center justify-between font-extrabold text-sm text-slate-900">
-              <span>Total Paid</span>
-              <span>₹{orderSuccess.totalPaid}</span>
-            </div>
-          </div>
-
-          {/* WhatsApp Direct Chat Fast-Track Button */}
+          {/* WhatsApp Direct Action Button */}
           <a
-            href={`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(
-              `*🎉 ORDER NOTIFICATION #${orderSuccess.id}*\n\nHi! I just completed my payment of ₹${orderSuccess.totalPaid} for order #${orderSuccess.id}.\nName: ${orderSuccess.name}\nWhatsApp: +91 ${orderSuccess.whatsapp}\nPlease verify and deliver my credentials. Thanks!`
-            )}`}
+            href={`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(formattedReceiptText)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full py-4 px-5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2"
           >
             <MessageCircle className="w-5 h-5" />
-            <span>Open WhatsApp to Expedite Delivery ⚡</span>
+            <span>Send Order on WhatsApp to Expedite Delivery ⚡</span>
           </a>
+
+          {/* Join WhatsApp Community Card */}
+          <a
+            href="https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-brand-50 to-indigo-50 border border-brand-200 text-slate-800 hover:shadow-md transition-all group text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <strong className="text-xs sm:text-sm font-extrabold text-slate-900 block">
+                  Join Our Official Community
+                </strong>
+                <span className="text-[11px] text-slate-500 font-medium">
+                  Latest OTT releases, member discounts & instant support
+                </span>
+              </div>
+            </div>
+            <ExternalLink className="w-4 h-4 text-brand-600 group-hover:translate-x-0.5 transition-transform shrink-0" />
+          </a>
+
+          {/* Support Helpline & Manual Copy Option */}
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-700">
+                Taking longer than usual? Reach out directly:
+              </span>
+              <button
+                type="button"
+                onClick={handleCopyPhoneNumber}
+                className="text-[11px] font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
+              >
+                {copiedPhone ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                <span>{copiedPhone ? 'Number Copied' : 'Copy Number'}</span>
+              </button>
+            </div>
+            
+            <div className="flex items-center gap-3 pt-1">
+              <a
+                href={`https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(`Hi! Checking on my order #${orderSuccess.id}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-mono font-extrabold text-emerald-700 hover:underline flex items-center gap-1.5"
+              >
+                <PhoneCall className="w-3.5 h-3.5 text-emerald-600" />
+                <span>+91 93060 22703</span>
+              </a>
+              <span className="text-[11px] text-slate-400">· Click to chat or copy and message manually</span>
+            </div>
+          </div>
 
           {/* Return to Store */}
           <button
