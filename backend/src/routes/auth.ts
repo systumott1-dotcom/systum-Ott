@@ -5,8 +5,12 @@ import { User } from '../models/User.js';
 import { authenticateToken } from '../middleware/auth.js';
 import type { AuthRequest } from '../middleware/auth.js';
 import mongoose from 'mongoose';
+import { authLimiter } from '../middleware/rateLimiter.js';
 
 export const authRouter = Router();
+
+// Apply strict rate limiting to all auth endpoints to prevent brute-force attacks
+authRouter.use(authLimiter);
 
 // In-memory fallback users
 const inMemoryUsers: Array<{

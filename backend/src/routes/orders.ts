@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
 import { Order } from '../models/Order.js';
+import { uploadImageToCloudinary } from '../services/cloudinary.js';
 
 export const ordersRouter = Router();
 
@@ -25,6 +26,7 @@ interface LocalOrder {
   expiryDate: string;
   warrantyType?: string;
   utrNumber?: string;
+  paymentScreenshotUrl?: string;
   status: 'PENDING_VERIFICATION' | 'DELIVERED' | 'CANCELLED';
   deliveryCredentials?: string;
   createdAt: string;
@@ -103,12 +105,32 @@ const generateUniqueNumericOrderId = async (): Promise<string> => {
 
 // POST /api/orders - create new customer order
 ordersRouter.post('/', async (req, res) => {
-  const { name, whatsapp, email, items, totalAmount, utrNumber, deliveryPreference, warrantyType } = req.body;
+  const { 
+    name, 
+    whatsapp, 
+    email, 
+    items, 
+    totalAmount, 
+    utrNumber, 
+    paymentScreenshot, 
+    paymentScreenshotUrl, 
+    deliveryPreference, 
+    warrantyType 
+  } = req.body;
 
   if (!name || !whatsapp || !items || !totalAmount) {
     return res.status(400).json({
       success: false,
       message: 'Missing required order fields (name, whatsapp, items, totalAmount)',
+    });
+  }
+
+  // Payment screenshot is mandatory
+  const rawScreenshot = paymentScreenshot || paymentScreenshotUrl;
+  if (!rawScreenshot) {
+    return res.status(400).json({
+      success: false,
+      message: 'Payment screenshot is mandatory. Please upload a screenshot of your completed UPI payment.',
     });
   }
 
@@ -120,6 +142,16 @@ ordersRouter.post('/', async (req, res) => {
       month: 'short',
       year: 'numeric',
     });
+
+    // Upload screenshot to Cloudinary if it's base64 data
+    let uploadedScreenshotUrl = rawScreenshot;
+    if (typeof rawScreenshot === 'string' && rawScreenshot.startsWith('data:image')) {
+      try {
+        uploadedScreenshotUrl = await uploadImageToCloudinary(rawScreenshot, 'systum_ott_payment_screenshots');
+      } catch {
+        uploadedScreenshotUrl = rawScreenshot;
+      }
+    }
 
     // Calculate expiry from primary item's validity
     const firstItemValidity = items[0]?.validity || items[0]?.plan || '30 Days';
@@ -143,6 +175,7 @@ ordersRouter.post('/', async (req, res) => {
         })),
         totalAmount,
         utrNumber,
+        paymentScreenshotUrl: uploadedScreenshotUrl,
         paymentMethod: 'UPI',
         status: 'PENDING_VERIFICATION',
         purchaseDate,
@@ -155,7 +188,7 @@ ordersRouter.post('/', async (req, res) => {
       return res.status(201).json({
         success: true,
         message: 'Order recorded successfully.',
-        order: { id: newOrder.id, ...newOrder.toObject(), purchaseDate, expiryDate },
+        order: { id: newOrder.id, ...newOrder.toObject(), purchaseDate, expiryDate, paymentScreenshotUrl: uploadedScreenshotUrl },
       });
     }
 
@@ -177,6 +210,7 @@ ordersRouter.post('/', async (req, res) => {
       expiryDate,
       warrantyType: warrantyType || 'Full-Term Replacement',
       utrNumber,
+      paymentScreenshotUrl: uploadedScreenshotUrl,
       status: 'PENDING_VERIFICATION',
       createdAt: now.toISOString(),
     };

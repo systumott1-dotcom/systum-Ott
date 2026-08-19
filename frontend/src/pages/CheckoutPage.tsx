@@ -18,7 +18,9 @@ import {
   ExternalLink,
   PhoneCall,
   Lock,
-  Headphones
+  Headphones,
+  Camera,
+  Upload
 } from 'lucide-react';
 
 interface CheckoutPageProps {
@@ -43,11 +45,40 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
   const [utrNumber, setUtrNumber] = useState('');
+  const [paymentScreenshot, setPaymentScreenshot] = useState<string>('');
+  const [screenshotPreview, setScreenshotPreview] = useState<string>('');
+  const [screenshotError, setScreenshotError] = useState<string>('');
   const [couponInput, setCouponInput] = useState('');
   const [copiedUPI, setCopiedUPI] = useState(false);
   const [copiedReceipt, setCopiedReceipt] = useState(false);
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+      setScreenshotError('Screenshot size must be under 8MB');
+      toast.error('File too large. Please upload an image under 8MB.');
+      return;
+    }
+
+    setScreenshotError('');
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setPaymentScreenshot(base64);
+      setScreenshotPreview(base64);
+      toast.success('Payment screenshot selected! 📸');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveScreenshot = () => {
+    setPaymentScreenshot('');
+    setScreenshotPreview('');
+  };
   const [orderSuccess, setOrderSuccess] = useState<{
     id: string;
     name: string;
@@ -132,6 +163,12 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
       return;
     }
 
+    if (!paymentScreenshot) {
+      setScreenshotError('Payment screenshot is mandatory. Please upload a screenshot of your UPI payment.');
+      toast.error('Please upload your payment screenshot before confirming your order.');
+      return;
+    }
+
     setIsSubmitting(true);
     let assignedOrderId = Math.floor(10000 + Math.random() * 90000).toString();
 
@@ -176,6 +213,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
           })),
           totalAmount: finalAmount,
           utrNumber: utrNumber.trim() || undefined,
+          paymentScreenshot,
         }),
       });
 
@@ -596,6 +634,70 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
                       <span className="text-[10px] text-slate-400 mt-1 block">
                         Found in your UPI app receipt after payment
                       </span>
+                    </div>
+
+                    {/* Mandatory Payment Screenshot Upload */}
+                    <div className="pt-2 border-t border-slate-100">
+                      <label className="text-xs font-bold text-slate-800 block mb-1.5 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <Camera className="w-3.5 h-3.5 text-brand-600" />
+                          <span>Upload Payment Screenshot (Mandatory) *</span>
+                        </span>
+                        <span className="text-[10px] font-black uppercase text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                          Mandatory
+                        </span>
+                      </label>
+
+                      {screenshotPreview ? (
+                        <div className="relative rounded-2xl border-2 border-emerald-500/40 bg-emerald-50/20 p-3 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <img
+                              src={screenshotPreview}
+                              alt="Payment Screenshot Preview"
+                              className="w-16 h-16 object-cover rounded-xl border border-slate-200 shadow-xs shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <span className="text-xs font-extrabold text-emerald-800 flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                <span>Screenshot Attached</span>
+                              </span>
+                              <p className="text-[10px] text-slate-500 truncate mt-0.5">
+                                Verified receipt ready for fast dispatch
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRemoveScreenshot}
+                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-colors shrink-0"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex flex-col items-center justify-center p-5 border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-2xl bg-slate-50 hover:bg-brand-50/20 cursor-pointer transition-all group text-center">
+                          <div className="w-10 h-10 rounded-full bg-brand-50 group-hover:bg-brand-100 text-brand-600 flex items-center justify-center mb-2 transition-colors">
+                            <Upload className="w-5 h-5" />
+                          </div>
+                          <span className="text-xs font-extrabold text-slate-800 group-hover:text-brand-700">
+                            Click to upload payment screenshot
+                          </span>
+                          <span className="text-[10px] text-slate-400 mt-0.5">
+                            PNG, JPG, JPEG or WEBP (Max 8MB)
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleScreenshotChange}
+                            className="hidden"
+                            required
+                          />
+                        </label>
+                      )}
+
+                      {screenshotError && (
+                        <p className="text-xs text-rose-600 font-bold mt-1.5">{screenshotError}</p>
+                      )}
                     </div>
                   </div>
 

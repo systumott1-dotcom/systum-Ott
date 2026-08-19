@@ -22,7 +22,8 @@ import {
   Search,
   Copy,
   Check,
-  ExternalLink
+  ExternalLink,
+  Camera
 } from 'lucide-react';
 import type { Product, ProductPlan } from '../types';
 import { CATEGORIES } from '../data/products';
@@ -45,6 +46,7 @@ interface OrderData {
   items: Array<{ productId: string; productTitle: string; planName: string; price: number; quantity: number }>;
   totalAmount: number;
   utrNumber?: string;
+  paymentScreenshotUrl?: string;
   status: 'PENDING_VERIFICATION' | 'DELIVERED' | 'CANCELLED';
   deliveryCredentials?: string;
   deliveryNotes?: string;
@@ -116,6 +118,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const [searchedOrder, setSearchedOrder] = useState<OrderData | null>(null);
   const [isSearchingOrder, setIsSearchingOrder] = useState(false);
   const [copiedReceiptId, setCopiedReceiptId] = useState<string | null>(null);
+  const [viewScreenshotUrl, setViewScreenshotUrl] = useState<string | null>(null);
 
   // Coupons State
   const [coupons, setCoupons] = useState<CouponData[]>([]);
@@ -125,7 +128,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const [newCouponMin, setNewCouponMin] = useState(0);
 
   // Lock background scroll when any modal is open
-  useBodyScrollLock(isAddProductModalOpen || Boolean(deliveryModalOrder));
+  useBodyScrollLock(isAddProductModalOpen || Boolean(deliveryModalOrder) || Boolean(viewScreenshotUrl));
 
   // API helper
   const apiHeaders = useCallback(() => ({
@@ -974,8 +977,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     </div>
                   </div>
 
-                  {/* UTR & Credentials */}
-                  {(searchedOrder.utrNumber || searchedOrder.deliveryCredentials) && (
+                  {/* UTR, Credentials & Screenshot */}
+                  {(searchedOrder.utrNumber || searchedOrder.deliveryCredentials || searchedOrder.paymentScreenshotUrl) && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       {searchedOrder.utrNumber && (
                         <div className="bg-white p-3 rounded-xl border border-slate-200">
@@ -983,8 +986,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                           <strong className="font-mono text-slate-900">{searchedOrder.utrNumber}</strong>
                         </div>
                       )}
+                      {searchedOrder.paymentScreenshotUrl && (
+                        <div className="bg-white p-3 rounded-xl border border-slate-200 flex items-center justify-between">
+                          <div>
+                            <span className="text-slate-400 font-bold block mb-0.5">Payment Proof:</span>
+                            <span className="text-emerald-700 font-extrabold">Screenshot Uploaded</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setViewScreenshotUrl(searchedOrder.paymentScreenshotUrl!)}
+                            className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-2xs"
+                          >
+                            <Camera className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>View Proof</span>
+                          </button>
+                        </div>
+                      )}
                       {searchedOrder.deliveryCredentials && (
-                        <div className="bg-emerald-50/70 p-3 rounded-xl border border-emerald-200 font-mono text-emerald-900">
+                        <div className="bg-emerald-50/70 p-3 rounded-xl border border-emerald-200 font-mono text-emerald-900 col-span-1 sm:col-span-2">
                           <span className="text-emerald-700 font-bold block mb-0.5 font-sans">Delivered Credentials:</span>
                           <pre className="whitespace-pre-wrap">{searchedOrder.deliveryCredentials}</pre>
                         </div>
@@ -1075,6 +1094,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     {order.utrNumber && (
                       <div className="text-xs text-slate-500 mt-2">
                         UTR: <span className="font-mono font-bold text-slate-700">{order.utrNumber}</span>
+                      </div>
+                    )}
+
+                    {order.paymentScreenshotUrl && (
+                      <div className="mt-2 flex items-center justify-between bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100">
+                        <span className="text-xs text-emerald-800 font-bold flex items-center gap-1.5">
+                          <Camera className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Payment Screenshot Attached</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setViewScreenshotUrl(order.paymentScreenshotUrl!)}
+                          className="px-2.5 py-1 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-bold flex items-center gap-1 shadow-2xs"
+                        >
+                          <span>View Proof</span>
+                        </button>
                       </div>
                     )}
 
@@ -1176,6 +1211,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           </div>
         )}
       </div>
+
+      {/* Payment Screenshot Full Viewer Modal */}
+      {viewScreenshotUrl && (
+        <div 
+          className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-200" 
+          onClick={() => setViewScreenshotUrl(null)}
+        >
+          <div 
+            className="relative max-w-3xl w-full bg-slate-900 rounded-3xl p-5 overflow-hidden border border-slate-700 shadow-2xl animate-in zoom-in-95 duration-200" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800 text-white">
+              <span className="font-extrabold text-sm flex items-center gap-2">
+                <Camera className="w-4 h-4 text-emerald-400" />
+                Customer UPI Payment Screenshot
+              </span>
+              <button 
+                onClick={() => setViewScreenshotUrl(null)} 
+                className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="mt-4 flex justify-center max-h-[75vh] overflow-auto rounded-2xl bg-black/40 p-2">
+              <img 
+                src={viewScreenshotUrl} 
+                alt="Customer Payment Screenshot" 
+                className="max-w-full h-auto object-contain rounded-xl shadow-lg" 
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
