@@ -1,8 +1,5 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "systum-ott",
-  "compatibility_date": "2026-08-19",
-  "assets": {
-    "directory": "./dist"
-  }
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-08-19"
 }
