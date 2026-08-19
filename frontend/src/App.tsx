@@ -24,6 +24,7 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { ProductPage } from './pages/ProductPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderHistoryModal } from './components/OrderHistoryModal';
+import { LivePurchasePopup } from './components/LivePurchasePopup';
 
 function Storefront() {
   const { isAdmin, setIsAuthModalOpen, setAuthModalTab } = useAuth();
@@ -138,6 +139,7 @@ function Storefront() {
         onClose={() => setIsOrderHistoryOpen(false)}
       />
       <WhatsAppFloatingButton />
+      <LivePurchasePopup />
     </div>
   );
 }
