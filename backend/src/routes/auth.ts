@@ -6,6 +6,7 @@ import { authenticateToken } from '../middleware/auth.js';
 import type { AuthRequest } from '../middleware/auth.js';
 import mongoose from 'mongoose';
 import { authLimiter } from '../middleware/rateLimiter.js';
+import { sendPasswordResetEmail } from '../services/email.js';
 
 export const authRouter = Router();
 
@@ -177,6 +178,125 @@ authRouter.post('/login', async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ success: false, message: 'Server error during login' });
+  }
+});
+
+// In-memory OTP storage for password resets (15 minutes validity)
+const resetOtpStore = new Map<string, { otp: string; expiresAt: number }>();
+
+// POST /api/auth/forgot-password - Send password reset OTP to email / Gmail
+authRouter.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ success: false, message: 'Please provide a valid email address.' });
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+
+  try {
+    const isDbConnected = mongoose.connection.readyState === 1;
+    let userExists = false;
+
+    if (isDbConnected) {
+      const user = await User.findOne({ email: normalizedEmail });
+      if (user) userExists = true;
+    } else {
+      const user = inMemoryUsers.find((u) => u.email === normalizedEmail);
+      if (user) userExists = true;
+    }
+
+    if (!userExists) {
+      // Return success without revealing user existence to prevent enumeration
+      return res.json({
+        success: true,
+        message: 'If an account is associated with this email, a 6-digit password reset code has been sent.',
+      });
+    }
+
+    // Generate secure 6-digit numeric OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+    resetOtpStore.set(normalizedEmail, { otp, expiresAt });
+
+    // Send email via Resend
+    await sendPasswordResetEmail(normalizedEmail, otp);
+
+    res.json({
+      success: true,
+      message: `A 6-digit password reset code has been sent to ${normalizedEmail}. Please check your inbox or spam folder.`,
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ success: false, message: 'Failed to process password reset request.' });
+  }
+});
+
+// POST /api/auth/reset-password - Verify OTP and update password
+authRouter.post('/reset-password', async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+
+  if (!email || !otp || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Email, OTP code, and new password are required.' });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ success: false, message: 'New password must be at least 6 characters.' });
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+  const storedOtpData = resetOtpStore.get(normalizedEmail);
+
+  if (!storedOtpData) {
+    return res.status(400).json({
+      success: false,
+      message: 'No active password reset request found for this email. Please request a new code.',
+    });
+  }
+
+  if (Date.now() > storedOtpData.expiresAt) {
+    resetOtpStore.delete(normalizedEmail);
+    return res.status(400).json({
+      success: false,
+      message: 'The password reset code has expired. Please request a new code.',
+    });
+  }
+
+  if (storedOtpData.otp !== otp.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid verification code. Please check the 6-digit code in your email.',
+    });
+  }
+
+  try {
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const isDbConnected = mongoose.connection.readyState === 1;
+
+    if (isDbConnected) {
+      const user = await User.findOne({ email: normalizedEmail });
+      if (user) {
+        user.passwordHash = passwordHash;
+        await user.save();
+      }
+    } else {
+      const user = inMemoryUsers.find((u) => u.email === normalizedEmail);
+      if (user) {
+        user.passwordHash = passwordHash;
+      }
+    }
+
+    // Clean up OTP after successful reset
+    resetOtpStore.delete(normalizedEmail);
+
+    res.json({
+      success: true,
+      message: 'Password successfully updated! You can now log in with your new password.',
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ success: false, message: 'Failed to reset password.' });
   }
 });
 

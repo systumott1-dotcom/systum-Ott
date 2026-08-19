@@ -74,21 +74,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return { success: false, message: data.message || 'Login failed' };
     } catch (error) {
-      // Offline fallback mock for default admin
-      if (email === 'admin@systumott.in' && password === 'admin1234') {
-        const mockAdmin: User = {
-          id: 'admin-1',
-          name: 'Systum Admin',
-          email: 'admin@systumott.in',
-          role: 'admin',
-          phone: '9306022703',
-        };
-        const mockToken = 'mock_admin_token_jwt';
-        setToken(mockToken);
-        setUser(mockAdmin);
-        setIsAuthModalOpen(false);
-        return { success: true };
-      }
       return { success: false, message: 'Server connection error. Please try again.' };
     }
   };

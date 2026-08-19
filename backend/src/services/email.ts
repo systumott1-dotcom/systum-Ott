@@ -105,6 +105,57 @@ export const sendOrderEmail = async (payload: SendOrderEmailPayload): Promise<bo
 };
 
 /**
+ * Send password reset OTP email to user or admin
+ */
+export const sendPasswordResetEmail = async (toEmail: string, resetCode: string): Promise<boolean> => {
+  const resend = getResendClient();
+
+  if (!resend) {
+    console.log(`ℹ️ Resend API key not configured. Mocking password reset email to ${toEmail} with OTP: ${resetCode}`);
+    return true;
+  }
+
+  try {
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+    await resend.emails.send({
+      from: `Systum OTT Security <${fromEmail}>`,
+      to: toEmail,
+      subject: '🔐 Password Reset Verification Code - Systum OTT',
+      html: `
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 16px; background: #ffffff;">
+          <div style="text-align: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 16px; margin-bottom: 24px;">
+            <h2 style="color: #7c3aed; margin: 0; font-size: 22px;">Systum OTT Security</h2>
+            <p style="color: #64748b; font-size: 12px; margin: 4px 0 0 0;">Account Recovery & Security Desk</p>
+          </div>
+
+          <p style="color: #1e293b; font-size: 14px; margin-bottom: 12px;">Hello,</p>
+          <p style="color: #475569; font-size: 13px; line-height: 1.6;">We received a request to reset the password for your Systum OTT account (<strong>${toEmail}</strong>).</p>
+          <p style="color: #475569; font-size: 13px; line-height: 1.6;">Use the secure 6-digit verification code below to reset your password:</p>
+
+          <div style="margin: 24px 0; padding: 18px; background: #f5f3ff; border: 2px dashed #c4b5fd; border-radius: 12px; text-align: center;">
+            <span style="font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #6d28d9; font-family: monospace;">${resetCode}</span>
+            <p style="font-size: 11px; color: #7c3aed; margin: 8px 0 0 0; font-weight: 600;">Valid for 15 minutes only</p>
+          </div>
+
+          <p style="color: #64748b; font-size: 12px; line-height: 1.5;">If you did not request this password reset, please ignore this email or reach out to our security team. Your account password remains unchanged.</p>
+
+          <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 24px 0;" />
+          <p style="text-align: center; font-size: 11px; color: #94a3b8; margin: 0;">
+            © ${new Date().getFullYear()} Systum OTT India · +91 93060 22703
+          </p>
+        </div>
+      `,
+    });
+
+    console.log(`✉️ Password reset verification code dispatched to ${toEmail}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Password Reset Email Error:', error);
+    return false;
+  }
+};
+
+/**
  * Send test verification email to admin
  */
 export const sendTestEmail = async (toEmail: string): Promise<{ success: boolean; data?: any; error?: string }> => {
