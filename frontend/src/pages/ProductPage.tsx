@@ -19,12 +19,10 @@ import {
   ChevronRight,
   Package,
   Heart,
-  HelpCircle,
   TrendingUp,
   Lock,
   Headphones,
-  CheckCircle2,
-  XCircle
+  CheckCircle2
 } from 'lucide-react';
 
 interface ProductPageProps {
@@ -442,30 +440,6 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                   <div className="flex items-start gap-2.5 font-medium">
                     <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                     <span>Full 100% WhatsApp support provided for any access-related inquiry</span>
-                  </div>
-                </div>
-
-                {/* FAQs - Quick Answers */}
-                <div className="pt-4 border-t border-slate-100 space-y-3">
-                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-                    <HelpCircle className="w-4 h-4 text-brand-600" />
-                    <span>FAQs – Quick Answers</span>
-                  </h4>
-
-                  <div className="space-y-3 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                    <div>
-                      <strong className="text-slate-900 block mb-0.5">Q1. Can I use on multiple devices?</strong>
-                      <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5" /> Yes, login allowed on multiple devices, usable on one device at a time.
-                      </span>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-200">
-                      <strong className="text-slate-900 block mb-0.5">Q2. Will I face screen limit or profile access issues?</strong>
-                      <span className="text-slate-600 font-semibold flex items-center gap-1">
-                        <XCircle className="w-3.5 h-3.5 text-rose-500" /> No. This plan is verified and designed to be issue-free with full replacement warranty.
-                      </span>
-                    </div>
                   </div>
                 </div>
 
