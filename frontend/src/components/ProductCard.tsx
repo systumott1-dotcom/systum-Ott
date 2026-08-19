@@ -3,10 +3,7 @@ import type { Product, ProductPlan } from '../types';
 import { useCart } from '../context/CartContext';
 import { 
   Zap, 
-  Star, 
-  ShoppingBag, 
-  Eye, 
-  Check, 
+  Heart,
   Tv, 
   Film, 
   PlayCircle, 
@@ -59,14 +56,14 @@ const ICON_COMPONENTS: Record<string, React.ElementType> = {
 };
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { addToCart, buyNow, setQuickViewProduct } = useCart();
-  
+  const { buyNow, setQuickViewProduct } = useCart();
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
   // Default to popular plan or first plan
   const defaultPlanIndex = product.plans.findIndex((p) => p.isPopular);
-  const [selectedPlanIndex, setSelectedPlanIndex] = useState<number>(
+  const [selectedPlanIndex] = useState<number>(
     defaultPlanIndex >= 0 ? defaultPlanIndex : 0
   );
-  const [isAdded, setIsAdded] = useState(false);
 
   const selectedPlan: ProductPlan = product.plans[selectedPlanIndex] || product.plans[0];
 
@@ -76,191 +73,117 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const IconComponent = ICON_COMPONENTS[product.iconName] || Tv;
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    addToCart(product, selectedPlan);
-    setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 1500);
-  };
-
   const handleBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
     buyNow(product, selectedPlan);
   };
 
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsWishlisted((prev) => !prev);
+  };
+
   return (
     <div
       onClick={() => setQuickViewProduct(product)}
-      className="group white-card white-card-hover rounded-3xl p-5 border border-slate-200/90 flex flex-col justify-between cursor-pointer relative overflow-hidden transition-all duration-300 bg-white"
+      className="group white-card rounded-3xl p-3 sm:p-4 border border-slate-200 shadow-xs hover:shadow-xl hover:border-brand-300 flex flex-col justify-between cursor-pointer relative overflow-hidden transition-all duration-300 bg-white"
     >
-      {/* Top Badges */}
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {product.badge && (
-            <span className="bg-gradient-to-r from-brand-600 to-indigo-600 text-white text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full shadow-xs">
-              {product.badge}
-            </span>
-          )}
-          <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-slate-200">
-            {product.accountType}
-          </span>
-        </div>
-
-        {discountPercent > 0 && (
-          <span className="bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-[10px] px-2 py-0.5 rounded-full">
-            Save {discountPercent}%
-          </span>
-        )}
-      </div>
-
-      {/* Product Logo/Image & Title */}
-      <div>
-        <div className="flex items-start gap-3.5 mb-3.5">
-          {/* App Image / Logo Icon Box */}
+      {/* Top Image Poster Container */}
+      <div className="relative w-full aspect-square sm:aspect-[4/3] rounded-2xl overflow-hidden bg-slate-900 border border-slate-100/80 shadow-xs">
+        {product.imageUrl ? (
+          <img
+            src={product.imageUrl}
+            alt={product.title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
           <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-xs overflow-hidden border transition-transform group-hover:scale-105"
+            className="w-full h-full flex flex-col items-center justify-center p-4 text-center"
             style={{
-              backgroundColor: product.imageUrl ? '#ffffff' : `${product.iconColor}15`,
-              borderColor: product.imageUrl ? '#e2e8f0' : `${product.iconColor}30`,
+              background: `linear-gradient(135deg, ${product.iconColor}20, ${product.iconColor}05)`,
             }}
           >
-            {product.imageUrl ? (
-              <img
-                src={product.imageUrl}
-                alt={product.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-md mb-2 group-hover:scale-110 transition-transform"
+              style={{
+                backgroundColor: `${product.iconColor}20`,
+                borderColor: `${product.iconColor}40`,
+                borderWidth: '1px',
+              }}
+            >
               <IconComponent className="w-7 h-7" style={{ color: product.iconColor }} />
-            )}
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <h3 className="font-extrabold text-base text-slate-900 group-hover:text-brand-600 transition-colors line-clamp-1">
+            </div>
+            <span className="text-xs font-bold text-slate-700 truncate max-w-full">
               {product.title}
-            </h3>
-            <div className="flex items-center gap-2 mt-0.5">
-              <div className="flex items-center text-amber-500 text-xs font-bold">
-                <Star className="w-3.5 h-3.5 fill-amber-400 mr-1" />
-                <span>{product.rating}</span>
-              </div>
-              <span className="text-slate-400 text-xs">•</span>
-              <span className="text-slate-500 text-xs">{product.reviewsCount}+ verified</span>
-            </div>
-          </div>
-        </div>
-
-        <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-4">
-          {product.shortDescription}
-        </p>
-
-        {/* Plan Selector Buttons (if multiple plans exist) */}
-        {product.plans.length > 1 && (
-          <div className="space-y-1.5 mb-4">
-            <div className="text-[11px] font-bold text-slate-500">Select Validity:</div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-              {product.plans.map((plan, idx) => (
-                <button
-                  key={plan.name}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedPlanIndex(idx);
-                  }}
-                  className={`px-2 py-1.5 rounded-xl text-[11px] font-bold border transition-all text-center ${
-                    selectedPlanIndex === idx
-                      ? 'bg-brand-50 border-brand-500 text-brand-700 shadow-xs'
-                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <span className="block truncate">{plan.validity}</span>
-                </button>
-              ))}
-            </div>
+            </span>
           </div>
         )}
 
-        {/* Feature Pills */}
-        <div className="space-y-1 mb-4 pt-1">
-          {product.features.slice(0, 2).map((feat, i) => (
-            <div key={i} className="flex items-center gap-1.5 text-[11px] text-slate-600 font-medium">
-              <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span className="truncate">{feat}</span>
-            </div>
-          ))}
-        </div>
+        {/* Top-Left Discount Badge */}
+        {discountPercent > 0 && (
+          <div className="absolute top-2.5 left-2.5 bg-[#E50914] text-white text-[10px] sm:text-[11px] font-black uppercase px-2 sm:px-2.5 py-0.5 rounded-lg shadow-md tracking-wider z-10">
+            {discountPercent}% OFF
+          </div>
+        )}
+
+        {/* Top-Right Badge (e.g. NEW, POPULAR) */}
+        {product.badge && (
+          <div className="absolute top-2.5 right-2.5 bg-slate-900/85 backdrop-blur-xs text-white text-[9px] sm:text-[10px] font-black uppercase px-2 py-0.5 rounded-lg border border-white/20 shadow-md z-10">
+            {product.badge}
+          </div>
+        )}
+
+        {/* Bottom-Right Wishlist Floating Heart Button */}
+        <button
+          type="button"
+          onClick={handleToggleWishlist}
+          className="absolute bottom-2.5 right-2.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/95 backdrop-blur-xs shadow-md flex items-center justify-center text-slate-600 hover:text-red-500 hover:scale-110 active:scale-95 transition-all z-10"
+        >
+          <Heart
+            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-colors ${
+              isWishlisted ? 'fill-red-500 text-red-500' : ''
+            }`}
+          />
+        </button>
       </div>
 
-      {/* Price & Action Buttons */}
-      <div className="pt-3 border-t border-slate-100 space-y-3">
-        {/* Price Row */}
-        <div className="flex items-baseline justify-between">
-          <div>
-            <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
-              Special Price ({selectedPlan.validity})
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-xl font-black text-slate-900">
-                ₹{selectedPlan.discountedPrice}
-              </span>
-              <span className="text-xs text-slate-400 line-through">
-                ₹{selectedPlan.originalPrice}
-              </span>
-            </div>
-          </div>
+      {/* Product Content Details */}
+      <div className="pt-2.5 flex-1 flex flex-col justify-between">
+        <div>
+          {/* Category Tag */}
+          <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-[#9C7A4A] block truncate">
+            {product.category}
+          </span>
 
-          <div className="text-right">
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
-              <Zap className="w-3.5 h-3.5 text-amber-500" /> Instant
-            </span>
-          </div>
+          {/* Product Title */}
+          <h3 className="font-extrabold text-xs sm:text-sm md:text-base text-slate-900 group-hover:text-brand-600 transition-colors line-clamp-2 leading-snug mt-0.5 min-h-[2.4rem]">
+            {product.title}
+          </h3>
         </div>
 
-        {/* Buttons Grid */}
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            className={`w-full py-2.5 px-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs ${
-              isAdded
-                ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
-                : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800 hover:text-slate-900'
-            }`}
-          >
-            {isAdded ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Added!</span>
-              </>
-            ) : (
-              <>
-                <ShoppingBag className="w-3.5 h-3.5 text-brand-600" />
-                <span>Add to Cart</span>
-              </>
+        {/* Pricing & CTA */}
+        <div className="mt-2 pt-2 border-t border-slate-100/80">
+          <div className="flex items-baseline gap-1.5 mb-2.5">
+            <span className="text-base sm:text-lg md:text-xl font-black text-slate-900">
+              ₹{selectedPlan.discountedPrice}
+            </span>
+            {selectedPlan.originalPrice > selectedPlan.discountedPrice && (
+              <span className="text-[11px] sm:text-xs text-slate-400 line-through font-medium">
+                ₹{selectedPlan.originalPrice}
+              </span>
             )}
-          </button>
+          </div>
 
+          {/* Full-Width Buy Now Button */}
           <button
             type="button"
             onClick={handleBuyNow}
-            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-extrabold shadow-md shadow-brand-600/20 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-1"
+            className="w-full py-2.5 sm:py-3 px-3 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-brand-600/20 transition-all transform group-hover:shadow-lg active:scale-95 flex items-center justify-center gap-1.5"
           >
+            <Zap className="w-3.5 h-3.5 fill-white" />
             <span>Buy Now</span>
           </button>
         </div>
-
-        {/* Quick View Link */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setQuickViewProduct(product);
-          }}
-          className="w-full text-center text-[11px] font-semibold text-slate-500 hover:text-brand-600 flex items-center justify-center gap-1 py-0.5 transition-colors"
-        >
-          <Eye className="w-3.5 h-3.5" />
-          <span>View Plan Details & Compatibility</span>
-        </button>
       </div>
     </div>
   );

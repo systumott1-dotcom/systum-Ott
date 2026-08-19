@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import type { Product, CategoryId } from '../types';
 import { CATEGORIES } from '../data/products';
 import { ProductCard } from './ProductCard';
-import { Search, Tag, ArrowUpDown, X, Loader2, Package } from 'lucide-react';
+import { Search, ArrowUpDown, X, Loader2, Package } from 'lucide-react';
 
 interface ProductGridProps {
   products: Product[];
@@ -66,25 +66,27 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
     <section id="shop-section" className="py-16 scroll-mt-20 bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Section Title & Header */}
+        {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-bold uppercase tracking-wider mb-2">
-              <Tag className="w-3.5 h-3.5 text-brand-600" /> Curated Digital Plans
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF5EE] border border-[#EFE3CF] text-[#9C7A4A] text-xs font-extrabold uppercase tracking-wider mb-2">
+              <span className="text-amber-500">🔥</span> FEATURED
             </div>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900">
-              {activeCategory === 'all'
-                ? 'All Available Subscriptions'
-                : activeCategoryObj?.name || 'Subscriptions'}
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              {activeCategory === 'all' ? (
+                <>Bestselling <span className="gradient-text">Plans</span></>
+              ) : (
+                <>{activeCategoryObj?.name} <span className="gradient-text">Plans</span></>
+              )}
             </h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
               {loading ? 'Loading products...' : `Showing ${filteredProducts.length} verified digital plans with instant WhatsApp delivery`}
             </p>
           </div>
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 shadow-xs">
+            <div className="flex items-center gap-2 bg-white border border-slate-200 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-slate-700 shadow-xs">
               <ArrowUpDown className="w-3.5 h-3.5 text-brand-600" />
               <span>Sort by:</span>
               <select
@@ -174,7 +176,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             <p className="text-xs text-slate-400 mt-1">Fetching the latest subscriptions for you</p>
           </div>
         ) : filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          /* Strict 2-column on mobile, 3/4-column on desktop */
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
