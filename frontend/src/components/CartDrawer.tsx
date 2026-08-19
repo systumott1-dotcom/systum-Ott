@@ -29,7 +29,6 @@ export const CartDrawer: React.FC = () => {
     applyPromoCode,
     removePromoCode,
     generateWhatsAppOrderUrl,
-    setIsCheckoutOpen,
   } = useCart();
 
   useBodyScrollLock(isCartOpen);
@@ -53,7 +52,9 @@ export const CartDrawer: React.FC = () => {
 
   const handleProceedToCheckout = () => {
     setIsCartOpen(false);
-    setIsCheckoutOpen(true);
+    window.history.pushState({}, '', '/checkout');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (

@@ -132,7 +132,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const buyNow = (product: Product, plan: ProductPlan) => {
     setCheckoutItem({ product, plan });
-    setIsCheckoutOpen(true);
+    setIsCartOpen(false);
+    window.history.pushState({}, '', '/checkout');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const generateWhatsAppOrderUrl = (directItem?: { product: Product; plan: ProductPlan }) => {

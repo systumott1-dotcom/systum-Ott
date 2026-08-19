@@ -18,13 +18,13 @@ import { ReviewsSection } from './components/ReviewsSection';
 import { FAQSection } from './components/FAQSection';
 import { Footer } from './components/Footer';
 import { CartDrawer } from './components/CartDrawer';
-import { CheckoutModal } from './components/CheckoutModal';
 import { PolicyModals } from './components/PolicyModals';
 import type { PolicyType } from './components/PolicyModals';
 import { WhatsAppFloatingButton } from './components/WhatsAppFloatingButton';
 import { AuthModal } from './components/AuthModal';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { ProductPage } from './pages/ProductPage';
+import { CheckoutPage } from './pages/CheckoutPage';
 
 function Storefront() {
   const { isAdmin, setIsAuthModalOpen, setAuthModalTab } = useAuth();
@@ -83,7 +83,9 @@ function Storefront() {
       />
 
       <main className="flex-grow">
-        {router.route === 'product' && router.productIdOrSlug ? (
+        {router.route === 'checkout' ? (
+          <CheckoutPage onBackToStore={() => router.navigate('/')} />
+        ) : router.route === 'product' && router.productIdOrSlug ? (
           <ProductPage
             productIdOrSlug={router.productIdOrSlug}
             products={products}
@@ -129,7 +131,6 @@ function Storefront() {
       />
 
       <CartDrawer />
-      <CheckoutModal />
       <AuthModal />
       <PolicyModals
         activePolicy={activePolicy}

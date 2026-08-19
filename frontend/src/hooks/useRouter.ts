@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-export type RouteType = 'home' | 'product' | 'admin';
+export type RouteType = 'home' | 'product' | 'checkout' | 'admin';
 
 export interface RouteInfo {
   path: string;
@@ -20,6 +20,10 @@ const parsePath = (path: string): RouteInfo => {
 
   if (cleanPath.startsWith('/admin')) {
     return { path: cleanPath, route: 'admin', productIdOrSlug: null };
+  }
+
+  if (cleanPath.startsWith('/checkout')) {
+    return { path: cleanPath, route: 'checkout', productIdOrSlug: null };
   }
 
   const productMatch = cleanPath.match(/^\/product\/(.+)$/);
