@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   ShoppingBag, 
   Search, 
@@ -15,13 +15,16 @@ import {
   Bot, 
   GraduationCap, 
   User, 
-  Sliders 
+  Sliders,
+  ArrowRight,
+  Sparkles
 } from 'lucide-react';
 import { useCart, WHATSAPP_PHONE } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import type { CategoryId } from '../types';
+import type { CategoryId, Product } from '../types';
 
 interface NavbarProps {
+  products?: Product[];
   activeCategory: CategoryId;
   onSelectCategory: (id: CategoryId) => void;
   searchQuery: string;
@@ -31,6 +34,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
+  products = [],
   activeCategory,
   onSelectCategory,
   searchQuery,
@@ -38,10 +42,60 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenPolicy,
   onOpenAdmin,
 }) => {
-  const { totalItems, setIsCartOpen } = useCart();
+  const { totalItems, setIsCartOpen, setQuickViewProduct } = useCart();
   const { user, isAdmin, setIsAuthModalOpen, setAuthModalTab, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categoriesDropdownOpen, setCategoriesDropdownOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  const desktopSearchRef = useRef<HTMLDivElement>(null);
+  const mobileSearchRef = useRef<HTMLDivElement>(null);
+
+  // Close search suggestions on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (
+        desktopSearchRef.current &&
+        !desktopSearchRef.current.contains(e.target as Node) &&
+        mobileSearchRef.current &&
+        !mobileSearchRef.current.contains(e.target as Node)
+      ) {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutsideClick);
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, []);
+
+  // Filter matching products for auto-suggest
+  const searchMatches = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase().trim();
+    return products
+      .filter((p) => {
+        const matchTitle = p.title.toLowerCase().includes(q);
+        const matchDesc = p.shortDescription.toLowerCase().includes(q);
+        const matchCat = p.category.toLowerCase().includes(q);
+        const matchFeat = p.features?.some((f) => f.toLowerCase().includes(q));
+        const matchType = p.accountType?.toLowerCase().includes(q);
+        return matchTitle || matchDesc || matchCat || matchFeat || matchType;
+      })
+      .slice(0, 5);
+  }, [products, searchQuery]);
+
+  const handleSelectProduct = (product: Product) => {
+    setQuickViewProduct(product);
+    setIsSearchOpen(false);
+    onSearchChange('');
+  };
+
+  const handleViewAllResults = () => {
+    setIsSearchOpen(false);
+    const shopSection = document.getElementById('shop-section');
+    if (shopSection) {
+      shopSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const navCategories = [
     { id: 'all' as CategoryId, label: 'All Store', icon: Store },
@@ -61,6 +115,103 @@ export const Navbar: React.FC<NavbarProps> = ({
     if (shopSection) {
       shopSection.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  // Reusable Suggestions Dropdown
+  const renderSearchDropdown = () => {
+    if (!searchQuery.trim() || !isSearchOpen) return null;
+
+    return (
+      <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl border border-slate-200 shadow-2xl p-2.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150 max-h-96 overflow-y-auto">
+        <div className="px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100 flex items-center justify-between">
+          <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-amber-500" /> Suggestions</span>
+          <span>{searchMatches.length} Matches</span>
+        </div>
+
+        {searchMatches.length > 0 ? (
+          <div className="divide-y divide-slate-100 mt-1">
+            {searchMatches.map((product) => {
+              const plan = product.plans[0];
+              const discount = plan
+                ? Math.round(((plan.originalPrice - plan.discountedPrice) / plan.originalPrice) * 100)
+                : 0;
+
+              return (
+                <button
+                  key={product.id}
+                  type="button"
+                  onClick={() => handleSelectProduct(product)}
+                  className="w-full p-2.5 rounded-xl hover:bg-slate-50 flex items-center gap-3 transition-colors text-left group"
+                >
+                  {/* Thumbnail / Icon */}
+                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center">
+                    {product.imageUrl ? (
+                      <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <Tv className="w-5 h-5 text-brand-600" />
+                    )}
+                  </div>
+
+                  {/* Title & Category */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 group-hover:text-brand-600 transition-colors truncate">
+                        {product.title}
+                      </h4>
+                      {discount > 0 && (
+                        <span className="text-[9px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.2 rounded shrink-0">
+                          {discount}% OFF
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[10px] sm:text-[11px] text-slate-500 truncate mt-0.5">
+                      {product.category.toUpperCase()} · {product.accountType}
+                    </p>
+                  </div>
+
+                  {/* Price */}
+                  {plan && (
+                    <div className="text-right shrink-0">
+                      <span className="text-xs sm:text-sm font-black text-slate-900">
+                        ₹{plan.discountedPrice}
+                      </span>
+                      {plan.originalPrice > plan.discountedPrice && (
+                        <span className="block text-[10px] text-slate-400 line-through">
+                          ₹{plan.originalPrice}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+
+            {/* Bottom View All Link */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={handleViewAllResults}
+                className="w-full py-2 text-center text-xs font-bold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100/70 rounded-xl transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span>View all results in Store</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 text-center">
+            <p className="text-xs text-slate-500">No subscriptions matching <strong>"{searchQuery}"</strong></p>
+            <button
+              type="button"
+              onClick={handleViewAllResults}
+              className="mt-2 text-xs font-bold text-brand-600 hover:underline"
+            >
+              Browse all subscriptions
+            </button>
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -100,7 +251,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </a>
 
           {/* Desktop Search Bar */}
-          <div className="hidden lg:flex flex-1 max-w-md mx-4">
+          <div className="hidden lg:flex flex-1 max-w-md mx-4" ref={desktopSearchRef}>
             <div className="relative w-full">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <Search className="w-4 h-4" />
@@ -108,18 +259,29 @@ export const Navbar: React.FC<NavbarProps> = ({
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
+                onFocus={() => setIsSearchOpen(true)}
+                onChange={(e) => {
+                  onSearchChange(e.target.value);
+                  setIsSearchOpen(true);
+                }}
                 placeholder="Search Netflix, Adobe, Prime, Canva, Hotstar..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all shadow-xs"
+                className="w-full pl-10 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all shadow-xs"
               />
               {searchQuery && (
                 <button
-                  onClick={() => onSearchChange('')}
+                  type="button"
+                  onClick={() => {
+                    onSearchChange('');
+                    setIsSearchOpen(false);
+                  }}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-slate-400 hover:text-slate-700 font-semibold"
                 >
-                  Clear
+                  <X className="w-3.5 h-3.5" />
                 </button>
               )}
+
+              {/* Suggestions Popover */}
+              {renderSearchDropdown()}
             </div>
           </div>
 
@@ -267,7 +429,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Mobile Search Bar (under header) */}
-        <div className="lg:hidden pb-3 pt-1">
+        <div className="lg:hidden pb-3 pt-1" ref={mobileSearchRef}>
           <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
               <Search className="w-4 h-4" />
@@ -275,10 +437,29 @@ export const Navbar: React.FC<NavbarProps> = ({
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onFocus={() => setIsSearchOpen(true)}
+              onChange={(e) => {
+                onSearchChange(e.target.value);
+                setIsSearchOpen(true);
+              }}
               placeholder="Search OTT, Software, AI Tools..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500"
+              className="w-full pl-10 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  onSearchChange('');
+                  setIsSearchOpen(false);
+                }}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-slate-400 hover:text-slate-700 font-semibold"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {/* Suggestions Popover */}
+            {renderSearchDropdown()}
           </div>
         </div>
       </div>

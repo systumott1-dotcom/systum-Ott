@@ -119,28 +119,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         )}
 
-        {/* Top-Left Discount Badge */}
-        {discountPercent > 0 && (
-          <div className="absolute top-2.5 left-2.5 bg-[#E50914] text-white text-[10px] sm:text-[11px] font-black uppercase px-2 sm:px-2.5 py-0.5 rounded-lg shadow-md tracking-wider z-10">
-            {discountPercent}% OFF
-          </div>
-        )}
-
-        {/* Top-Right Badge (e.g. NEW, POPULAR) */}
-        {product.badge && (
-          <div className="absolute top-2.5 right-2.5 bg-slate-900/85 backdrop-blur-xs text-white text-[9px] sm:text-[10px] font-black uppercase px-2 py-0.5 rounded-lg border border-white/20 shadow-md z-10">
-            {product.badge}
-          </div>
-        )}
+        {/* Top-Left Badges Stack (Non-overlapping & Responsive) */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1 items-start z-10 max-w-[75%] pointer-events-none">
+          {discountPercent > 0 && (
+            <span className="bg-[#E50914] text-white text-[8px] sm:text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md shadow-md tracking-wider leading-none">
+              {discountPercent}% OFF
+            </span>
+          )}
+          {product.badge && (
+            <span className="bg-slate-900/90 backdrop-blur-xs text-white text-[8px] sm:text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md border border-white/20 shadow-md leading-none truncate max-w-full">
+              {product.badge}
+            </span>
+          )}
+        </div>
 
         {/* Bottom-Right Wishlist Floating Heart Button */}
         <button
           type="button"
           onClick={handleToggleWishlist}
-          className="absolute bottom-2.5 right-2.5 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/95 backdrop-blur-xs shadow-md flex items-center justify-center text-slate-600 hover:text-red-500 hover:scale-110 active:scale-95 transition-all z-10"
+          className="absolute bottom-2 right-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/95 backdrop-blur-xs shadow-md flex items-center justify-center text-slate-600 hover:text-red-500 hover:scale-110 active:scale-95 transition-all z-10"
         >
           <Heart
-            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-colors ${
+            className={`w-3 h-3 sm:w-3.5 sm:h-3.5 transition-colors ${
               isWishlisted ? 'fill-red-500 text-red-500' : ''
             }`}
           />

@@ -55,6 +55,7 @@ function Storefront() {
       <AnnouncementBar />
 
       <Navbar
+        products={products}
         activeCategory={activeCategory}
         onSelectCategory={setActiveCategory}
         searchQuery={searchQuery}
