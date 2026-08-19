@@ -129,12 +129,12 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
           <div className="lg:col-span-5 relative">
             <div className="relative mx-auto w-full max-w-lg">
               
-              {/* Strict 2x2 Grid matching screenshot */}
+              {/* 2x2 Grid with Brand Theme Colors */}
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 
                 {/* 1. Secure Payments */}
-                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#F6EFE9] border border-[#EFE5DC] flex items-center justify-center text-[#7A1E1E] shrink-0 group-hover:scale-105 transition-transform">
+                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-200 shadow-xs hover:shadow-md hover:border-brand-200 transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0 group-hover:scale-105 transition-transform">
                     <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   <div className="min-w-0">
@@ -144,8 +144,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
                 </div>
 
                 {/* 2. Verified Accounts */}
-                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#F6EFE9] border border-[#EFE5DC] flex items-center justify-center text-[#7A1E1E] shrink-0 group-hover:scale-105 transition-transform">
+                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-200 shadow-xs hover:shadow-md hover:border-brand-200 transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 shrink-0 group-hover:scale-105 transition-transform">
                     <BadgeCheck className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   <div className="min-w-0">
@@ -155,8 +155,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
                 </div>
 
                 {/* 3. WhatsApp Support */}
-                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#F6EFE9] border border-[#EFE5DC] flex items-center justify-center text-[#7A1E1E] shrink-0 group-hover:scale-105 transition-transform">
+                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-200 shadow-xs hover:shadow-md hover:border-brand-200 transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-105 transition-transform">
                     <Headphones className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   <div className="min-w-0">
@@ -166,8 +166,8 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
                 </div>
 
                 {/* 4. Replacement Warranty */}
-                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#F6EFE9] border border-[#EFE5DC] flex items-center justify-center text-[#7A1E1E] shrink-0 group-hover:scale-105 transition-transform">
+                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-200 shadow-xs hover:shadow-md hover:border-brand-200 transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0 group-hover:scale-105 transition-transform">
                     <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   <div className="min-w-0">
