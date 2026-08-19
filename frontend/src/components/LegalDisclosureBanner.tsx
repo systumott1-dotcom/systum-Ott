@@ -14,7 +14,7 @@ export const LegalDisclosureBanner: React.FC<LegalDisclosureBannerProps> = ({ on
           <div className="space-y-1.5 max-w-3xl">
             <div className="flex items-center gap-2 text-xs font-extrabold text-brand-700 bg-brand-50 px-2.5 py-1 rounded-md border border-brand-200 w-fit">
               <ShieldCheck className="w-4 h-4 text-brand-600" />
-              <span>Authorized Reseller & Multi-Channel Aggregator Disclosure</span>
+              <span>Authorized Seller & Multi-Channel Aggregator Disclosure</span>
             </div>
             
             <h3 className="text-base font-bold text-slate-900">
@@ -22,7 +22,7 @@ export const LegalDisclosureBanner: React.FC<LegalDisclosureBannerProps> = ({ on
             </h3>
             
             <p className="text-xs text-slate-600 leading-relaxed">
-              <strong>Systum OTT India</strong> operates as both an <em>independent direct reseller</em> and a <em>wholesale license aggregator</em>. We source authorized volume activation keys, family subscription allocations, and promotional batches directly from global wholesale marketplaces (such as Eneba, authorized enterprise partners, and certified distributor networks) to bring you wholesale pricing with an unconditional <strong>100% full-term replacement warranty</strong>.
+              <strong>Systum OTT India</strong> operates as both an <em>independent direct seller</em> and a <em>wholesale license aggregator</em>. We source authorized volume activation keys, family subscription allocations, and promotional batches directly from global wholesale marketplaces (such as Eneba, authorized enterprise partners, and certified distributor networks) to bring you wholesale pricing with an unconditional <strong>100% full-term replacement warranty</strong>.
             </p>
           </div>
 
@@ -32,7 +32,7 @@ export const LegalDisclosureBanner: React.FC<LegalDisclosureBannerProps> = ({ on
               className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5"
             >
               <Info className="w-4 h-4 text-brand-600" />
-              <span>Read Reseller Policy</span>
+              <span>Read Seller Policy</span>
             </button>
             <button
               onClick={() => onOpenPolicy('refund')}

@@ -35,7 +35,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-600"></span>
               </span>
               <Flame className="w-3.5 h-3.5 text-amber-500" />
-              <span>Systum OTT · Authorized Reseller & Sourcing</span>
+              <span>Systum OTT · Authorized Seller & Sourcing</span>
             </div>
 
             {/* Main Headline */}

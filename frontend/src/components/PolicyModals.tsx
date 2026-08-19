@@ -36,7 +36,7 @@ export const PolicyModals: React.FC<PolicyModalsProps> = ({ activePolicy, onClos
                 <ShoppingCart className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-xl font-extrabold text-slate-900">Seller & Reseller Disclosure</h3>
+                <h3 className="text-xl font-extrabold text-slate-900">Seller & Sourcing Disclosure</h3>
                 <p className="text-xs text-slate-500">Business Model & Source Transparency</p>
               </div>
             </div>
@@ -171,13 +171,13 @@ export const PolicyModals: React.FC<PolicyModalsProps> = ({ activePolicy, onClos
               </div>
               <div>
                 <h3 className="text-xl font-extrabold text-slate-900">DMCA & Trademark Disclaimer</h3>
-                <p className="text-xs text-slate-500">Independent Reseller Notice</p>
+                <p className="text-xs text-slate-500">Independent Seller Notice</p>
               </div>
             </div>
 
             <div className="space-y-3 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-4">
               <p>
-                <strong>Systum OTT India</strong> operates as an independent digital subscription facilitator, group-subscription organizer, and retail key reseller.
+                <strong>Systum OTT India</strong> operates as an independent digital subscription facilitator, group-subscription organizer, and retail key seller.
               </p>
               <p>
                 All product names, logos, brands, and registered trademarks (e.g. Netflix, Amazon Prime, Disney+ Hotstar, Adobe, Spotify, Canva, Microsoft, ChatGPT) mentioned on this website are the property of their respective trademark holders.
