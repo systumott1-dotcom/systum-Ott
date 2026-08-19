@@ -14,7 +14,10 @@ import {
 import confetti from 'canvas-confetti';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
+import { useToast } from '../context/ToastContext';
+
 export const CheckoutModal: React.FC = () => {
+  const toast = useToast();
   const {
     cart,
     checkoutItem,
@@ -43,13 +46,14 @@ export const CheckoutModal: React.FC = () => {
   const handleCopyUPI = () => {
     navigator.clipboard.writeText(upiId);
     setCopiedUPI(true);
+    toast.success('UPI ID copied to clipboard! 📋');
     setTimeout(() => setCopiedUPI(false), 2000);
   };
 
   const handleCompleteOrder = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !whatsapp) {
-      alert('Please enter your Name and WhatsApp number for delivery.');
+      toast.warning('Please enter your Name and WhatsApp number for delivery.');
       return;
     }
 

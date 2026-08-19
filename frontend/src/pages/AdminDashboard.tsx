@@ -23,6 +23,7 @@ import {
 import type { Product, ProductPlan } from '../types';
 import { CATEGORIES } from '../data/products';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import { useToast } from '../context/ToastContext';
 
 interface AdminStats {
   totalRevenue: number;
@@ -60,6 +61,7 @@ interface AdminDashboardProps {
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore }) => {
   const { user, logout, token } = useAuth();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'stats' | 'products' | 'orders' | 'coupons'>('stats');
   const [saving, setSaving] = useState(false);
 
@@ -216,6 +218,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         const data = await res.json();
         if (data.success && data.product) {
           setProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? data.product : p)));
+          toast.success(`"${productForm.title}" updated successfully! 🎉`);
+        } else {
+          toast.error(data.message || 'Failed to update product');
         }
       } else {
         // CREATE
@@ -227,6 +232,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         const data = await res.json();
         if (data.success && data.product) {
           setProducts((prev) => [data.product, ...prev]);
+          toast.success(`"${productForm.title}" created successfully! 🚀`);
+        } else {
+          toast.error(data.message || 'Failed to create product');
         }
       }
 
@@ -245,28 +253,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         ],
         featuresText: '4K Ultra HD\nPersonal Screen PIN\n100% Replacement Warranty',
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Save product error:', err);
-      alert('Failed to save product. Please try again.');
+      toast.error(err?.message || 'Failed to save product. Backend server is starting up or unreachable.');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
-    try {
-      const res = await fetch(`/api/admin/products/${id}`, {
-        method: 'DELETE',
-        headers: apiHeaders(),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setProducts((prev) => prev.filter((p) => p.id !== id));
-      }
-    } catch {
-      alert('Failed to delete product.');
-    }
+  const handleDeleteProduct = (id: string) => {
+    toast.showConfirm({
+      title: 'Delete Product?',
+      message: 'Are you sure you want to permanently delete this product? It will be removed from the store.',
+      confirmText: 'Yes, Delete',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/admin/products/${id}`, {
+            method: 'DELETE',
+            headers: apiHeaders(),
+          });
+          const data = await res.json();
+          if (data.success) {
+            setProducts((prev) => prev.filter((p) => p.id !== id));
+            toast.success('Product deleted successfully');
+          } else {
+            toast.error(data.message || 'Failed to delete product');
+          }
+        } catch {
+          toast.error('Network error while deleting product.');
+        }
+      },
+    });
   };
 
   const handleEditProduct = (product: Product) => {
@@ -324,10 +342,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       const waUrl = `https://wa.me/91${phone}?text=${encodedMsg}`;
       window.open(waUrl, '_blank');
 
+      toast.success(`Order #${deliveryModalOrder.id} delivered via WhatsApp! 📲`);
       setDeliveryModalOrder(null);
       setCredentialsInput('');
     } catch {
-      alert('Failed to dispatch delivery.');
+      toast.error('Failed to dispatch delivery.');
     }
   };
 
@@ -348,12 +367,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       const data = await res.json();
       if (data.success && data.coupon) {
         setCoupons((prev) => [...prev, data.coupon]);
+        toast.success(`Coupon "${newCouponCode}" created successfully! 🏷️`);
         setNewCouponCode('');
         setNewCouponValue(10);
         setNewCouponMin(0);
+      } else {
+        toast.error(data.message || 'Failed to create coupon');
       }
     } catch {
-      alert('Failed to create coupon.');
+      toast.error('Failed to create coupon.');
     }
   };
 
@@ -366,9 +388,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         body: JSON.stringify({ email: user?.email }),
       });
       const data = await res.json();
-      alert(data.success ? `Test email sent to ${user?.email}!` : `Email failed: ${data.message}`);
+      if (data.success) {
+        toast.success(`Test email sent to ${user?.email || 'admin'}! 📬`);
+      } else {
+        toast.error(`Email failed: ${data.message || 'Check Resend configuration'}`);
+      }
     } catch {
-      alert('Email service error.');
+      toast.error('Email service error.');
     }
   };
 

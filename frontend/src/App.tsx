@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ToastProvider } from './context/ToastContext';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { useProducts } from './hooks/useProducts';
@@ -108,11 +109,13 @@ function Storefront() {
 
 export function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <Storefront />
-      </CartProvider>
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <CartProvider>
+          <Storefront />
+        </CartProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 
