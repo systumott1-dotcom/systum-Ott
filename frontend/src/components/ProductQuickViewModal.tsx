@@ -51,18 +51,31 @@ export const ProductQuickViewModal: React.FC = () => {
           <X className="w-5 h-5" />
         </button>
 
+        {/* Product Banner Image (if available) */}
+        {product.imageUrl && (
+          <div className="w-full h-44 sm:h-52 rounded-2xl overflow-hidden mb-6 border border-slate-100 shadow-xs bg-slate-100">
+            <img
+              src={product.imageUrl}
+              alt={product.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+
         {/* Top Header */}
         <div className="flex items-start gap-4 mb-6">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-xs"
-            style={{
-              backgroundColor: `${product.iconColor}15`,
-              borderColor: `${product.iconColor}30`,
-              borderWidth: '1px',
-            }}
-          >
-            <Tv className="w-7 h-7" style={{ color: product.iconColor }} />
-          </div>
+          {!product.imageUrl && (
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-xs"
+              style={{
+                backgroundColor: `${product.iconColor}15`,
+                borderColor: `${product.iconColor}30`,
+                borderWidth: '1px',
+              }}
+            >
+              <Tv className="w-7 h-7" style={{ color: product.iconColor }} />
+            </div>
+          )}
 
           <div className="pr-8">
             <div className="flex items-center gap-2 mb-1">
