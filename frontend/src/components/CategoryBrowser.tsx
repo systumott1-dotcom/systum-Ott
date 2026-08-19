@@ -1,7 +1,20 @@
 import React from 'react';
 import { CATEGORIES } from '../data/products';
 import type { CategoryId } from '../types';
-import { Store, Tv, Laptop, PackagePlus, Music, Bot, GraduationCap, ArrowRight, Clapperboard } from 'lucide-react';
+import { 
+  Store, 
+  Tv, 
+  Laptop, 
+  PackagePlus, 
+  Music, 
+  Bot, 
+  GraduationCap, 
+  ArrowRight, 
+  Clapperboard,
+  Gamepad2,
+  ShieldCheck,
+  Code2
+} from 'lucide-react';
 
 interface CategoryBrowserProps {
   activeCategory: CategoryId;
@@ -17,6 +30,9 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Bot,
   GraduationCap,
   Clapperboard,
+  Gamepad2,
+  ShieldCheck,
+  Code2,
 };
 
 export const CategoryBrowser: React.FC<CategoryBrowserProps> = ({
@@ -40,8 +56,8 @@ export const CategoryBrowser: React.FC<CategoryBrowserProps> = ({
           </p>
         </div>
 
-        {/* Category Cards Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-5">
+        {/* Category Cards 3x3 Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {CATEGORIES.filter((c) => c.id !== 'all').map((category) => {
             const Icon = ICON_MAP[category.icon] || Store;
             const isActive = activeCategory === category.id;

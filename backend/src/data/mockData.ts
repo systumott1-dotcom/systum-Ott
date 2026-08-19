@@ -41,6 +41,24 @@ export const CATEGORIES = [
     icon: 'GraduationCap',
     description: 'Coursera Plus, LinkedIn Learning, edX, DataCamp',
   },
+  {
+    id: 'gaming',
+    name: 'Gaming & Passes',
+    icon: 'Gamepad2',
+    description: 'Xbox Game Pass, Discord Nitro, Steam, Minecraft',
+  },
+  {
+    id: 'vpn',
+    name: 'VPN & Privacy',
+    icon: 'ShieldCheck',
+    description: 'NordVPN, Surfshark, ExpressVPN, AdGuard Premium',
+  },
+  {
+    id: 'dev',
+    name: 'Developer & Design',
+    icon: 'Code2',
+    description: 'GitHub Copilot, Canva Pro, Figma, Envato Elements',
+  },
 ];
 
 export const PRODUCTS = [

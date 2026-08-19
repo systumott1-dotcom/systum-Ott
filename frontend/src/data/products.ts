@@ -43,6 +43,24 @@ export const CATEGORIES: Category[] = [
     icon: 'GraduationCap',
     description: 'Coursera Plus, LinkedIn Learning, edX, DataCamp',
   },
+  {
+    id: 'gaming',
+    name: 'Gaming & Passes',
+    icon: 'Gamepad2',
+    description: 'Xbox Game Pass, Discord Nitro, Steam, Minecraft',
+  },
+  {
+    id: 'vpn',
+    name: 'VPN & Privacy',
+    icon: 'ShieldCheck',
+    description: 'NordVPN, Surfshark, ExpressVPN, AdGuard Premium',
+  },
+  {
+    id: 'dev',
+    name: 'Developer & Design',
+    icon: 'Code2',
+    description: 'GitHub Copilot, Canva Pro, Figma, Envato Elements',
+  },
 ];
 
 // Products are now fetched dynamically from the backend API.
