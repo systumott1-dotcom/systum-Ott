@@ -28,20 +28,20 @@ export const CategoryBrowser: React.FC<CategoryBrowserProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-8 space-y-2">
-          <span className="text-xs font-bold uppercase tracking-widest text-brand-700 bg-brand-50 px-3 py-1 rounded-full border border-brand-200">
-            Explore Categories
+        <div className="text-center max-w-2xl mx-auto mb-10 space-y-2.5">
+          <span className="inline-block text-[11px] font-extrabold uppercase tracking-widest text-[#9C7A4A] bg-[#FAF5EE] px-4 py-1 rounded-full border border-[#EFE3CF]">
+            CATEGORIES
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-            Browse by Category
+          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            Browse by <span className="text-[#8B2626]">Category</span>
           </h2>
-          <p className="text-sm text-slate-500">
-            From streaming to productivity tools — everything digital at India's lowest verified prices.
+          <p className="text-sm text-slate-500 font-medium">
+            From streaming to software — everything digital at India's best prices.
           </p>
         </div>
 
         {/* Category Cards Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-5">
           {CATEGORIES.filter((c) => c.id !== 'all').map((category) => {
             const Icon = ICON_MAP[category.icon] || Store;
             const isActive = activeCategory === category.id;
@@ -56,39 +56,28 @@ export const CategoryBrowser: React.FC<CategoryBrowserProps> = ({
                     shopSection.scrollIntoView({ behavior: 'smooth' });
                   }
                 }}
-                className={`group text-left p-4 rounded-2xl border transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
+                className={`group text-left p-5 sm:p-6 rounded-3xl border transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
                   isActive
-                    ? 'bg-gradient-to-b from-brand-50 to-indigo-50/50 border-brand-500 shadow-md scale-[1.02]'
-                    : 'bg-slate-50 hover:bg-white border-slate-200 hover:border-brand-300 hover:shadow-md hover:-translate-y-1'
+                    ? 'bg-white border-[#8B2626] shadow-xl ring-2 ring-[#8B2626]/20 scale-[1.02]'
+                    : 'bg-white hover:bg-slate-50/60 border-slate-100 shadow-[0_4px_25px_rgba(0,0,0,0.03)] hover:shadow-lg hover:border-slate-200'
                 }`}
               >
-                {/* Active Indicator Glow */}
-                {isActive && (
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-600 to-indigo-600" />
-                )}
-
-                <div>
-                  <div
-                    className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 transition-colors ${
-                      isActive
-                        ? 'bg-brand-600 text-white shadow-md'
-                        : 'bg-white border border-slate-200 text-brand-600 group-hover:bg-brand-50'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5" />
+                {/* Top Row: Icon + Arrow */}
+                <div className="flex items-center justify-between w-full">
+                  <div className="w-12 h-12 rounded-2xl bg-[#F6EFE9] border border-[#EFE5DC] flex items-center justify-center text-[#7A1E1E] transition-transform group-hover:scale-105">
+                    <Icon className="w-6 h-6" />
                   </div>
-
-                  <h3 className="font-bold text-sm text-slate-900 group-hover:text-brand-600 transition-colors">
-                    {category.name}
-                  </h3>
-                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                    {category.description}
-                  </p>
+                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition-all" />
                 </div>
 
-                <div className="mt-3 pt-2 flex items-center gap-1 text-[10px] font-bold text-brand-600 group-hover:text-brand-700">
-                  <span>Explore</span>
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                {/* Bottom Content */}
+                <div className="mt-5">
+                  <h3 className="font-extrabold text-sm sm:text-base text-slate-900 group-hover:text-[#8B2626] transition-colors">
+                    {category.name}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium mt-1 line-clamp-2 leading-relaxed">
+                    {category.description}
+                  </p>
                 </div>
               </button>
             );

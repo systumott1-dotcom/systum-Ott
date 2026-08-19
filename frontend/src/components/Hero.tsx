@@ -129,50 +129,50 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
           <div className="lg:col-span-5 relative">
             <div className="relative mx-auto w-full max-w-lg">
               
-              {/* Strict 2x2 Grid (2 columns, 2 rows) */}
+              {/* Strict 2x2 Grid matching screenshot */}
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 
                 {/* 1. Secure Payments */}
-                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 md:p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-[#FBF5EE] border border-[#F3E7DC] flex items-center justify-center text-[#9C3826] shrink-0 group-hover:scale-105 transition-transform">
-                    <ShieldCheck className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
+                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#F6EFE9] border border-[#EFE5DC] flex items-center justify-center text-[#7A1E1E] shrink-0 group-hover:scale-105 transition-transform">
+                    <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm tracking-tight truncate">Secure Payments</h4>
-                    <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 truncate">UPI · GPay · PhonePe</p>
+                    <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm md:text-base leading-tight tracking-tight">Secure Payments</h4>
+                    <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 sm:mt-1 leading-tight">UPI · GPay · PhonePe</p>
                   </div>
                 </div>
 
                 {/* 2. Verified Accounts */}
-                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 md:p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-[#FBF5EE] border border-[#F3E7DC] flex items-center justify-center text-[#9C3826] shrink-0 group-hover:scale-105 transition-transform">
-                    <BadgeCheck className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
+                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#F6EFE9] border border-[#EFE5DC] flex items-center justify-center text-[#7A1E1E] shrink-0 group-hover:scale-105 transition-transform">
+                    <BadgeCheck className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm tracking-tight truncate">Verified Accounts</h4>
-                    <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 truncate">100% genuine & authentic</p>
+                    <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm md:text-base leading-tight tracking-tight">Verified Accounts</h4>
+                    <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 sm:mt-1 leading-tight">100% genuine & authentic</p>
                   </div>
                 </div>
 
                 {/* 3. WhatsApp Support */}
-                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 md:p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-[#FBF5EE] border border-[#F3E7DC] flex items-center justify-center text-[#9C3826] shrink-0 group-hover:scale-105 transition-transform">
-                    <Headphones className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
+                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#F6EFE9] border border-[#EFE5DC] flex items-center justify-center text-[#7A1E1E] shrink-0 group-hover:scale-105 transition-transform">
+                    <Headphones className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm tracking-tight truncate">WhatsApp Support</h4>
-                    <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 truncate">We're here to help</p>
+                    <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm md:text-base leading-tight tracking-tight">WhatsApp Support</h4>
+                    <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 sm:mt-1 leading-tight">We're here to help</p>
                   </div>
                 </div>
 
                 {/* 4. Replacement Warranty */}
-                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 md:p-5 border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-[#FBF5EE] border border-[#F3E7DC] flex items-center justify-center text-[#9C3826] shrink-0 group-hover:scale-105 transition-transform">
-                    <RotateCcw className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
+                <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-md transition-all duration-300 flex items-center gap-3 sm:gap-3.5 group">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#F6EFE9] border border-[#EFE5DC] flex items-center justify-center text-[#7A1E1E] shrink-0 group-hover:scale-105 transition-transform">
+                    <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm tracking-tight truncate">Replacement Warranty</h4>
-                    <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 truncate">Full duration guarantee</p>
+                    <h4 className="font-extrabold text-slate-900 text-xs sm:text-sm md:text-base leading-tight tracking-tight">Replacement Warranty</h4>
+                    <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 sm:mt-1 leading-tight">Full duration guarantee</p>
                   </div>
                 </div>
 
