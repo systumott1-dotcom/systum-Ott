@@ -12,8 +12,6 @@ import {
   MessageCircle, 
   Tv, 
   Smartphone, 
-  Laptop, 
-  Tablet, 
   Flame, 
   BadgeCheck,
   ChevronRight,
@@ -227,31 +225,6 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                 <div className="flex items-center gap-1 font-semibold">
                   <Zap className="w-3.5 h-3.5 text-amber-500" />
                   <span>Instant WhatsApp Delivery</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Supported Devices */}
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-2xs space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Supported Devices & Platforms
-              </h4>
-              <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-700 space-y-1">
-                  <Tv className="w-5 h-5 mx-auto text-brand-600" />
-                  <span className="text-[10px] font-bold block">Smart TV</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-700 space-y-1">
-                  <Smartphone className="w-5 h-5 mx-auto text-brand-600" />
-                  <span className="text-[10px] font-bold block">Mobile</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-700 space-y-1">
-                  <Laptop className="w-5 h-5 mx-auto text-brand-600" />
-                  <span className="text-[10px] font-bold block">Laptop/PC</span>
-                </div>
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-700 space-y-1">
-                  <Tablet className="w-5 h-5 mx-auto text-brand-600" />
-                  <span className="text-[10px] font-bold block">Tablet</span>
                 </div>
               </div>
             </div>
