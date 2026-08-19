@@ -1,5 +1,16 @@
 import React from 'react';
-import { Percent, MessageCircle, ShieldCheck, Zap, ArrowRight, CheckCircle2, Star, Flame, Tv, Laptop, Bot } from 'lucide-react';
+import { 
+  ShieldCheck, 
+  BadgeCheck, 
+  Headphones, 
+  RotateCcw, 
+  MessageCircle, 
+  ArrowRight, 
+  Star, 
+  Flame, 
+  Zap, 
+  CheckCircle2 
+} from 'lucide-react';
 import { WHATSAPP_PHONE } from '../context/CartContext';
 
 interface HeroProps {
@@ -114,102 +125,57 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
 
           </div>
 
-          {/* Right Column: Interactive Animated Subscription Grid Showcase */}
+          {/* Right Column: 2x2 Trust Features Grid */}
           <div className="lg:col-span-5 relative">
             <div className="relative mx-auto max-w-md">
               
-              {/* Main White Showcase Card */}
-              <div className="white-card rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200 relative z-10 space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
-                    <span className="w-3 h-3 rounded-full bg-amber-400 inline-block"></span>
-                    <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-                    <span className="text-xs font-bold text-slate-700 ml-2">Today's Hot Deals</span>
+              {/* Feature Cards 2x2 Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                
+                {/* 1. Secure Payments */}
+                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-4 group">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-50/80 border border-rose-100 flex items-center justify-center text-rose-700 shadow-xs group-hover:scale-105 transition-transform">
+                    <ShieldCheck className="w-6 h-6" />
                   </div>
-                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                    Live Stock
-                  </span>
-                </div>
-
-                {/* Deal Items */}
-                <div className="space-y-3">
-                  {/* Item 1 */}
-                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 hover:border-brand-300 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-red-100 border border-red-200 flex items-center justify-center text-red-600 font-bold shadow-xs">
-                        <Tv className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-slate-900">Netflix 4K Ultra HD</h4>
-                        <span className="text-xs text-slate-500">PIN Profile • 4K UHD</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs text-slate-400 line-through mr-1.5">₹649</span>
-                      <span className="text-sm font-extrabold text-emerald-600">₹99</span>
-                    </div>
-                  </div>
-
-                  {/* Item 2 */}
-                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 hover:border-brand-300 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-red-100 border border-red-200 flex items-center justify-center text-red-600 font-bold shadow-xs">
-                        <Laptop className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-slate-900">Adobe Creative Cloud</h4>
-                        <span className="text-xs text-slate-500">20+ Apps • Firefly AI</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs text-slate-400 line-through mr-1.5">₹4,230</span>
-                      <span className="text-sm font-extrabold text-emerald-600">₹449</span>
-                    </div>
-                  </div>
-
-                  {/* Item 3 */}
-                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70 hover:border-brand-300 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-600 font-bold shadow-xs">
-                        <Bot className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-slate-900">ChatGPT Plus (GPT-4o)</h4>
-                        <span className="text-xs text-slate-500">Voice Mode • DALL-E</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs text-slate-400 line-through mr-1.5">₹1,999</span>
-                      <span className="text-sm font-extrabold text-emerald-600">₹249</span>
-                    </div>
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 text-base tracking-tight">Secure Payments</h4>
+                    <p className="text-xs text-slate-500 font-medium mt-1">UPI · GPay · PhonePe</p>
                   </div>
                 </div>
 
-                {/* Bottom Trust Badge */}
-                <div className="pt-2 flex items-center justify-between text-xs text-slate-500">
-                  <span className="flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> WhatsApp Direct Delivery
-                  </span>
-                  <span className="text-brand-700 font-bold">100% Genuine</span>
+                {/* 2. Verified Accounts */}
+                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-4 group">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-50/80 border border-amber-100 flex items-center justify-center text-amber-700 shadow-xs group-hover:scale-105 transition-transform">
+                    <BadgeCheck className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 text-base tracking-tight">Verified Accounts</h4>
+                    <p className="text-xs text-slate-500 font-medium mt-1">100% genuine & authentic</p>
+                  </div>
                 </div>
-              </div>
 
-              {/* Floating Accent Badges */}
-              <div className="absolute -top-4 -right-4 white-card p-3 rounded-2xl border border-brand-200 shadow-xl hidden sm:flex items-center gap-2.5 animate-float z-20">
-                <Percent className="w-5 h-5 text-amber-500" />
-                <div>
-                  <div className="text-xs font-bold text-slate-900">Up to 90% OFF</div>
-                  <div className="text-[10px] text-slate-500">Save thousands/year</div>
+                {/* 3. WhatsApp Support */}
+                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-4 group">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50/80 border border-emerald-100 flex items-center justify-center text-emerald-700 shadow-xs group-hover:scale-105 transition-transform">
+                    <Headphones className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 text-base tracking-tight">WhatsApp Support</h4>
+                    <p className="text-xs text-slate-500 font-medium mt-1">We're here to help</p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="absolute -bottom-4 -left-4 white-card p-3 rounded-2xl border border-emerald-200 shadow-xl hidden sm:flex items-center gap-2.5 animate-float z-20" style={{ animationDelay: '1.5s' }}>
-                <ShieldCheck className="w-5 h-5 text-emerald-600" />
-                <div>
-                  <div className="text-xs font-bold text-slate-900">Instant Replacement</div>
-                  <div className="text-[10px] text-slate-500">24/7 Dedicated Support</div>
+                {/* 4. Replacement Warranty */}
+                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between space-y-4 group">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50/80 border border-indigo-100 flex items-center justify-center text-indigo-700 shadow-xs group-hover:scale-105 transition-transform">
+                    <RotateCcw className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-slate-900 text-base tracking-tight">Replacement Warranty</h4>
+                    <p className="text-xs text-slate-500 font-medium mt-1">Full duration guarantee</p>
+                  </div>
                 </div>
+
               </div>
 
             </div>
@@ -220,3 +186,4 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
     </section>
   );
 };
+
