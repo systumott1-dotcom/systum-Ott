@@ -14,11 +14,15 @@ import {
   Tag, 
   Shield, 
   ArrowLeft, 
-  LogOut, 
+  LogOut,
   DollarSign,
   Mail,
   Loader2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Search,
+  Copy,
+  Check,
+  ExternalLink
 } from 'lucide-react';
 import type { Product, ProductPlan } from '../types';
 import { CATEGORIES } from '../data/products';
@@ -102,6 +106,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const [deliveryModalOrder, setDeliveryModalOrder] = useState<OrderData | null>(null);
   const [credentialsInput, setCredentialsInput] = useState('');
   const [sendEmailCheck, setSendEmailCheck] = useState(true);
+  const [orderLookupInput, setOrderLookupInput] = useState('');
+  const [searchedOrder, setSearchedOrder] = useState<OrderData | null>(null);
+  const [isSearchingOrder, setIsSearchingOrder] = useState(false);
+  const [copiedReceiptId, setCopiedReceiptId] = useState<string | null>(null);
 
   // Coupons State
   const [coupons, setCoupons] = useState<CouponData[]>([]);
@@ -348,6 +356,82 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     } catch {
       toast.error('Failed to dispatch delivery.');
     }
+  };
+
+  // Dedicated Order ID Lookup
+  const handleLookupOrder = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleanId = orderLookupInput.trim().replace(/^#/, '');
+    if (!cleanId) {
+      toast.warning('Please enter an Order ID to lookup (e.g. 45432)');
+      return;
+    }
+
+    setIsSearchingOrder(true);
+    try {
+      // Local match first
+      const localMatch = orders.find(
+        (o) => o.id === cleanId || o.id === `#${cleanId}` || o.id.toLowerCase().includes(cleanId.toLowerCase())
+      );
+      if (localMatch) {
+        setSearchedOrder(localMatch);
+        toast.success(`Found Order #${localMatch.id}! 📦`);
+        setIsSearchingOrder(false);
+        return;
+      }
+
+      // API fetch
+      const res = await fetch(`/api/admin/orders/${cleanId}`, {
+        headers: apiHeaders(),
+      });
+      const data = await res.json();
+      if (data.success && (data.order || data.data)) {
+        const found = data.order || data.data;
+        setSearchedOrder(found);
+        toast.success(`Found Order #${found.id}! 📦`);
+      } else {
+        toast.error(`No order found matching ID #${cleanId}`);
+        setSearchedOrder(null);
+      }
+    } catch {
+      toast.error('Failed to lookup order');
+    } finally {
+      setIsSearchingOrder(false);
+    }
+  };
+
+  const handleUpdateStatusDirect = async (
+    orderId: string,
+    newStatus: 'PENDING_VERIFICATION' | 'DELIVERED' | 'CANCELLED'
+  ) => {
+    try {
+      await fetch(`/api/admin/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: apiHeaders(),
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+      );
+
+      if (searchedOrder && searchedOrder.id === orderId) {
+        setSearchedOrder({ ...searchedOrder, status: newStatus });
+      }
+
+      toast.success(`Order #${orderId} marked as ${newStatus}!`);
+    } catch {
+      toast.error('Failed to update status');
+    }
+  };
+
+  const handleCopyOrderReceipt = (order: OrderData) => {
+    const itemsList = order.items.map((i) => `${i.productTitle} (${i.planName}) x ${i.quantity}`).join(', ');
+    const receipt = `*🎉 ORDER DETAILS #${order.id}*\n\nCustomer: ${order.customerName}\nPhone: +91 ${order.customerPhone}\nItems: ${itemsList}\nAmount: ₹${order.totalAmount}\nStatus: ${order.status}\n${order.utrNumber ? `UTR: ${order.utrNumber}\n` : ''}${order.deliveryCredentials ? `Credentials: ${order.deliveryCredentials}\n` : ''}`;
+    navigator.clipboard.writeText(receipt);
+    setCopiedReceiptId(order.id);
+    toast.success(`Order #${order.id} receipt copied! 📋`);
+    setTimeout(() => setCopiedReceiptId(null), 2000);
   };
 
   // Add Coupon
@@ -651,8 +735,190 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
 
         {/* ORDERS TAB */}
         {activeTab === 'orders' && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-extrabold text-slate-900 mb-4">Orders & UPI Verification</h3>
+          <div className="space-y-6">
+            
+            {/* Header & Order Lookup Tool */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                    <Search className="w-5 h-5 text-brand-600" />
+                    <span>Order Lookup & Search Tool</span>
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Paste any numeric Order ID (e.g. 45432) to instantly retrieve customer details, purchased items, and delivery status.
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleLookupOrder} className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    value={orderLookupInput}
+                    onChange={(e) => setOrderLookupInput(e.target.value)}
+                    placeholder="Enter or Paste Order ID (e.g. 45432 or #45432)..."
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={isSearchingOrder}
+                  className="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-extrabold shadow-md flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+                >
+                  {isSearchingOrder ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  <span>Find Order</span>
+                </button>
+                {searchedOrder && (
+                  <button
+                    type="button"
+                    onClick={() => { setSearchedOrder(null); setOrderLookupInput(''); }}
+                    className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold shrink-0"
+                  >
+                    Clear
+                  </button>
+                )}
+              </form>
+            </div>
+
+            {/* SEARCHED ORDER DETAIL VIEW */}
+            {searchedOrder && (
+              <div className="bg-gradient-to-br from-brand-50/60 via-white to-indigo-50/40 rounded-2xl border-2 border-brand-300 p-6 shadow-md space-y-4 animate-in zoom-in-98 duration-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-brand-200 pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center font-mono font-black text-sm shadow-xs">
+                      #{searchedOrder.id}
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-slate-900 text-base">
+                        Order #{searchedOrder.id} Details
+                      </h4>
+                      <span className="text-xs text-slate-500">
+                        Placed on {new Date(searchedOrder.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Status Badges & Quick Action */}
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-extrabold px-3 py-1 rounded-full border ${
+                      searchedOrder.status === 'DELIVERED'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : searchedOrder.status === 'CANCELLED'
+                        ? 'bg-rose-50 text-rose-700 border-rose-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {searchedOrder.status.replace('_', ' ')}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyOrderReceipt(searchedOrder)}
+                      className="px-3 py-1 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 flex items-center gap-1 shadow-2xs"
+                    >
+                      {copiedReceiptId === searchedOrder.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedReceiptId === searchedOrder.id ? 'Copied' : 'Copy'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Customer Info Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-4 rounded-xl border border-slate-200 text-xs">
+                  <div>
+                    <span className="text-slate-400 font-bold block mb-0.5">Customer Name:</span>
+                    <strong className="text-slate-900 text-sm">{searchedOrder.customerName}</strong>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block mb-0.5">WhatsApp Number:</span>
+                    <a
+                      href={`https://wa.me/91${searchedOrder.customerPhone.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-700 font-mono font-bold text-sm hover:underline flex items-center gap-1"
+                    >
+                      <span>+91 {searchedOrder.customerPhone}</span>
+                      <ExternalLink className="w-3 h-3 text-emerald-600" />
+                    </a>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 font-bold block mb-0.5">Email / Gmail:</span>
+                    <span className="text-slate-700 font-semibold">{searchedOrder.customerEmail || 'Not provided'}</span>
+                  </div>
+                </div>
+
+                {/* Items in Order */}
+                <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block">
+                    Purchased Subscriptions:
+                  </span>
+                  <div className="divide-y divide-slate-100">
+                    {searchedOrder.items.map((item, i) => (
+                      <div key={i} className="py-2 flex items-center justify-between text-xs">
+                        <div>
+                          <strong className="text-slate-900 block text-sm">{item.productTitle}</strong>
+                          <span className="text-slate-500 font-medium">{item.planName} · Qty: {item.quantity}</span>
+                        </div>
+                        <span className="font-black text-slate-900 text-sm">₹{item.price * item.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-2 border-t border-slate-200 flex items-center justify-between font-extrabold text-sm text-slate-900">
+                    <span>Total Paid</span>
+                    <span className="text-base text-emerald-600 font-black">₹{searchedOrder.totalAmount}</span>
+                  </div>
+                </div>
+
+                {/* UTR & Credentials */}
+                {(searchedOrder.utrNumber || searchedOrder.deliveryCredentials) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    {searchedOrder.utrNumber && (
+                      <div className="bg-white p-3 rounded-xl border border-slate-200">
+                        <span className="text-slate-400 font-bold block mb-0.5">UPI UTR / Reference:</span>
+                        <strong className="font-mono text-slate-900">{searchedOrder.utrNumber}</strong>
+                      </div>
+                    )}
+                    {searchedOrder.deliveryCredentials && (
+                      <div className="bg-emerald-50/70 p-3 rounded-xl border border-emerald-200 font-mono text-emerald-900">
+                        <span className="text-emerald-700 font-bold block mb-0.5 font-sans">Delivered Credentials:</span>
+                        <pre className="whitespace-pre-wrap">{searchedOrder.deliveryCredentials}</pre>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Quick Actions */}
+                <div className="flex flex-wrap gap-2 pt-2">
+                  <button
+                    onClick={() => { setDeliveryModalOrder(searchedOrder); setCredentialsInput(searchedOrder.deliveryCredentials || ''); }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-extrabold shadow-md flex items-center gap-1.5"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>{searchedOrder.deliveryCredentials ? 'Update / Resend via WhatsApp' : 'Deliver via WhatsApp'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleUpdateStatusDirect(searchedOrder.id, 'DELIVERED')}
+                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+                  >
+                    Mark DELIVERED
+                  </button>
+
+                  <button
+                    onClick={() => handleUpdateStatusDirect(searchedOrder.id, 'CANCELLED')}
+                    className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold"
+                  >
+                    Mark CANCELLED
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* All Orders List Header */}
+            <div className="flex items-center justify-between pt-2">
+              <h4 className="text-sm font-extrabold text-slate-900">
+                All Orders ({orders.length})
+              </h4>
+            </div>
+
             {orders.length === 0 ? (
               <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
                 <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto mb-3" />
@@ -661,7 +927,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               </div>
             ) : (
               orders.map((order) => (
-                <div key={order.id} className="bg-white rounded-2xl border border-slate-200 p-5">
+                <div key={order.id} className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-xs transition-shadow">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <div className="flex items-center gap-2">
@@ -672,7 +938,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                           : 'bg-amber-50 text-amber-700 border border-amber-200'
                         }`}>{order.status.replace('_', ' ')}</span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">{order.customerName} · {order.customerPhone}</p>
+                      <p className="text-xs text-slate-500 mt-1">{order.customerName} · +91 {order.customerPhone}</p>
                     </div>
                     <span className="text-lg font-black text-slate-900">₹{order.totalAmount}</span>
                   </div>
@@ -695,14 +961,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     </div>
                   )}
 
-                  {order.status === 'PENDING_VERIFICATION' && (
-                    <div className="flex gap-2 mt-3">
-                      <button onClick={() => { setDeliveryModalOrder(order); setCredentialsInput(''); }}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold shadow-md">
-                        <MessageCircle className="w-3.5 h-3.5" /> Deliver via WhatsApp
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-slate-100">
+                    <button onClick={() => { setDeliveryModalOrder(order); setCredentialsInput(order.deliveryCredentials || ''); }}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold shadow-md">
+                      <MessageCircle className="w-3.5 h-3.5" /> {order.deliveryCredentials ? 'Update / Resend WhatsApp' : 'Deliver via WhatsApp'}
+                    </button>
+                    <button onClick={() => handleCopyOrderReceipt(order)}
+                      className="flex items-center gap-1 px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold">
+                      <Copy className="w-3.5 h-3.5" /> Copy Receipt
+                    </button>
+                  </div>
                 </div>
               ))
             )}

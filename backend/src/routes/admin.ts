@@ -267,6 +267,30 @@ adminRouter.get('/orders', async (_req, res) => {
   }
 });
 
+// GET /api/admin/orders/:id (Lookup single order by ID)
+adminRouter.get('/orders/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isDbConnected = mongoose.connection.readyState === 1;
+
+    if (isDbConnected) {
+      const order = await Order.findOne({ id });
+      if (!order) {
+        return res.status(404).json({ success: false, message: 'Order not found' });
+      }
+      return res.json({ success: true, order });
+    }
+
+    const order = adminOrders.find((o) => o.id === id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    res.json({ success: true, order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to lookup order' });
+  }
+});
+
 // PATCH /api/admin/orders/:id/status
 adminRouter.patch('/orders/:id/status', async (req, res) => {
   try {
