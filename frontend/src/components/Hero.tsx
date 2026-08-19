@@ -29,19 +29,19 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
           {/* Left Column: Headline & Value Proposition */}
           <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
             {/* Top Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-bold shadow-xs">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-50 border border-brand-200/90 text-brand-800 text-[11px] sm:text-xs font-black shadow-2xs tracking-wide uppercase">
               <span className="flex h-2 w-2 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-600"></span>
               </span>
               <Flame className="w-3.5 h-3.5 text-amber-500" />
-              <span>India's Most Trusted Digital Subscription Hub</span>
+              <span>Systum OTT · Authorized Reseller & Sourcing</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.15]">
-              Get OTT & Software Subscriptions at <br className="hidden sm:inline" />
-              <span className="gradient-text">up to 90% OFF</span>
+              Premium Digital Subscriptions at <br className="hidden sm:inline" />
+              <span className="gradient-text">Unbeatable Prices</span>
             </h1>
 
             {/* Subheading */}
