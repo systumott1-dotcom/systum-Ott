@@ -8,7 +8,6 @@ import type { CategoryId } from './types';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { CategoryBrowser } from './components/CategoryBrowser';
-import { ComboHighlights } from './components/ComboHighlights';
 import { ProductGrid } from './components/ProductGrid';
 import { HowItWorks } from './components/HowItWorks';
 import { TrustFeatures } from './components/TrustFeatures';
@@ -101,8 +100,6 @@ function Storefront() {
               activeCategory={activeCategory}
               onSelectCategory={setActiveCategory}
             />
-
-            <ComboHighlights products={products} />
 
             <ProductGrid
               products={products}
