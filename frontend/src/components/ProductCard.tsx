@@ -113,32 +113,27 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         )}
       </div>
 
-      {/* Product Image Banner (if uploaded) */}
-      {product.imageUrl && (
-        <div className="relative w-full h-36 rounded-2xl overflow-hidden mb-3 border border-slate-100 shadow-xs bg-slate-50 group-hover:shadow-md transition-all">
-          <img
-            src={product.imageUrl}
-            alt={product.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        </div>
-      )}
-
-      {/* Product Icon & Title */}
+      {/* Product Logo/Image & Title */}
       <div>
-        <div className="flex items-start gap-3 mb-3">
-          {!product.imageUrl && (
-            <div
-              className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-xs transition-transform group-hover:scale-105"
-              style={{
-                backgroundColor: `${product.iconColor}15`,
-                borderColor: `${product.iconColor}30`,
-                borderWidth: '1px',
-              }}
-            >
-              <IconComponent className="w-5 h-5" style={{ color: product.iconColor }} />
-            </div>
-          )}
+        <div className="flex items-start gap-3.5 mb-3.5">
+          {/* App Image / Logo Icon Box */}
+          <div
+            className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-xs overflow-hidden border transition-transform group-hover:scale-105"
+            style={{
+              backgroundColor: product.imageUrl ? '#ffffff' : `${product.iconColor}15`,
+              borderColor: product.imageUrl ? '#e2e8f0' : `${product.iconColor}30`,
+            }}
+          >
+            {product.imageUrl ? (
+              <img
+                src={product.imageUrl}
+                alt={product.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <IconComponent className="w-7 h-7" style={{ color: product.iconColor }} />
+            )}
+          </div>
 
           <div className="flex-1 min-w-0">
             <h3 className="font-extrabold text-base text-slate-900 group-hover:text-brand-600 transition-colors line-clamp-1">

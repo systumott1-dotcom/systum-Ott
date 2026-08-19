@@ -64,18 +64,23 @@ export const ProductQuickViewModal: React.FC = () => {
 
         {/* Top Header */}
         <div className="flex items-start gap-4 mb-6">
-          {!product.imageUrl && (
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-xs"
-              style={{
-                backgroundColor: `${product.iconColor}15`,
-                borderColor: `${product.iconColor}30`,
-                borderWidth: '1px',
-              }}
-            >
-              <Tv className="w-7 h-7" style={{ color: product.iconColor }} />
-            </div>
-          )}
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-xs overflow-hidden border"
+            style={{
+              backgroundColor: product.imageUrl ? '#ffffff' : `${product.iconColor}15`,
+              borderColor: product.imageUrl ? '#e2e8f0' : `${product.iconColor}30`,
+            }}
+          >
+            {product.imageUrl ? (
+              <img
+                src={product.imageUrl}
+                alt={product.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Tv className="w-8 h-8" style={{ color: product.iconColor }} />
+            )}
+          </div>
 
           <div className="pr-8">
             <div className="flex items-center gap-2 mb-1">
