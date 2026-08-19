@@ -25,6 +25,7 @@ import { AuthModal } from './components/AuthModal';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { ProductPage } from './pages/ProductPage';
 import { CheckoutPage } from './pages/CheckoutPage';
+import { OrderHistoryModal } from './components/OrderHistoryModal';
 
 function Storefront() {
   const { isAdmin, setIsAuthModalOpen, setAuthModalTab } = useAuth();
@@ -34,6 +35,7 @@ function Storefront() {
   const [activeCategory, setActiveCategory] = useState<CategoryId>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activePolicy, setActivePolicy] = useState<PolicyType>(null);
+  const [isOrderHistoryOpen, setIsOrderHistoryOpen] = useState(false);
 
   const handleExploreShop = () => {
     if (router.route !== 'home') {
@@ -80,6 +82,7 @@ function Storefront() {
             router.navigate('/admin');
           }
         }}
+        onOpenOrderHistory={() => setIsOrderHistoryOpen(true)}
       />
 
       <main className="flex-grow">
@@ -135,6 +138,10 @@ function Storefront() {
       <PolicyModals
         activePolicy={activePolicy}
         onClose={() => setActivePolicy(null)}
+      />
+      <OrderHistoryModal
+        isOpen={isOrderHistoryOpen}
+        onClose={() => setIsOrderHistoryOpen(false)}
       />
       <WhatsAppFloatingButton />
     </div>

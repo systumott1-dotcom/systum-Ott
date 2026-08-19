@@ -15,6 +15,9 @@ export interface ProductPlan {
   discountedPrice: number;
   devices?: string;
   isPopular?: boolean;
+  validityDays?: number;
+  warrantyDays?: number;
+  warrantyType?: string; // e.g. "Full-Term Replacement", "No Warranty / As-Is"
 }
 
 export interface Product {
@@ -32,6 +35,8 @@ export interface Product {
   features: string[];
   instantDelivery: boolean;
   warrantyDays: number;
+  hasWarranty?: boolean;
+  warrantyType?: 'Full-Term Replacement' | '7 Days Replacement' | 'No Warranty / As-Is' | string;
   accountType: 'Private Account' | 'Shared Profile' | 'Digital License' | 'Family Invite' | string;
   compatibility: string[]; // e.g. ["Smart TV", "Mobile", "Laptop", "Tablet"]
   rating: number;
@@ -48,6 +53,29 @@ export interface CartItem {
   originalPrice: number;
   quantity: number;
   accountType: string;
+}
+
+export interface OrderHistoryItem {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  items: Array<{
+    productId?: string;
+    productTitle: string;
+    planName: string;
+    validity?: string;
+    price: number;
+    quantity: number;
+  }>;
+  totalAmount: number;
+  purchaseDate: string;
+  expiryDate: string;
+  warrantyType?: string;
+  utrNumber?: string;
+  status: 'PENDING_VERIFICATION' | 'DELIVERED' | 'CANCELLED';
+  deliveryCredentials?: string;
+  createdAt: string;
 }
 
 export interface Review {

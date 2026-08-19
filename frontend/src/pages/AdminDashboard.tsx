@@ -48,6 +48,9 @@ interface OrderData {
   status: 'PENDING_VERIFICATION' | 'DELIVERED' | 'CANCELLED';
   deliveryCredentials?: string;
   deliveryNotes?: string;
+  purchaseDate?: string;
+  expiryDate?: string;
+  warrantyType?: string;
   createdAt: string;
 }
 
@@ -91,6 +94,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     iconName: 'Tv',
     imageUrl: '',
     sourceVendor: 'Eneba / Direct Wholesale',
+    warrantyType: 'Full-Term Replacement',
+    hasWarranty: true,
+    warrantyDays: 30,
     plans: [
       { name: '1 Month Access', validity: '30 Days', originalPrice: 649, discountedPrice: 99, isPopular: true },
       { name: '3 Months Access', validity: '90 Days', originalPrice: 1799, discountedPrice: 269 },
@@ -212,6 +218,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         iconName: productForm.iconName,
         imageUrl: finalImageUrl,
         sourceVendor: productForm.sourceVendor,
+        warrantyType: productForm.warrantyType,
+        warrantyDays: Number(productForm.warrantyDays) || 30,
+        hasWarranty: productForm.warrantyType !== 'No Warranty / As-Is',
         features,
         plans: productForm.plans,
       };
@@ -255,6 +264,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         title: '', category: 'ott', shortDescription: '', accountType: 'Private Screen PIN',
         badge: 'Popular', iconColor: '#7c3aed', iconName: 'Tv', imageUrl: '',
         sourceVendor: 'Eneba / Direct Wholesale',
+        warrantyType: 'Full-Term Replacement',
+        hasWarranty: true,
+        warrantyDays: 30,
         plans: [
           { name: '1 Month Access', validity: '30 Days', originalPrice: 649, discountedPrice: 99, isPopular: true },
           { name: '3 Months Access', validity: '90 Days', originalPrice: 1799, discountedPrice: 269 },
@@ -307,6 +319,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       iconName: product.iconName,
       imageUrl: product.imageUrl || '',
       sourceVendor: 'Eneba / Direct Wholesale',
+      warrantyType: product.warrantyType || (product.hasWarranty !== false ? 'Full-Term Replacement' : 'No Warranty / As-Is'),
+      hasWarranty: product.hasWarranty !== false,
+      warrantyDays: product.warrantyDays || 30,
       plans: [...product.plans],
       featuresText: product.features.join('\n'),
     });
@@ -564,6 +579,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     title: '', category: 'ott', shortDescription: '', accountType: 'Private Screen PIN',
                     badge: 'Popular', iconColor: '#7c3aed', iconName: 'Tv', imageUrl: '',
                     sourceVendor: 'Eneba / Direct Wholesale',
+                    warrantyType: 'Full-Term Replacement',
+                    hasWarranty: true,
+                    warrantyDays: 30,
                     plans: [
                       { name: '1 Month Access', validity: '30 Days', originalPrice: 649, discountedPrice: 99, isPopular: true },
                       { name: '3 Months Access', validity: '90 Days', originalPrice: 1799, discountedPrice: 269 },
@@ -687,6 +705,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     <div>
                       <label className="text-xs font-bold text-slate-700 block mb-1">Features (one per line)</label>
                       <textarea value={productForm.featuresText} onChange={(e) => setProductForm({...productForm, featuresText: e.target.value})} rows={3} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-mono" placeholder="4K Ultra HD\nPersonal Screen PIN\n100% Warranty" />
+                    </div>
+
+                    {/* Warranty & Replacement Settings */}
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                      <label className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                        <Shield className="w-4 h-4 text-brand-600" />
+                        <span>Warranty & Replacement Policy</span>
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-600 block mb-1">Warranty Type</label>
+                          <select
+                            value={productForm.warrantyType}
+                            onChange={(e) => setProductForm({ ...productForm, warrantyType: e.target.value })}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white"
+                          >
+                            <option value="Full-Term Replacement">Full-Term Replacement Warranty</option>
+                            <option value="7 Days Replacement">7 Days Replacement Warranty</option>
+                            <option value="No Warranty / As-Is">No Warranty / As-Is (Clearance/Promotional)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-600 block mb-1">Warranty Period (Days)</label>
+                          <input
+                            type="number"
+                            value={productForm.warrantyDays}
+                            onChange={(e) => setProductForm({ ...productForm, warrantyDays: Number(e.target.value) })}
+                            placeholder="e.g. 30, 90, 365"
+                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white font-mono"
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     {/* Plans Editor */}
@@ -867,99 +917,131 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   </div>
                 </div>
 
-                {/* UTR & Credentials */}
-                {(searchedOrder.utrNumber || searchedOrder.deliveryCredentials) && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                    {searchedOrder.utrNumber && (
-                      <div className="bg-white p-3 rounded-xl border border-slate-200">
-                        <span className="text-slate-400 font-bold block mb-0.5">UPI UTR / Reference:</span>
-                        <strong className="font-mono text-slate-900">{searchedOrder.utrNumber}</strong>
-                      </div>
-                    )}
-                    {searchedOrder.deliveryCredentials && (
-                      <div className="bg-emerald-50/70 p-3 rounded-xl border border-emerald-200 font-mono text-emerald-900">
-                        <span className="text-emerald-700 font-bold block mb-0.5 font-sans">Delivered Credentials:</span>
-                        <pre className="whitespace-pre-wrap">{searchedOrder.deliveryCredentials}</pre>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Quick Actions */}
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <button
-                    onClick={() => { setDeliveryModalOrder(searchedOrder); setCredentialsInput(searchedOrder.deliveryCredentials || ''); }}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-extrabold shadow-md flex items-center gap-1.5"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>{searchedOrder.deliveryCredentials ? 'Update / Resend via WhatsApp' : 'Deliver via WhatsApp'}</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleUpdateStatusDirect(searchedOrder.id, 'DELIVERED')}
-                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
-                  >
-                    Mark DELIVERED
-                  </button>
-
-                  <button
-                    onClick={() => handleUpdateStatusDirect(searchedOrder.id, 'CANCELLED')}
-                    className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold"
-                  >
-                    Mark CANCELLED
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* All Orders List Header */}
-            <div className="flex items-center justify-between pt-2">
-              <h4 className="text-sm font-extrabold text-slate-900">
-                All Orders ({orders.length})
-              </h4>
-            </div>
-
-            {orders.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
-                <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <h4 className="text-lg font-bold text-slate-600">No orders yet</h4>
-                <p className="text-sm text-slate-400">Orders will appear here when customers make purchases.</p>
-              </div>
-            ) : (
-              orders.map((order) => (
-                <div key={order.id} className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-xs transition-shadow">
-                  <div className="flex items-start justify-between mb-3">
+                  {/* Purchase Date, Expiry Date & Warranty Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-100 text-[11px] my-2">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-sm text-slate-900">#{order.id}</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          order.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : order.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border border-red-200'
-                          : 'bg-amber-50 text-amber-700 border border-amber-200'
-                        }`}>{order.status.replace('_', ' ')}</span>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1">{order.customerName} · +91 {order.customerPhone}</p>
+                      <span className="text-slate-400 font-bold block mb-0.5">📅 Purchase Date:</span>
+                      <strong className="text-slate-800">{searchedOrder.purchaseDate || new Date(searchedOrder.createdAt).toLocaleDateString()}</strong>
                     </div>
-                    <span className="text-lg font-black text-slate-900">₹{order.totalAmount}</span>
+                    <div>
+                      <span className="text-slate-400 font-bold block mb-0.5">⏳ Expiry Date:</span>
+                      <strong className="text-emerald-700 font-extrabold">{searchedOrder.expiryDate || '30 Days Validity'}</strong>
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <span className="text-slate-400 font-bold block mb-0.5">🛡️ Warranty:</span>
+                      <strong className="text-brand-700">{searchedOrder.warrantyType || 'Full Replacement'}</strong>
+                    </div>
                   </div>
 
-                  {order.items.map((item, i) => (
-                    <div key={i} className="text-xs text-slate-600 bg-slate-50 px-3 py-2 rounded-lg mb-1">
-                      {item.productTitle} — {item.planName} — ₹{item.price} × {item.quantity}
-                    </div>
-                  ))}
-
-                  {order.utrNumber && (
-                    <div className="text-xs text-slate-500 mt-2">
-                      UTR: <span className="font-mono font-bold text-slate-700">{order.utrNumber}</span>
+                  {/* UTR & Credentials */}
+                  {(searchedOrder.utrNumber || searchedOrder.deliveryCredentials) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      {searchedOrder.utrNumber && (
+                        <div className="bg-white p-3 rounded-xl border border-slate-200">
+                          <span className="text-slate-400 font-bold block mb-0.5">UPI UTR / Reference:</span>
+                          <strong className="font-mono text-slate-900">{searchedOrder.utrNumber}</strong>
+                        </div>
+                      )}
+                      {searchedOrder.deliveryCredentials && (
+                        <div className="bg-emerald-50/70 p-3 rounded-xl border border-emerald-200 font-mono text-emerald-900">
+                          <span className="text-emerald-700 font-bold block mb-0.5 font-sans">Delivered Credentials:</span>
+                          <pre className="whitespace-pre-wrap">{searchedOrder.deliveryCredentials}</pre>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {order.deliveryCredentials && (
-                    <div className="text-xs text-emerald-700 bg-emerald-50 p-2 rounded-lg mt-2 font-mono">
-                      Delivered: {order.deliveryCredentials}
+                  {/* Quick Actions */}
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    <button
+                      onClick={() => { setDeliveryModalOrder(searchedOrder); setCredentialsInput(searchedOrder.deliveryCredentials || ''); }}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-extrabold shadow-md flex items-center gap-1.5"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>{searchedOrder.deliveryCredentials ? 'Update / Resend via WhatsApp' : 'Deliver via WhatsApp'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleUpdateStatusDirect(searchedOrder.id, 'DELIVERED')}
+                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+                    >
+                      Mark DELIVERED
+                    </button>
+
+                    <button
+                      onClick={() => handleUpdateStatusDirect(searchedOrder.id, 'CANCELLED')}
+                      className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold"
+                    >
+                      Mark CANCELLED
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* All Orders List Header */}
+              <div className="flex items-center justify-between pt-2">
+                <h4 className="text-sm font-extrabold text-slate-900">
+                  All Orders ({orders.length})
+                </h4>
+              </div>
+
+              {orders.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
+                  <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <h4 className="text-lg font-bold text-slate-600">No orders yet</h4>
+                  <p className="text-sm text-slate-400">Orders will appear here when customers make purchases.</p>
+                </div>
+              ) : (
+                orders.map((order) => (
+                  <div key={order.id} className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-xs transition-shadow">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-sm text-slate-900">#{order.id}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            order.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : order.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border border-red-200'
+                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>{order.status.replace('_', ' ')}</span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">{order.customerName} · +91 {order.customerPhone}</p>
+                      </div>
+                      <span className="text-lg font-black text-slate-900">₹{order.totalAmount}</span>
                     </div>
-                  )}
+
+                    {order.items.map((item, i) => (
+                      <div key={i} className="text-xs text-slate-600 bg-slate-50 px-3 py-2 rounded-lg mb-1">
+                        {item.productTitle} — {item.planName} — ₹{item.price} × {item.quantity}
+                      </div>
+                    ))}
+
+                    {/* Purchase Date, Expiry Date & Warranty Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 bg-slate-50 p-3 rounded-xl border border-slate-100 text-[11px] my-2">
+                      <div>
+                        <span className="text-slate-400 font-bold block mb-0.5">📅 Purchase Date:</span>
+                        <strong className="text-slate-800">{order.purchaseDate || new Date(order.createdAt).toLocaleDateString()}</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 font-bold block mb-0.5">⏳ Expiry Date:</span>
+                        <strong className="text-emerald-700 font-extrabold">{order.expiryDate || '30 Days Validity'}</strong>
+                      </div>
+                      <div className="col-span-2 sm:col-span-1">
+                        <span className="text-slate-400 font-bold block mb-0.5">🛡️ Warranty:</span>
+                        <strong className="text-brand-700">{order.warrantyType || 'Full Replacement'}</strong>
+                      </div>
+                    </div>
+
+                    {order.utrNumber && (
+                      <div className="text-xs text-slate-500 mt-2">
+                        UTR: <span className="font-mono font-bold text-slate-700">{order.utrNumber}</span>
+                      </div>
+                    )}
+
+                    {order.deliveryCredentials && (
+                      <div className="text-xs text-emerald-700 bg-emerald-50 p-2 rounded-lg mt-2 font-mono">
+                        Delivered: {order.deliveryCredentials}
+                      </div>
+                    )}
 
                   <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-slate-100">
                     <button onClick={() => { setDeliveryModalOrder(order); setCredentialsInput(order.deliveryCredentials || ''); }}

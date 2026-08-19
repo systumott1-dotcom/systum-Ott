@@ -25,6 +25,10 @@ export interface IOrder extends Document {
   status: 'PENDING_VERIFICATION' | 'DELIVERED' | 'CANCELLED';
   deliveryCredentials?: string;
   deliveryNotes?: string;
+  purchaseDate?: string;
+  expiryDate?: string;
+  warrantyType?: string;
+  warrantyDays?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,7 +48,7 @@ const OrderSchema: Schema = new Schema(
     id: { type: String, required: true, unique: true, index: true },
     customerName: { type: String, required: true, trim: true },
     customerPhone: { type: String, required: true, trim: true, index: true },
-    customerEmail: { type: String, trim: true },
+    customerEmail: { type: String, trim: true, index: true },
     items: [OrderItemSchema],
     totalAmount: { type: Number, required: true },
     appliedCoupon: { type: String },
@@ -60,6 +64,10 @@ const OrderSchema: Schema = new Schema(
     },
     deliveryCredentials: { type: String },
     deliveryNotes: { type: String },
+    purchaseDate: { type: String },
+    expiryDate: { type: String },
+    warrantyType: { type: String, default: 'Full-Term Replacement' },
+    warrantyDays: { type: Number, default: 30 },
   },
   { timestamps: true }
 );

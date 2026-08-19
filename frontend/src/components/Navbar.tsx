@@ -31,6 +31,7 @@ interface NavbarProps {
   onSearchChange: (q: string) => void;
   onOpenPolicy: (type: 'terms' | 'refund' | 'privacy' | 'dmca' | 'reseller' | 'how-it-works') => void;
   onOpenAdmin: () => void;
+  onOpenOrderHistory?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -41,6 +42,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSearchChange,
   onOpenPolicy,
   onOpenAdmin,
+  onOpenOrderHistory,
 }) => {
   const { totalItems, setIsCartOpen } = useCart();
   const { user, isAdmin, setIsAuthModalOpen, setAuthModalTab, logout } = useAuth();
@@ -394,6 +396,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
+            {/* My Orders Button */}
+            <button
+              onClick={onOpenOrderHistory}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 text-xs font-bold transition-all shadow-2xs"
+              title="Track active subscriptions & order history"
+            >
+              <ShoppingBag className="w-3.5 h-3.5 text-brand-600" />
+              <span>My Orders</span>
+            </button>
+
             {/* WhatsApp Quick Link */}
             <a
               href={`https://wa.me/${WHATSAPP_PHONE}?text=Hello!+I+want+to+inquire+about+a+subscription.`}
@@ -502,6 +514,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>Sign In / Create Account</span>
               </button>
             )}
+
+            {/* My Orders Button Mobile */}
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                if (onOpenOrderHistory) onOpenOrderHistory();
+              }}
+              className="w-full py-2.5 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-between transition-colors shadow-2xs"
+            >
+              <span className="flex items-center gap-2">
+                <ShoppingBag className="w-4 h-4 text-brand-600" />
+                <span>My Orders & Subscriptions</span>
+              </span>
+              <span className="text-[10px] text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full font-extrabold">Track</span>
+            </button>
           </div>
 
           <div className="text-xs font-bold uppercase tracking-wider text-slate-400 px-2">

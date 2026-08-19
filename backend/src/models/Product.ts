@@ -6,6 +6,9 @@ export interface IProductPlan {
   originalPrice: number;
   discountedPrice: number;
   isPopular?: boolean;
+  validityDays?: number;
+  warrantyDays?: number;
+  warrantyType?: string;
 }
 
 export interface IProduct extends Document {
@@ -22,13 +25,15 @@ export interface IProduct extends Document {
   accountType: string;
   instantDelivery: boolean;
   warrantyDays: number;
+  hasWarranty: boolean;
+  warrantyType: string;
   compatibility: string[];
   features: string[];
   plans: IProductPlan[];
   rating: number;
   reviewsCount: number;
   inStock: boolean;
-  sourceVendor?: string; // e.g. "Eneba Partner", "Direct Licensee", "Aggregator"
+  sourceVendor?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +44,9 @@ const ProductPlanSchema = new Schema({
   originalPrice: { type: Number, required: true },
   discountedPrice: { type: Number, required: true },
   isPopular: { type: Boolean, default: false },
+  validityDays: { type: Number },
+  warrantyDays: { type: Number },
+  warrantyType: { type: String, default: 'Full-Term Replacement' },
 });
 
 const ProductSchema: Schema = new Schema(
@@ -56,6 +64,8 @@ const ProductSchema: Schema = new Schema(
     accountType: { type: String, default: 'Private Profile' },
     instantDelivery: { type: Boolean, default: true },
     warrantyDays: { type: Number, default: 30 },
+    hasWarranty: { type: Boolean, default: true },
+    warrantyType: { type: String, default: 'Full-Term Replacement' },
     compatibility: [{ type: String }],
     features: [{ type: String }],
     plans: [ProductPlanSchema],

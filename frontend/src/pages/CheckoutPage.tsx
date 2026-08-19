@@ -124,8 +124,26 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
 
     const now = new Date();
     const purchaseDate = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-    const expiry = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const expiryDate = expiry.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    
+    // Calculate exact expiry date according to selected validity
+    const firstPlanStr = items[0]?.plan || '30 Days';
+    let days = 30;
+    const v = firstPlanStr.toLowerCase();
+    if (v.includes('lifetime') || v.includes('permanent')) {
+      days = 36500;
+    } else {
+      const matchDays = v.match(/(\d+)\s*(day|days|d)/);
+      const matchMonths = v.match(/(\d+)\s*(month|months|mo|m)/);
+      const matchYears = v.match(/(\d+)\s*(year|years|yr|y)/);
+      if (matchDays) days = parseInt(matchDays[1], 10);
+      else if (matchMonths) days = parseInt(matchMonths[1], 10) * 30;
+      else if (matchYears) days = parseInt(matchYears[1], 10) * 365;
+      else if (v.includes('3 month')) days = 90;
+      else if (v.includes('6 month')) days = 180;
+      else if (v.includes('1 year') || v.includes('12 month')) days = 365;
+    }
+    const expiry = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+    const expiryDate = v.includes('lifetime') ? 'Lifetime Access' : expiry.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
     try {
       // POST order to backend
@@ -152,6 +170,30 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
       if (data.success && data.order?.id) {
         assignedOrderId = data.order.id;
       }
+
+      // Persist order locally for customer Orders History
+      try {
+        const existingOrders = JSON.parse(localStorage.getItem('systum_ott_user_orders_v1') || '[]');
+        const newHistoryItem = {
+          id: assignedOrderId,
+          customerName: name.trim(),
+          customerPhone: whatsapp.trim(),
+          customerEmail: email.trim() || undefined,
+          items: items.map((i) => ({
+            productTitle: i.title,
+            planName: i.plan,
+            price: i.price,
+            quantity: i.quantity,
+          })),
+          totalAmount: finalAmount,
+          purchaseDate,
+          expiryDate,
+          warrantyType: 'Full-Term Replacement',
+          status: 'PENDING_VERIFICATION',
+          createdAt: now.toISOString(),
+        };
+        localStorage.setItem('systum_ott_user_orders_v1', JSON.stringify([newHistoryItem, ...existingOrders]));
+      } catch {}
 
       // Trigger Confetti
       confetti({
