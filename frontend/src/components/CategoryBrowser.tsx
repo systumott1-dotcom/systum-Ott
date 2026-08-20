@@ -108,9 +108,10 @@ const CATEGORY_STYLES: Record<string, CategoryStyleConfig> = {
     titleHover: 'group-hover:text-purple-600',
     iconSvg: (
       <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L14.5 8.5L21 11L14.5 13.5L12 20L9.5 13.5L3 11L9.5 8.5L12 2Z" fill="white" fillOpacity="0.25" stroke="white" strokeWidth="2" strokeLinejoin="round"/>
-        <circle cx="19" cy="4" r="1.5" fill="#FDE047"/>
-        <circle cx="5" cy="18" r="1.5" fill="#C4B5FD"/>
+        <rect x="3" y="3" width="7.5" height="7.5" rx="2.5" fill="white" fillOpacity="0.35" stroke="white" strokeWidth="2"/>
+        <rect x="13.5" y="3" width="7.5" height="7.5" rx="2.5" fill="#FEF08A" stroke="white" strokeWidth="2"/>
+        <rect x="3" y="13.5" width="7.5" height="7.5" rx="2.5" fill="#C4B5FD" stroke="white" strokeWidth="2"/>
+        <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2.5" fill="white" fillOpacity="0.35" stroke="white" strokeWidth="2"/>
       </svg>
     ),
   },

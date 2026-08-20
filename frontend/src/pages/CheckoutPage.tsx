@@ -11,20 +11,19 @@ import {
   Zap, 
   CheckCircle2, 
   ShoppingBag, 
-  Sparkles,
-  User,
-  Users,
-  ExternalLink,
-  PhoneCall,
-  Camera,
-  Upload,
-  Tag,
-  Gift,
-  X,
-  ChevronRight,
-  ArrowRight,
-  Loader2,
-  AlertCircle
+  User, 
+  Users, 
+  ExternalLink, 
+  PhoneCall, 
+  Camera, 
+  Upload, 
+  Tag, 
+  Gift, 
+  X, 
+  ChevronRight, 
+  ArrowRight, 
+  Loader2, 
+  AlertCircle 
 } from 'lucide-react';
 
 interface CheckoutPageProps {
@@ -386,7 +385,7 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-black uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" /> Order Placed Successfully
+              <CheckCircle2 className="w-3.5 h-3.5" /> Order Placed Successfully
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
               Thank You, {orderSuccess.name}!
@@ -578,7 +577,7 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
           <div>
             <div className="mb-8">
               <span className="inline-flex items-center gap-1 text-xs font-extrabold uppercase tracking-wider text-brand-700 bg-brand-50 px-3 py-1 rounded-full border border-brand-200 mb-2">
-                <Sparkles className="w-3.5 h-3.5" /> Step 1 of 2: Details & Review
+                <Zap className="w-3.5 h-3.5 text-brand-600" /> Step 1 of 2: Details & Review
               </span>
               <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
                 Review Order & <span className="gradient-text">Customer Details</span>
@@ -1004,13 +1003,13 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
 
       </div>
 
-      {/* ================= FLOATING ACTIVE OFFERS BUTTON ================= */}
+      {/* ================= FLOATING ACTIVE OFFERS BUTTON (LEFT SIDE TO AVOID WHATSAPP OVERLAP) ================= */}
       {activeCoupons.length > 0 && currentStep !== 'success' && (
-        <div className="fixed bottom-6 right-4 sm:right-8 z-30">
+        <div className="fixed bottom-6 left-4 sm:left-8 z-30">
           <button
             type="button"
             onClick={() => setIsOfferTrayOpen(true)}
-            className="group px-4 py-3 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white rounded-2xl shadow-xl shadow-orange-500/30 flex items-center gap-2.5 text-xs font-extrabold transition-all hover:scale-105 active:scale-95 animate-bounce"
+            className="group px-4 py-3 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white rounded-2xl shadow-xl shadow-orange-500/30 flex items-center gap-2.5 text-xs font-extrabold transition-all hover:scale-105 active:scale-95 animate-bounce cursor-pointer"
           >
             <Gift className="w-4 h-4 text-amber-200" />
             <span className="hidden sm:inline">Active Offers & Coupons</span>

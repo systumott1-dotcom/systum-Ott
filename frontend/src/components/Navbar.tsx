@@ -11,7 +11,8 @@ import {
   PackagePlus, 
   Music, 
   Flame, 
-  Sparkles, 
+  LayoutGrid, 
+  TrendingUp,
   User, 
   Sliders,
   ArrowRight
@@ -126,7 +127,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'combo' as CategoryId, label: 'COMBO', icon: PackagePlus },
     { id: 'music' as CategoryId, label: 'Music', icon: Music },
     { id: 'adult' as CategoryId, label: 'Adult', icon: Flame },
-    { id: 'other' as CategoryId, label: 'Other', icon: Sparkles },
+    { id: 'other' as CategoryId, label: 'Other', icon: LayoutGrid },
   ];
 
   const handleCategoryClick = (catId: CategoryId) => {
@@ -253,7 +254,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 md:w-96 bg-white rounded-2xl border border-slate-200 shadow-2xl p-2.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150 max-h-96 overflow-y-auto">
                         <div className="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100 flex items-center justify-between">
                           <span className="flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-amber-500" /> Suggestions
+                            <TrendingUp className="w-3 h-3 text-brand-600" /> Suggestions
                           </span>
                           <span>{searchMatches.length} Found</span>
                         </div>

@@ -40,7 +40,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'other',
     name: 'Other',
-    icon: 'Sparkles',
+    icon: 'LayoutGrid',
     description: 'AI Tools, Cloud, VPN, Education & Digital Utilities',
   },
 ];
