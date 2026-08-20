@@ -70,7 +70,7 @@ export const Footer: React.FC<FooterProps> = ({ onSelectCategory, onOpenPolicy }
             </div>
 
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
-              India's most reliable and affordable digital subscription marketplace. Get OTT apps, software licenses, and AI tools with instant WhatsApp delivery and full-term replacement warranty.
+              India's most reliable and affordable digital subscription marketplace. Get OTT apps, software licenses, and AI tools with Instant Delivery Via WhatsApp and full-term replacement warranty.
             </p>
 
             <div className="pt-2 flex items-center gap-3 text-xs text-emerald-400 font-semibold">

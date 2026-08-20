@@ -80,7 +80,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
               )}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              {loading ? 'Loading products...' : `Showing ${filteredProducts.length} verified digital plans with instant WhatsApp delivery`}
+              {loading ? 'Loading products...' : `Showing ${filteredProducts.length} verified digital plans with Instant Delivery Via WhatsApp`}
             </p>
           </div>
 

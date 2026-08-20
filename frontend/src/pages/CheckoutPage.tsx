@@ -151,7 +151,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
         quantity: item.quantity,
         accountType: item.accountType,
         imageUrl: undefined,
-        features: ['Instant WhatsApp Dispatch', 'PIN Security', 'Replacement Warranty'],
+        features: ['Instant Delivery Via WhatsApp', 'PIN Security', 'Replacement Warranty'],
         warrantyType: 'Full-Term Replacement Warranty',
         warrantyDays: 30,
       }));
@@ -344,7 +344,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
       }
 
       setCurrentStep('success');
-      toast.success(`Order #${assignedOrderId} recorded! WhatsApp delivery is being prepared.`);
+      toast.success(`Order #${assignedOrderId} recorded! Instant Delivery Via WhatsApp is being prepared.`);
     } catch {
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
       setOrderSuccess({
@@ -581,7 +581,7 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
 
           <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500 font-semibold">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Instant WhatsApp Delivery Guaranteed</span>
+            <span>Instant Delivery Via WhatsApp Guaranteed</span>
           </div>
         </div>
       </div>
@@ -612,7 +612,7 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
                 <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
                   <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900 border-b border-slate-100 pb-3">
                     <User className="w-4 h-4 text-brand-600" />
-                    <span>WhatsApp Delivery & Contact Info</span>
+                    <span>Instant Delivery Via WhatsApp & Contact Info</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

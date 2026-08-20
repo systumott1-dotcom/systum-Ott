@@ -24,7 +24,7 @@ export const HowItWorks: React.FC = () => {
     },
     {
       step: '03',
-      title: 'Get Instant WhatsApp Delivery',
+      title: 'Instant Delivery Via WhatsApp',
       description:
         'Login credentials, family invite link, or official license key will be sent directly to your WhatsApp within 5 minutes.',
       icon: MessageSquare,

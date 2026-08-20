@@ -10,7 +10,7 @@ export const AnnouncementBar: React.FC = () => {
           <span className="bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
             <Flame className="w-3 h-3 text-amber-300" /> Flash Sale
           </span>
-          <span>Save up to 90% on Premium Subscriptions • Instant WhatsApp Delivery</span>
+          <span>Save up to 90% on Premium Subscriptions • Instant Delivery Via WhatsApp</span>
         </div>
 
         <div className="hidden md:flex items-center gap-6 text-slate-200">

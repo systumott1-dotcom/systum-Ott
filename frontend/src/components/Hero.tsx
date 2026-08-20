@@ -47,7 +47,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
             {/* Subheading */}
             <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
               Netflix 4K, Amazon Prime, Hotstar, Adobe CC, MS Office, ChatGPT & 50+ premium tools. 
-              <strong className="text-slate-900 font-bold"> Instant WhatsApp delivery</strong> with <strong className="text-brand-700 font-bold">100% full-term replacement warranty</strong>.
+              <strong className="text-slate-900 font-bold"> Instant Delivery Via WhatsApp</strong> with <strong className="text-brand-700 font-bold">100% full-term replacement warranty</strong>.
             </p>
 
             {/* Action Buttons */}

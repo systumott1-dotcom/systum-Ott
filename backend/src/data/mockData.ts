@@ -92,7 +92,7 @@ export const PRODUCTS = [
       'Private login or dedicated personal screen',
       'Full 4K Ultra HD streaming quality',
       'Supports all languages and regional cinema',
-      'Instant WhatsApp credential delivery',
+      'Instant Delivery Via WhatsApp',
     ],
     plans: [
       { name: 'Shared (1 Device)', validity: '30 Days', originalPrice: 299, discountedPrice: 69 },

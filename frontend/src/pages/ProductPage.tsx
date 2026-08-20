@@ -317,7 +317,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                 <span className="text-slate-400">·</span>
                 <div className="flex items-center gap-1 font-semibold">
                   <Zap className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Instant WhatsApp Delivery</span>
+                  <span>Instant Delivery Via WhatsApp</span>
                 </div>
               </div>
             </div>
@@ -522,10 +522,10 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                     </div>
                     <div className="min-w-0">
                       <h5 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight truncate">
-                        WhatsApp Delivery
+                        Instant Delivery Via WhatsApp
                       </h5>
                       <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-tight mt-0.5">
-                        Secure & direct
+                        Within 5 minutes
                       </p>
                     </div>
                   </div>
