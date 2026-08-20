@@ -43,6 +43,7 @@ export interface Product {
   rating: number;
   reviewsCount: number;
   inStock?: boolean;
+  displayOrder?: number;
 }
 
 export interface CartItem {

@@ -32,7 +32,9 @@ import {
   Sparkles,
   RefreshCw,
   Lock,
-  KeyRound
+  KeyRound,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import type { Product, ProductPlan } from '../types';
 import { CATEGORIES } from '../data/products';
@@ -444,6 +446,44 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         }
       },
     });
+  };
+
+  // Move product to target position number (1-indexed)
+  const handleMoveProduct = async (id: string, targetPosition: number) => {
+    const currentIndex = products.findIndex((p) => p.id === id);
+    if (currentIndex === -1) return;
+    const newIndex = Math.max(0, Math.min(products.length - 1, targetPosition - 1));
+    if (currentIndex === newIndex) return;
+
+    // Optimistic UI update
+    const updated = [...products];
+    const [moved] = updated.splice(currentIndex, 1);
+    updated.splice(newIndex, 0, moved);
+    setProducts(updated);
+
+    try {
+      const res = await fetch(`/api/admin/products/${id}/move`, {
+        method: 'PUT',
+        headers: apiHeaders(),
+        body: JSON.stringify({ targetPosition }),
+      });
+      const data = await res.json();
+      if (data.success && data.products) {
+        setProducts(data.products);
+        toast.success(data.message || `Moved to #${targetPosition}! ✨`);
+      }
+    } catch {
+      toast.error('Failed to update product position.');
+    }
+  };
+
+  // Shift product up or down by 1 slot
+  const handleShiftProduct = async (id: string, direction: 'up' | 'down') => {
+    const currentIndex = products.findIndex((p) => p.id === id);
+    if (currentIndex === -1) return;
+    const targetPosition = direction === 'up' ? currentIndex : currentIndex + 2;
+    if (targetPosition < 1 || targetPosition > products.length) return;
+    await handleMoveProduct(id, targetPosition);
   };
 
   const handleEditProduct = (product: Product) => {
@@ -952,8 +992,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         {/* PRODUCTS TAB */}
         {activeTab === 'products' && (
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-extrabold text-slate-900">Product Manager</h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                  <Package className="w-5 h-5 text-brand-600" />
+                  <span>Product Manager & Numbering</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Change product position numbers below. Storefront displays products in this exact order (#1 = Top 1st item).
+                </p>
+              </div>
               <button
                 onClick={() => {
                   setEditingProduct(null);
@@ -976,7 +1024,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                   setImagePreview('');
                   setIsAddProductModalOpen(true);
                 }}
-                className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold shadow-md"
+                className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold shadow-md cursor-pointer shrink-0"
               >
                 <Plus className="w-4 h-4" /> Add Product
               </button>
@@ -995,8 +1043,66 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {products.map((product) => (
-                  <div key={product.id} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 hover:shadow-md transition-shadow">
+                {products.map((product, idx) => (
+                  <div key={product.id} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 hover:shadow-md transition-shadow relative">
+                    
+                    {/* Position Numbering & Reorder Controls */}
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100 bg-slate-50/70 -mx-5 -mt-5 px-4 pt-3.5 rounded-t-2xl">
+                      <div className="flex items-center gap-2">
+                        <span className={`flex items-center justify-center px-2 py-0.5 rounded-lg text-white text-[11px] font-black shadow-2xs ${
+                          idx === 0 
+                            ? 'bg-gradient-to-r from-amber-500 to-orange-500' 
+                            : idx === 1 
+                            ? 'bg-gradient-to-r from-slate-600 to-slate-700'
+                            : 'bg-gradient-to-r from-brand-600 to-indigo-600'
+                        }`}>
+                          #{idx + 1} {idx === 0 ? '★ 1st' : ''}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-500">Display Order</span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        {/* Position Selector Dropdown */}
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] text-slate-400 font-bold">Pos:</span>
+                          <select
+                            value={idx + 1}
+                            onChange={(e) => handleMoveProduct(product.id, Number(e.target.value))}
+                            className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-[11px] font-extrabold text-brand-700 focus:outline-none focus:ring-1 focus:ring-brand-500 cursor-pointer shadow-2xs"
+                            title="Change product ranking number (e.g. choose #1 to move to first place)"
+                          >
+                            {products.map((_, posIdx) => (
+                              <option key={posIdx + 1} value={posIdx + 1}>
+                                #{posIdx + 1} {posIdx === 0 ? '(Top 1)' : ''}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Move Up Button */}
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={() => handleShiftProduct(product.id, 'up')}
+                          className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-brand-600 hover:bg-brand-50 disabled:opacity-25 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                          title="Move Up by 1 position"
+                        >
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        </button>
+
+                        {/* Move Down Button */}
+                        <button
+                          type="button"
+                          disabled={idx === products.length - 1}
+                          onClick={() => handleShiftProduct(product.id, 'down')}
+                          className="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:text-brand-600 hover:bg-brand-50 disabled:opacity-25 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                          title="Move Down by 1 position"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
                     {product.imageUrl && (
                       <img src={product.imageUrl} alt={product.title} className="w-full h-32 object-cover rounded-xl" />
                     )}

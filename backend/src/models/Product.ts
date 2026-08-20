@@ -34,6 +34,7 @@ export interface IProduct extends Document {
   reviewsCount: number;
   tags?: string[];
   inStock: boolean;
+  displayOrder?: number;
   sourceVendor?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -74,6 +75,7 @@ const ProductSchema: Schema = new Schema(
     rating: { type: Number, default: 5.0 },
     reviewsCount: { type: Number, default: 120 },
     inStock: { type: Boolean, default: true },
+    displayOrder: { type: Number, default: 0, index: true },
     sourceVendor: { type: String, default: 'Licensed Aggregator (Eneba / Volume)' },
   },
   { timestamps: true }

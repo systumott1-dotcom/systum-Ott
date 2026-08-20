@@ -143,12 +143,117 @@ adminRouter.get('/products', async (_req, res) => {
   try {
     const isDbConnected = mongoose.connection.readyState === 1;
     if (isDbConnected) {
-      const products = await Product.find().sort({ createdAt: -1 });
+      const products = await Product.find().sort({ displayOrder: 1, createdAt: -1 });
       return res.json({ success: true, products });
     }
-    res.json({ success: true, products: adminProducts });
+    const sorted = [...adminProducts].sort((a, b) => ((a.displayOrder ?? 9999) - (b.displayOrder ?? 9999)));
+    res.json({ success: true, products: sorted });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to fetch products' });
+  }
+});
+
+// PUT /api/admin/products/reorder (Save new product ordering list)
+adminRouter.put('/products/reorder', async (req, res) => {
+  try {
+    const { orderedIds } = req.body;
+    if (!Array.isArray(orderedIds)) {
+      return res.status(400).json({ success: false, message: 'orderedIds must be an array of product IDs' });
+    }
+
+    const isDbConnected = mongoose.connection.readyState === 1;
+    if (isDbConnected) {
+      const bulkOps = orderedIds.map((id: string, index: number) => ({
+        updateOne: {
+          filter: { id },
+          update: { $set: { displayOrder: index } },
+        },
+      }));
+      await Product.bulkWrite(bulkOps);
+      const updatedProducts = await Product.find().sort({ displayOrder: 1, createdAt: -1 });
+      return res.json({ success: true, message: 'Products reordered successfully! ✨', products: updatedProducts });
+    }
+
+    // In-memory fallback
+    const idToIndex = new Map<string, number>(orderedIds.map((id: string, idx: number) => [id, idx]));
+    adminProducts.forEach((p) => {
+      if (idToIndex.has(p.id)) {
+        p.displayOrder = idToIndex.get(p.id)!;
+      }
+    });
+    adminProducts.sort((a, b) => (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999));
+    res.json({ success: true, message: 'Products reordered successfully! ✨', products: adminProducts });
+  } catch (error) {
+    console.error('Reorder error:', error);
+    res.status(500).json({ success: false, message: 'Failed to reorder products' });
+  }
+});
+
+// PUT /api/admin/products/:id/move (Move a product to a specific position number or swap)
+adminRouter.put('/products/:id/move', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { targetPosition, swapWithId, direction } = req.body;
+    const isDbConnected = mongoose.connection.readyState === 1;
+
+    let currentList: any[] = [];
+    if (isDbConnected) {
+      currentList = await Product.find().sort({ displayOrder: 1, createdAt: -1 });
+    } else {
+      currentList = [...adminProducts].sort((a, b) => (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999));
+    }
+
+    const currentIndex = currentList.findIndex((p) => p.id === id);
+    if (currentIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    let newIndex = currentIndex;
+
+    if (swapWithId) {
+      // Direct swap between two products
+      const targetIdx = currentList.findIndex((p) => p.id === swapWithId);
+      if (targetIdx !== -1) {
+        const temp = currentList[currentIndex];
+        currentList[currentIndex] = currentList[targetIdx];
+        currentList[targetIdx] = temp;
+      }
+    } else if (typeof targetPosition === 'number') {
+      // 1-indexed target position (e.g. position 1 = index 0)
+      newIndex = Math.max(0, Math.min(currentList.length - 1, targetPosition - 1));
+      const [movedItem] = currentList.splice(currentIndex, 1);
+      currentList.splice(newIndex, 0, movedItem);
+    } else if (direction === 'up' && currentIndex > 0) {
+      const temp = currentList[currentIndex];
+      currentList[currentIndex] = currentList[currentIndex - 1];
+      currentList[currentIndex - 1] = temp;
+    } else if (direction === 'down' && currentIndex < currentList.length - 1) {
+      const temp = currentList[currentIndex];
+      currentList[currentIndex] = currentList[currentIndex + 1];
+      currentList[currentIndex + 1] = temp;
+    }
+
+    // Assign consecutive 0-indexed displayOrder to all items
+    const orderedIds = currentList.map((p) => p.id);
+
+    if (isDbConnected) {
+      const bulkOps = orderedIds.map((pId: string, index: number) => ({
+        updateOne: {
+          filter: { id: pId },
+          update: { $set: { displayOrder: index } },
+        },
+      }));
+      await Product.bulkWrite(bulkOps);
+      const updatedProducts = await Product.find().sort({ displayOrder: 1, createdAt: -1 });
+      return res.json({ success: true, message: `Product position updated to #${newIndex + 1}! ✨`, products: updatedProducts });
+    }
+
+    // In-memory fallback
+    adminProducts = currentList.map((p, idx) => ({ ...p, displayOrder: idx }));
+    res.json({ success: true, message: `Product position updated to #${newIndex + 1}! ✨`, products: adminProducts });
+  } catch (error) {
+    console.error('Move product error:', error);
+    res.status(500).json({ success: false, message: 'Failed to move product' });
   }
 });
 

@@ -28,7 +28,7 @@ productsRouter.get('/', async (req, res) => {
           { features: { $regex: q, $options: 'i' } },
         ];
       }
-      const products = await Product.find(filter).sort({ createdAt: -1 });
+      const products = await Product.find(filter).sort({ displayOrder: 1, createdAt: -1 });
       return res.json({ success: true, count: products.length, products });
     }
 
@@ -47,6 +47,7 @@ productsRouter.get('/', async (req, res) => {
           p.features.some((f: string) => f.toLowerCase().includes(q))
       );
     }
+    filtered.sort((a, b) => ((a as any).displayOrder ?? 9999) - ((b as any).displayOrder ?? 9999));
     res.json({ success: true, count: filtered.length, products: filtered });
   } catch (error) {
     console.error('Products fetch error:', error);
