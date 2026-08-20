@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCart, WHATSAPP_PHONE } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
@@ -8,7 +8,6 @@ import {
   ShieldCheck, 
   Copy, 
   Check, 
-  MessageCircle, 
   Zap, 
   CheckCircle2, 
   ShoppingBag, 
@@ -17,14 +16,26 @@ import {
   Users,
   ExternalLink,
   PhoneCall,
-  Lock,
-  Headphones,
   Camera,
-  Upload
+  Upload,
+  Tag,
+  Gift,
+  X,
+  ChevronRight,
+  ArrowRight,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 
 interface CheckoutPageProps {
   onBackToStore: () => void;
+}
+
+interface ActiveCoupon {
+  code: string;
+  type: 'percentage' | 'flat';
+  value: number;
+  minOrderValue?: number;
 }
 
 export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => {
@@ -41,6 +52,10 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
     clearCart,
   } = useCart();
 
+  // Multi-step state: 'checkout' (Step 1: Info & Cart) -> 'payment' (Step 2: UPI & Screenshot) -> 'success'
+  const [currentStep, setCurrentStep] = useState<'checkout' | 'payment' | 'success'>('checkout');
+
+  // Customer Form State
   const [name, setName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
@@ -54,31 +69,28 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
   const [copiedPhone, setCopiedPhone] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Active coupons for floating offer tray
+  const [activeCoupons, setActiveCoupons] = useState<ActiveCoupon[]>([]);
+  const [isOfferTrayOpen, setIsOfferTrayOpen] = useState(false);
 
-    if (file.size > 8 * 1024 * 1024) {
-      setScreenshotError('Screenshot size must be under 8MB');
-      toast.error('File too large. Please upload an image under 8MB.');
-      return;
-    }
+  // Fetch active coupons on mount
+  useEffect(() => {
+    fetch('/api/coupons')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.coupons)) {
+          setActiveCoupons(d.coupons);
+        }
+      })
+      .catch(() => {
+        setActiveCoupons([
+          { code: 'SAVE10', type: 'percentage', value: 10, minOrderValue: 0 },
+          { code: 'EXTRA10', type: 'percentage', value: 10, minOrderValue: 0 },
+          { code: 'SUPER50', type: 'flat', value: 50, minOrderValue: 499 },
+        ]);
+      });
+  }, []);
 
-    setScreenshotError('');
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setPaymentScreenshot(base64);
-      setScreenshotPreview(base64);
-      toast.success('Payment screenshot selected! 📸');
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRemoveScreenshot = () => {
-    setPaymentScreenshot('');
-    setScreenshotPreview('');
-  };
   const [orderSuccess, setOrderSuccess] = useState<{
     id: string;
     name: string;
@@ -104,7 +116,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
           accountType: checkoutItem.product.accountType,
           imageUrl: checkoutItem.product.imageUrl,
           features: checkoutItem.product.features,
-          compatibility: checkoutItem.product.compatibility,
           warrantyType: checkoutItem.product.warrantyType || 'Full-Term Replacement Warranty',
           warrantyDays: checkoutItem.product.warrantyDays,
         },
@@ -120,7 +131,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
         accountType: item.accountType,
         imageUrl: undefined,
         features: ['Instant WhatsApp Dispatch', 'PIN Security', 'Replacement Warranty'],
-        compatibility: ['Mobile', 'Smart TV', 'PC', 'Tablet'],
         warrantyType: 'Full-Term Replacement Warranty',
         warrantyDays: 30,
       }));
@@ -129,6 +139,32 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
   const upiId = 'systumott.pay@okhdfcbank';
   const upiPayUrl = `upi://pay?pa=${upiId}&pn=Systum%20OTT%20India&am=${finalAmount}&cu=INR&tn=Order%20Subscription`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiPayUrl)}`;
+
+  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+      setScreenshotError('Screenshot size must be under 8MB');
+      toast.error('File too large. Please upload an image under 8MB.');
+      return;
+    }
+
+    setScreenshotError('');
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setPaymentScreenshot(base64);
+      setScreenshotPreview(base64);
+      toast.success('Payment screenshot uploaded! 📸');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveScreenshot = () => {
+    setPaymentScreenshot('');
+    setScreenshotPreview('');
+  };
 
   const handleCopyUPI = () => {
     navigator.clipboard.writeText(upiId);
@@ -144,24 +180,48 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
     setTimeout(() => setCopiedPhone(false), 2000);
   };
 
-  const handleApplyCoupon = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleApplyCoupon = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!couponInput.trim()) return;
     const ok = applyPromoCode(couponInput);
     if (ok) {
       toast.success(`Coupon ${couponInput.toUpperCase()} applied successfully! 🎉`);
       setCouponInput('');
+      confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
     } else {
-      toast.error('Invalid coupon code. Try SAVE10 or EXTRA10.');
+      toast.error('Invalid or expired coupon code.');
     }
   };
 
-  const handleSubmitOrder = async (e: React.FormEvent) => {
+  const handleApplyQuickCoupon = (code: string) => {
+    const ok = applyPromoCode(code);
+    if (ok) {
+      toast.success(`Coupon ${code} applied successfully! 🎉`);
+      setIsOfferTrayOpen(false);
+      confetti({ particleCount: 70, spread: 70, origin: { y: 0.7 } });
+    } else {
+      toast.error(`Could not apply coupon ${code}. Check minimum order requirement.`);
+    }
+  };
+
+  // Step 1 Validation -> Move to Payment
+  const handleProceedToPayment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !whatsapp.trim()) {
-      toast.warning('Please enter your Name and WhatsApp phone number.');
+    if (!name.trim()) {
+      toast.warning('Please enter your full name.');
       return;
     }
+    if (!whatsapp.trim() || whatsapp.trim().length < 10) {
+      toast.warning('Please enter a valid 10-digit WhatsApp phone number.');
+      return;
+    }
+    setCurrentStep('payment');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Step 2 Submission -> Process Order & Verification
+  const handleSubmitOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
 
     if (!paymentScreenshot) {
       setScreenshotError('Payment screenshot is mandatory. Please upload a screenshot of your UPI payment.');
@@ -268,6 +328,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
         clearCart();
       }
 
+      setCurrentStep('success');
       toast.success(`Order #${assignedOrderId} recorded! WhatsApp delivery is being prepared.`);
     } catch {
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
@@ -282,19 +343,21 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
         items,
       });
       if (!isDirectBuy) clearCart();
+      setCurrentStep('success');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // POST-PAYMENT SUCCESS SCREEN
-  if (orderSuccess) {
-    const productListStr = orderSuccess.items.map((i) => `${i.title} - ${i.plan}`).join(', ');
-    const formattedReceiptText = `*🎉 Thank You for Your Order!*
+  // SUCCESS STEP VIEW
+  if (currentStep === 'success' && orderSuccess) {
+    const productListStr = orderSuccess.items
+      .map((i) => `${i.title} (${i.plan}) x ${i.quantity}`)
+      .join(', ');
 
-📦 Order Details
-Order ID: #${orderSuccess.id}
-📨 Email / Number - ${orderSuccess.email ? `${orderSuccess.email} / ` : ''}+91 ${orderSuccess.whatsapp}
+    const formattedReceiptText = `*🎉 ORDER DETAILS #${orderSuccess.id}*
+Name: ${orderSuccess.name}
+📨 Email / Number: ${orderSuccess.email ? `${orderSuccess.email} / ` : ''}+91 ${orderSuccess.whatsapp}
 Product: ${productListStr}
 💰 Amount: ₹${orderSuccess.totalPaid}
 📅 Purchase Date: ${orderSuccess.purchaseDate}
@@ -409,7 +472,7 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
                 onClick={handleCopyPhoneNumber}
                 className="text-[11px] font-bold text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
               >
-                {copiedPhone ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                {copiedPhone ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedPhone ? 'Number Copied' : 'Copy Number'}</span>
               </button>
             </div>
@@ -442,7 +505,7 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
     );
   }
 
-  // If no items
+  // If no items in cart
   if (items.length === 0) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 text-center space-y-4">
@@ -465,19 +528,43 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/60 pb-20">
+    <div className="min-h-screen bg-slate-50/60 pb-20 relative">
       
-      {/* Top Header */}
+      {/* Top Header & Breadcrumb Progress */}
       <div className="bg-white border-b border-slate-200 sticky top-20 z-20 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <button
-            onClick={onBackToStore}
+            onClick={currentStep === 'payment' ? () => setCurrentStep('checkout') : onBackToStore}
             className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-brand-600 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Store</span>
+            <span>{currentStep === 'payment' ? 'Back to Customer Details' : 'Back to Store'}</span>
           </button>
-          <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold">
+
+          {/* Clean 2-Step Progress Indicator */}
+          <div className="flex items-center gap-2 text-xs font-bold">
+            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all ${
+              currentStep === 'checkout'
+                ? 'bg-brand-600 text-white shadow-xs'
+                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            }`}>
+              <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[10px]">1</span>
+              <span>Order Details</span>
+            </div>
+
+            <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
+
+            <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full transition-all ${
+              currentStep === 'payment'
+                ? 'bg-brand-600 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-400'
+            }`}>
+              <span className="w-4 h-4 rounded-full bg-black/10 flex items-center justify-center text-[10px]">2</span>
+              <span>UPI Payment & Proof</span>
+            </div>
+          </div>
+
+          <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500 font-semibold">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
             <span>Instant WhatsApp Delivery Guaranteed</span>
           </div>
@@ -486,462 +573,533 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         
-        <div className="mb-8">
-          <span className="inline-flex items-center gap-1 text-xs font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 mb-2">
-            <MessageCircle className="w-3.5 h-3.5 text-emerald-600" /> WhatsApp Instant Delivery
-          </span>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-            Checkout & <span className="gradient-text">Payment</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Pay via UPI and receive your login credentials directly on WhatsApp.
-          </p>
-        </div>
+        {/* ================= STEP 1: CHECKOUT & CUSTOMER DETAILS ================= */}
+        {currentStep === 'checkout' && (
+          <div>
+            <div className="mb-8">
+              <span className="inline-flex items-center gap-1 text-xs font-extrabold uppercase tracking-wider text-brand-700 bg-brand-50 px-3 py-1 rounded-full border border-brand-200 mb-2">
+                <Sparkles className="w-3.5 h-3.5" /> Step 1 of 2: Details & Review
+              </span>
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                Review Order & <span className="gradient-text">Customer Details</span>
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                Enter your WhatsApp number to receive your instant digital subscription credentials.
+              </p>
+            </div>
 
-        {/* 2-Column Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
-          {/* LEFT COLUMN: Form + UPI Payment (7 cols) */}
-          <div className="lg:col-span-7 space-y-6">
-            
-            <form onSubmit={handleSubmitOrder} className="space-y-6">
+            <form onSubmit={handleProceedToPayment} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               
-              {/* Customer Info Card */}
-              <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200 shadow-sm space-y-4">
-                <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900 border-b border-slate-100 pb-3">
-                  <User className="w-4 h-4 text-brand-600" />
-                  <span>Customer & WhatsApp Delivery Details</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                      Your Full Name *
-                    </label>
-                    <input
-                      required
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Rahul Sharma"
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-                    />
+              {/* Left Column: Customer Form (7 cols) */}
+              <div className="lg:col-span-7 space-y-6">
+                
+                {/* Customer Details Box */}
+                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
+                  <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900 border-b border-slate-100 pb-3">
+                    <User className="w-4 h-4 text-brand-600" />
+                    <span>WhatsApp Delivery & Contact Info</span>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1.5 flex items-center justify-between">
-                      <span>WhatsApp Number *</span>
-                      <span className="text-[10px] text-emerald-600 font-extrabold">Delivery will be sent here</span>
-                    </label>
-                    <div className="relative">
-                      <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs font-bold text-slate-400">
-                        +91
-                      </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                        Full Name *
+                      </label>
                       <input
                         required
-                        type="tel"
-                        value={whatsapp}
-                        onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                        placeholder="98765 43210"
-                        className="w-full pl-12 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="e.g. Rahul Sharma"
+                        className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
                       />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                    Email Address (Optional)
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. rahul@example.com"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-                  />
-                  <span className="text-[10px] text-slate-400 mt-1 block">
-                    Optional receipt copy sent to email
-                  </span>
-                </div>
-              </div>
-
-              {/* UPI Payment Card */}
-              <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200 shadow-sm space-y-5">
-                <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900 border-b border-slate-100 pb-3">
-                  <Zap className="w-4 h-4 text-amber-500" />
-                  <span>Scan QR Code or Pay via UPI</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
-                  
-                  {/* QR Code */}
-                  <div className="sm:col-span-5 text-center space-y-2">
-                    <div className="p-3 bg-white rounded-2xl border-2 border-slate-200 shadow-inner inline-block">
-                      <img
-                        src={qrCodeUrl}
-                        alt="UPI QR Code"
-                        className="w-44 h-44 object-contain mx-auto rounded-lg"
-                      />
-                    </div>
-                    <span className="text-[11px] text-slate-500 font-bold block">
-                      GPay · PhonePe · Paytm · BHIM
-                    </span>
-                  </div>
-
-                  {/* UPI Details & Copy */}
-                  <div className="sm:col-span-7 space-y-4">
-                    <div>
-                      <span className="text-xs font-bold text-slate-500 block mb-1">
-                        Amount to Pay:
-                      </span>
-                      <span className="text-3xl font-black text-slate-900">
-                        ₹{finalAmount}
-                      </span>
                     </div>
 
                     <div>
-                      <span className="text-xs font-bold text-slate-500 block mb-1">
-                        Official Merchant UPI ID:
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs font-bold text-slate-800 truncate">
-                          {upiId}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleCopyUPI}
-                          className="px-3.5 py-2.5 bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0"
-                        >
-                          {copiedUPI ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                          <span>{copiedUPI ? 'Copied!' : 'Copy'}</span>
-                        </button>
+                      <label className="text-xs font-bold text-slate-700 block mb-1.5 flex items-center justify-between">
+                        <span>WhatsApp Number *</span>
+                        <span className="text-[10px] text-emerald-600 font-extrabold">Instant Delivery</span>
+                      </label>
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-xs font-bold text-slate-500">
+                          +91
+                        </span>
+                        <input
+                          required
+                          type="tel"
+                          value={whatsapp}
+                          onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                          placeholder="98765 43210"
+                          className="w-full pl-12 pr-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                        />
                       </div>
                     </div>
+                  </div>
 
-                    {/* UTR Input */}
-                    <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">
-                        UPI Reference / UTR Number (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={utrNumber}
-                        onChange={(e) => setUtrNumber(e.target.value.replace(/\s+/g, ''))}
-                        placeholder="e.g. 423871928374"
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:bg-white focus:border-brand-500"
-                      />
-                      <span className="text-[10px] text-slate-400 mt-1 block">
-                        Found in your UPI app receipt after payment
-                      </span>
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                      Email Address (Optional)
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="e.g. rahul@gmail.com"
+                      className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                    />
+                    <span className="text-[11px] text-slate-400 mt-1 block">
+                      We'll dispatch your backup credentials & receipt here as well.
+                    </span>
+                  </div>
+                </div>
+
+                {/* Trust & Guarantee Highlights */}
+                <div className="grid grid-cols-2 gap-3.5">
+                  <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                      <Zap className="w-5 h-5" />
                     </div>
-
-                    {/* Mandatory Payment Screenshot Upload */}
-                    <div className="pt-2 border-t border-slate-100">
-                      <label className="text-xs font-bold text-slate-800 block mb-1.5 flex items-center justify-between">
-                        <span className="flex items-center gap-1.5">
-                          <Camera className="w-3.5 h-3.5 text-brand-600" />
-                          <span>Upload Payment Screenshot (Mandatory) *</span>
-                        </span>
-                        <span className="text-[10px] font-black uppercase text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
-                          Mandatory
-                        </span>
-                      </label>
-
-                      {screenshotPreview ? (
-                        <div className="relative rounded-2xl border-2 border-emerald-500/40 bg-emerald-50/20 p-3 flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <img
-                              src={screenshotPreview}
-                              alt="Payment Screenshot Preview"
-                              className="w-16 h-16 object-cover rounded-xl border border-slate-200 shadow-xs shrink-0"
-                            />
-                            <div className="min-w-0">
-                              <span className="text-xs font-extrabold text-emerald-800 flex items-center gap-1">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                <span>Screenshot Attached</span>
-                              </span>
-                              <p className="text-[10px] text-slate-500 truncate mt-0.5">
-                                Verified receipt ready for fast dispatch
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={handleRemoveScreenshot}
-                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-colors shrink-0"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ) : (
-                        <label className="flex flex-col items-center justify-center p-5 border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-2xl bg-slate-50 hover:bg-brand-50/20 cursor-pointer transition-all group text-center">
-                          <div className="w-10 h-10 rounded-full bg-brand-50 group-hover:bg-brand-100 text-brand-600 flex items-center justify-center mb-2 transition-colors">
-                            <Upload className="w-5 h-5" />
-                          </div>
-                          <span className="text-xs font-extrabold text-slate-800 group-hover:text-brand-700">
-                            Click to upload payment screenshot
-                          </span>
-                          <span className="text-[10px] text-slate-400 mt-0.5">
-                            PNG, JPG, JPEG or WEBP (Max 8MB)
-                          </span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleScreenshotChange}
-                            className="hidden"
-                            required
-                          />
-                        </label>
-                      )}
-
-                      {screenshotError && (
-                        <p className="text-xs text-rose-600 font-bold mt-1.5">{screenshotError}</p>
-                      )}
+                    <div>
+                      <strong className="text-xs font-extrabold text-slate-900 block">Instant Activation</strong>
+                      <span className="text-[10px] text-slate-500">Delivered within 5–15 mins</span>
                     </div>
                   </div>
 
+                  <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 shrink-0">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <strong className="text-xs font-extrabold text-slate-900 block">Full Replacement</strong>
+                      <span className="text-[10px] text-slate-500">100% Term Warranty</span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Final Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-[#25D366] to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-emerald-600/20 transition-all transform hover:-translate-y-0.5 active:scale-98 flex items-center justify-center gap-2"
-                >
-                  <WhatsAppIcon className="w-5 h-5 fill-white" />
-                  <span>{isSubmitting ? 'Recording Order...' : `Confirm Payment & Get Delivered to Your WhatsApp · ₹${finalAmount}`}</span>
-                </button>
+              </div>
+
+              {/* Right Column: Order Summary & Coupon (5 cols) */}
+              <div className="lg:col-span-5 space-y-6">
+                
+                <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-5">
+                  <h3 className="text-base font-extrabold text-slate-900 border-b border-slate-100 pb-3 flex items-center justify-between">
+                    <span>Order Summary</span>
+                    <span className="text-xs font-bold text-slate-500">{items.length} {items.length === 1 ? 'Subscription' : 'Subscriptions'}</span>
+                  </h3>
+
+                  {/* Items List */}
+                  <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                    {items.map((item, idx) => (
+                      <div key={idx} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <h4 className="font-extrabold text-xs text-slate-900 truncate">{item.title}</h4>
+                          <span className="text-[11px] text-slate-500 font-medium">{item.plan} ({item.validity})</span>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="font-black text-xs text-slate-900">₹{item.price * item.quantity}</span>
+                          {item.originalPrice > item.price && (
+                            <span className="text-[10px] text-slate-400 line-through block">₹{item.originalPrice * item.quantity}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Coupon Application Box */}
+                  <div className="pt-2">
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Tag className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          value={couponInput}
+                          onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                          placeholder="Coupon Code (e.g. SAVE10)"
+                          className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold uppercase focus:outline-none focus:bg-white focus:border-brand-500"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleApplyCoupon()}
+                        className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all"
+                      >
+                        Apply
+                      </button>
+                    </div>
+
+                    {appliedPromo && (
+                      <div className="flex items-center justify-between mt-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-bold">
+                        <span className="flex items-center gap-1.5">
+                          <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>Code '{appliedPromo}' applied (-₹{discount})</span>
+                        </span>
+                        <button type="button" onClick={removePromoCode} className="text-rose-500 hover:text-rose-700 text-xs">
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Price Calculations */}
+                  <div className="space-y-2 pt-3 border-t border-slate-100 text-xs">
+                    <div className="flex justify-between text-slate-600">
+                      <span>Subtotal</span>
+                      <span className="font-bold">₹{subtotal || finalAmount + discount}</span>
+                    </div>
+                    {discount > 0 && (
+                      <div className="flex justify-between text-emerald-600 font-bold">
+                        <span>Coupon Discount</span>
+                        <span>-₹{discount}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-200">
+                      <span>Payable Amount</span>
+                      <span className="text-brand-700 text-xl font-black">₹{finalAmount}</span>
+                    </div>
+                  </div>
+
+                  {/* Proceed to Payment CTA */}
+                  <button
+                    type="submit"
+                    className="w-full py-4 px-6 rounded-2xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-sm shadow-lg shadow-brand-600/25 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                  >
+                    <span>Proceed to UPI Payment (₹{finalAmount})</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
 
               </div>
 
             </form>
-
           </div>
+        )}
 
-          {/* RIGHT COLUMN: Order Summary & Coupon Engine (5 cols) */}
-          <div className="lg:col-span-5 space-y-6">
-            
-            {/* Order Summary Card */}
-            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
-              <h3 className="text-base font-extrabold text-slate-900 border-b border-slate-100 pb-3">
-                Order Summary ({items.length} {items.length === 1 ? 'Item' : 'Items'})
-              </h3>
+        {/* ================= STEP 2: DEDICATED UPI PAYMENT & PROOF PAGE ================= */}
+        {currentStep === 'payment' && (
+          <div>
+            <div className="mb-8">
+              <span className="inline-flex items-center gap-1 text-xs font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 mb-2">
+                <Zap className="w-3.5 h-3.5 text-emerald-600" /> Step 2 of 2: UPI Payment & Proof
+              </span>
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                Scan UPI QR & <span className="gradient-text">Upload Payment Proof</span>
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                Scan QR or pay to UPI ID <strong className="font-mono text-slate-800">{upiId}</strong>, then upload screenshot proof.
+              </p>
+            </div>
 
-              {/* Items List */}
-              <div className="space-y-3.5">
-                {items.map((item, idx) => {
-                  const savings = Math.max(0, item.originalPrice - item.price);
-                  const discountPct = item.originalPrice > item.price
-                    ? Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)
-                    : 0;
-
-                  return (
-                    <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-                      <div className="flex items-start gap-3">
-                        <div className="w-14 h-14 rounded-xl bg-slate-900 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center relative shadow-xs">
-                          {item.imageUrl ? (
-                            <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
-                          ) : (
-                            <ShoppingBag className="w-6 h-6 text-brand-400" />
-                          )}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 mb-0.5">
-                            <span className="text-[9px] font-extrabold uppercase tracking-wider text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                              {item.category?.toUpperCase() || 'OTT'}
-                            </span>
-                            {discountPct > 0 && (
-                              <span className="text-[9px] font-black text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
-                                {discountPct}% OFF
-                              </span>
-                            )}
-                          </div>
-
-                          <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 leading-snug">
-                            {item.title}
-                          </h4>
-                          <span className="text-xs text-slate-600 font-semibold block mt-0.5">
-                            {item.plan} {item.validity && !item.plan.includes(item.validity) ? `· ${item.validity}` : ''}
-                          </span>
-                        </div>
-
-                        <div className="text-right shrink-0">
-                          <span className="text-base font-black text-slate-900 block">
-                            ₹{item.price * item.quantity}
-                          </span>
-                          {item.originalPrice > item.price && (
-                            <span className="text-xs text-slate-400 line-through block">
-                              ₹{item.originalPrice * item.quantity}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Detail Badges Row */}
-                      <div className="flex flex-wrap gap-1.5 text-[10px] font-bold">
-                        <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 flex items-center gap-1">
-                          <Lock className="w-3 h-3 text-brand-600" />
-                          <span>{item.accountType}</span>
-                        </span>
-
-                        <span className="px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-1">
-                          <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                          <span>{item.warrantyType}</span>
-                        </span>
-
-                        {savings > 0 && (
-                          <span className="px-2 py-0.5 rounded-md bg-emerald-100/70 text-emerald-900 border border-emerald-300">
-                            🏷️ You save ₹{savings * item.quantity}!
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Inclusions Highlights */}
-                      {item.features && item.features.length > 0 && (
-                        <div className="pt-2 border-t border-slate-200/60 text-[11px] text-slate-600 space-y-1">
-                          {item.features.slice(0, 3).map((feat, fIdx) => (
-                            <div key={fIdx} className="flex items-center gap-1.5 font-medium">
-                              <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                              <span className="truncate">{feat}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+            {/* Customer Summary Bar */}
+            <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 font-extrabold text-sm">
+                  {name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-extrabold text-slate-900">
+                    {name} <span className="text-slate-400 font-normal">·</span> +91 {whatsapp}
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Paying <strong className="text-brand-700 font-extrabold">₹{finalAmount}</strong> for {items.length} subscription plan(s)
+                  </p>
+                </div>
               </div>
 
-              {/* Coupon Engine */}
-              {!isDirectBuy && (
-                <div className="pt-3 border-t border-slate-100">
-                  {appliedPromo ? (
-                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
-                      <div>
-                        <span className="font-bold text-emerald-800 block">Coupon {appliedPromo} Applied!</span>
-                        <span className="text-[11px] text-emerald-600">-₹{discount} Discount</span>
-                      </div>
-                      <button
-                        onClick={removePromoCode}
-                        className="text-red-500 hover:text-red-700 font-bold"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ) : (
-                    <form onSubmit={handleApplyCoupon} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={couponInput}
-                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                        placeholder="Discount Code (e.g. SAVE10)"
-                        className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono uppercase"
-                      />
-                      <button
-                        type="submit"
-                        className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold"
-                      >
-                        Apply
-                      </button>
-                    </form>
-                  )}
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={() => setCurrentStep('checkout')}
+                className="text-xs font-bold text-brand-600 hover:text-brand-700 hover:underline self-start sm:self-center"
+              >
+                Edit Contact Details
+              </button>
+            </div>
 
-              {/* Price Breakdown */}
-              <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
-                <div className="flex justify-between text-slate-600">
-                  <span>Subtotal</span>
-                  <span>₹{isDirectBuy ? checkoutItem.plan.discountedPrice : subtotal}</span>
-                </div>
-                {discount > 0 && (
-                  <div className="flex justify-between text-emerald-600 font-bold">
-                    <span>Coupon Discount</span>
-                    <span>-₹{discount}</span>
+            <form onSubmit={handleSubmitOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* Left Column: QR Code & UPI Apps (6 cols) */}
+              <div className="lg:col-span-6 space-y-6">
+                
+                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <Zap className="w-4 h-4 text-amber-500" />
+                      <span>Scan QR Code to Pay</span>
+                    </span>
+                    <span className="text-xs font-black text-brand-700 bg-brand-50 px-2.5 py-1 rounded-lg border border-brand-200">
+                      ₹{finalAmount} Payable
+                    </span>
                   </div>
-                )}
-                <div className="flex justify-between text-slate-600">
-                  <span>WhatsApp Delivery Fee</span>
-                  <span className="text-emerald-600 font-bold">FREE</span>
+
+                  {/* QR Code Container */}
+                  <div className="text-center space-y-3">
+                    <div className="p-4 bg-white rounded-2xl border-2 border-slate-200 shadow-inner inline-block relative group">
+                      <img
+                        src={qrCodeUrl}
+                        alt="UPI QR Code"
+                        className="w-48 h-48 sm:w-56 sm:h-56 object-contain mx-auto rounded-lg"
+                      />
+                    </div>
+                    <span className="text-xs text-slate-500 font-bold block">
+                      Works with Google Pay, PhonePe, Paytm, BHIM & all UPI apps
+                    </span>
+                  </div>
+
+                  {/* UPI ID & Copy Box */}
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2">
+                    <span className="text-[11px] font-bold text-slate-500 block">Direct UPI ID:</span>
+                    <div className="flex items-center justify-between bg-white px-3.5 py-2.5 rounded-xl border border-slate-200">
+                      <span className="text-xs sm:text-sm font-mono font-black text-slate-900">{upiId}</span>
+                      <button
+                        type="button"
+                        onClick={handleCopyUPI}
+                        className="px-3 py-1 rounded-lg bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 text-xs font-extrabold flex items-center gap-1 transition-colors"
+                      >
+                        {copiedUPI ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedUPI ? 'Copied!' : 'Copy'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Mobile Quick Pay Links */}
+                  <div className="space-y-2 pt-2">
+                    <span className="text-xs font-bold text-slate-700 block">Quick Open in UPI App:</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <a
+                        href={upiPayUrl}
+                        className="py-2.5 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-brand-600" /> Google Pay / PhonePe
+                      </a>
+                      <a
+                        href={upiPayUrl}
+                        className="py-2.5 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-blue-600" /> Paytm / BHIM
+                      </a>
+                    </div>
+                  </div>
                 </div>
-                <div className="pt-3 border-t border-slate-200 flex justify-between items-baseline font-black text-base text-slate-900">
-                  <span>Total Payable</span>
-                  <span className="text-2xl font-black text-slate-900">₹{finalAmount}</span>
-                </div>
+
               </div>
 
-            </div>
+              {/* Right Column: Screenshot Proof & Final Confirm (6 cols) */}
+              <div className="lg:col-span-6 space-y-6">
+                
+                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
+                  <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900 border-b border-slate-100 pb-3">
+                    <Camera className="w-4 h-4 text-emerald-600" />
+                    <span>Upload Payment Proof (Mandatory)</span>
+                  </div>
 
-            {/* 2x2 Trust Cards under Order */}
-            <div className="grid grid-cols-2 gap-3 text-left">
-              {/* WhatsApp Delivery */}
-              <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
-                  <Zap className="w-4 h-4 fill-amber-500 text-amber-500" />
+                  {/* Payment Screenshot Dropzone */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                      <span>Payment Screenshot / Receipt *</span>
+                      <span className="text-[10px] text-rose-500 font-bold">Required for instant verification</span>
+                    </label>
+
+                    {!screenshotPreview ? (
+                      <label className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
+                        screenshotError 
+                          ? 'border-rose-400 bg-rose-50/40 text-rose-700' 
+                          : 'border-slate-300 hover:border-brand-500 bg-slate-50 hover:bg-brand-50/20 text-slate-600'
+                      }`}>
+                        <div className="w-12 h-12 rounded-2xl bg-white shadow-xs border border-slate-200 flex items-center justify-center text-brand-600">
+                          <Upload className="w-6 h-6" />
+                        </div>
+                        <div className="text-center">
+                          <span className="text-xs font-extrabold text-slate-800 block">
+                            Click to upload screenshot proof
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            PNG, JPG, JPEG up to 8MB
+                          </span>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleScreenshotChange}
+                          className="hidden"
+                        />
+                      </label>
+                    ) : (
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                        <div className="relative rounded-xl overflow-hidden border border-slate-200 max-h-56 bg-slate-900 flex items-center justify-center">
+                          <img
+                            src={screenshotPreview}
+                            alt="Payment Proof"
+                            className="max-h-56 w-auto object-contain"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-emerald-700 font-bold flex items-center gap-1">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Screenshot Attached
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleRemoveScreenshot}
+                            className="text-xs text-rose-600 hover:text-rose-700 font-bold hover:underline"
+                          >
+                            Remove / Replace
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {screenshotError && (
+                      <p className="text-xs text-rose-600 font-bold flex items-center gap-1 mt-1">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        <span>{screenshotError}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* UTR / Ref Number Field */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1.5 flex items-center justify-between">
+                      <span>UPI Reference / UTR Number</span>
+                      <span className="text-[10px] text-slate-400">12-digit number (Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={utrNumber}
+                      onChange={(e) => setUtrNumber(e.target.value.replace(/\s+/g, ''))}
+                      placeholder="e.g. 423891029381"
+                      className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                    />
+                  </div>
+
+                  {/* Place Order CTA */}
+                  <div className="pt-3 border-t border-slate-100 space-y-3">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full py-4 px-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Verifying & Recording Order...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-5 h-5 stroke-[2.5]" />
+                          <span>Confirm Payment & Place Order (₹{finalAmount})</span>
+                        </>
+                      )}
+                    </button>
+
+                    <p className="text-[11px] text-center text-slate-400 font-medium">
+                      🔒 256-Bit Encrypted & Protected by 100% Term Replacement Warranty
+                    </p>
+                  </div>
+
                 </div>
-                <div className="min-w-0">
-                  <h5 className="font-extrabold text-slate-900 text-xs leading-tight truncate">
-                    WhatsApp Delivery
-                  </h5>
-                  <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
-                    Secure & direct
-                  </p>
-                </div>
+
               </div>
 
-              {/* Full Warranty */}
-              <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                </div>
-                <div className="min-w-0">
-                  <h5 className="font-extrabold text-slate-900 text-xs leading-tight truncate">
-                    Full Warranty
-                  </h5>
-                  <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
-                    Duration covered
-                  </p>
-                </div>
-              </div>
-
-              {/* Secure Payment */}
-              <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
-                  <Lock className="w-4 h-4 text-indigo-600" />
-                </div>
-                <div className="min-w-0">
-                  <h5 className="font-extrabold text-slate-900 text-xs leading-tight truncate">
-                    Secure Payment
-                  </h5>
-                  <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
-                    UPI / QR Code
-                  </p>
-                </div>
-              </div>
-
-              {/* WhatsApp Support */}
-              <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-200 shadow-2xs flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand-600 shrink-0">
-                  <Headphones className="w-4 h-4 text-brand-600" />
-                </div>
-                <div className="min-w-0">
-                  <h5 className="font-extrabold text-slate-900 text-xs leading-tight truncate">
-                    WhatsApp Support
-                  </h5>
-                  <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
-                    We're here to help
-                  </p>
-                </div>
-              </div>
-            </div>
-
+            </form>
           </div>
-
-        </div>
+        )}
 
       </div>
+
+      {/* ================= FLOATING ACTIVE OFFERS BUTTON ================= */}
+      {activeCoupons.length > 0 && currentStep !== 'success' && (
+        <div className="fixed bottom-6 right-4 sm:right-8 z-30">
+          <button
+            type="button"
+            onClick={() => setIsOfferTrayOpen(true)}
+            className="group px-4 py-3 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white rounded-2xl shadow-xl shadow-orange-500/30 flex items-center gap-2.5 text-xs font-extrabold transition-all hover:scale-105 active:scale-95 animate-bounce"
+          >
+            <Gift className="w-4 h-4 text-amber-200" />
+            <span className="hidden sm:inline">Active Offers & Coupons</span>
+            <span className="sm:hidden">Offers</span>
+            <span className="bg-black/25 px-2 py-0.5 rounded-full text-[10px] font-black">
+              {activeCoupons.length}
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* ================= ACTIVE OFFERS SLIDE-OVER MODAL ================= */}
+      {isOfferTrayOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={() => setIsOfferTrayOpen(false)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 border border-slate-200 shadow-2xl animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-orange-600">
+                  <Gift className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">Available Special Offers</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">1-Click apply directly to your cart</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsOfferTrayOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Coupons List */}
+            <div className="space-y-3">
+              {activeCoupons.map((coupon) => (
+                <div
+                  key={coupon.code}
+                  className="p-4 rounded-2xl bg-gradient-to-r from-amber-50/50 to-orange-50/50 border border-orange-200 flex items-center justify-between gap-3 group hover:border-orange-300 transition-all"
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-black text-sm text-brand-700 bg-white px-2 py-0.5 rounded-lg border border-orange-200">
+                        {coupon.code}
+                      </span>
+                      <span className="text-[11px] font-black text-orange-600">
+                        {coupon.type === 'percentage' ? `${coupon.value}% OFF` : `₹${coupon.value} FLAT OFF`}
+                      </span>
+                    </div>
+                    {coupon.minOrderValue && coupon.minOrderValue > 0 ? (
+                      <p className="text-[10px] text-slate-500 font-semibold mt-1">
+                        Valid on orders above ₹{coupon.minOrderValue}
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-slate-500 font-semibold mt-1">
+                        Valid on all subscription plans
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleApplyQuickCoupon(coupon.code)}
+                    className="px-3.5 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-extrabold shadow-xs transition-all shrink-0"
+                  >
+                    Apply
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsOfferTrayOpen(false)}
+              className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
+            >
+              Close Offers
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

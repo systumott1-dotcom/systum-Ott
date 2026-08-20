@@ -482,6 +482,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     setTimeout(() => setCopiedReceiptId(null), 2000);
   };
 
+  // Delete Order Permanently
+  const handleDeleteOrder = async (orderId: string) => {
+    if (!confirm(`Are you sure you want to permanently DELETE Order #${orderId}? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: 'DELETE',
+        headers: apiHeaders(),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setOrders((prev) => prev.filter((o) => o.id !== orderId));
+        if (searchedOrder && searchedOrder.id === orderId) setSearchedOrder(null);
+        toast.success(`Order #${orderId} deleted permanently.`);
+      } else {
+        toast.error(data.message || 'Failed to delete order');
+      }
+    } catch {
+      toast.error('Network error deleting order');
+    }
+  };
+
   // Add Coupon
   const handleAddCoupon = async () => {
     if (!newCouponCode.trim()) return;
@@ -508,6 +529,48 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       }
     } catch {
       toast.error('Failed to create coupon.');
+    }
+  };
+
+  // Delete Coupon
+  const handleDeleteCoupon = async (code: string) => {
+    if (!confirm(`Are you sure you want to DELETE coupon "${code}"?`)) return;
+    try {
+      const res = await fetch(`/api/admin/coupons/${code}`, {
+        method: 'DELETE',
+        headers: apiHeaders(),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCoupons((prev) => prev.filter((c) => c.code !== code));
+        toast.success(`Coupon "${code}" deleted successfully.`);
+      } else {
+        toast.error(data.message || 'Failed to delete coupon');
+      }
+    } catch {
+      toast.error('Network error deleting coupon');
+    }
+  };
+
+  // Toggle Coupon Active Status
+  const handleToggleCoupon = async (code: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/coupons/${code}/toggle`, {
+        method: 'PATCH',
+        headers: apiHeaders(),
+        body: JSON.stringify({ isActive: !currentStatus }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCoupons((prev) =>
+          prev.map((c) => (c.code === code ? { ...c, isActive: !currentStatus } : c))
+        );
+        toast.success(`Coupon "${code}" is now ${!currentStatus ? 'Active' : 'Inactive'}.`);
+      } else {
+        toast.error('Failed to update coupon status');
+      }
+    } catch {
+      toast.error('Network error updating coupon');
     }
   };
 
@@ -1204,19 +1267,55 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                       </div>
                     )}
 
-                  <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-slate-100">
-                    <button onClick={() => { setDeliveryModalOrder(order); setCredentialsInput(order.deliveryCredentials || ''); }}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold shadow-md">
-                      <MessageCircle className="w-3.5 h-3.5" /> {order.deliveryCredentials ? 'Update / Resend WhatsApp' : 'Deliver via WhatsApp'}
-                    </button>
-                    <button onClick={() => handleCopyOrderReceipt(order)}
-                      className="flex items-center gap-1 px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold">
-                      <Copy className="w-3.5 h-3.5" /> Copy Receipt
-                    </button>
+                    <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-slate-100 items-center">
+                      <button
+                        onClick={() => { setDeliveryModalOrder(order); setCredentialsInput(order.deliveryCredentials || ''); }}
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold shadow-md transition-all"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>{order.deliveryCredentials ? 'Update / Resend WhatsApp' : 'Deliver via WhatsApp'}</span>
+                      </button>
+
+                      {order.status !== 'DELIVERED' && (
+                        <button
+                          onClick={() => handleUpdateStatusDirect(order.id, 'DELIVERED')}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold transition-all"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Mark Delivered</span>
+                        </button>
+                      )}
+
+                      {order.status !== 'CANCELLED' && (
+                        <button
+                          onClick={() => handleUpdateStatusDirect(order.id, 'CANCELLED')}
+                          className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-xs font-bold transition-all"
+                        >
+                          <Ban className="w-3.5 h-3.5" />
+                          <span>Suspend / Cancel</span>
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => handleDeleteOrder(order.id)}
+                        className="flex items-center gap-1 px-3 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold transition-all"
+                        title="Permanently delete this order"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleCopyOrderReceipt(order)}
+                        className="flex items-center gap-1 px-3 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all sm:ml-auto"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Receipt</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
+                ))
+              )}
 
             {/* Delivery Modal */}
             {deliveryModalOrder && (
@@ -1278,17 +1377,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                 {coupons.map((coupon) => (
                   <div key={coupon.code} className="bg-white rounded-2xl border border-slate-200 p-5 flex items-center justify-between">
                     <div>
-                      <span className="text-lg font-black font-mono text-brand-700">{coupon.code}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-black font-mono text-brand-700">{coupon.code}</span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          coupon.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
+                        }`}>
+                          {coupon.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
                       <p className="text-xs text-slate-500 mt-1">
                         {coupon.type === 'percentage' ? `${coupon.value}% off` : `₹${coupon.value} off`}
                         {coupon.minOrderValue > 0 && ` · Min ₹${coupon.minOrderValue}`}
                       </p>
                     </div>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
-                      coupon.isActive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
-                    }`}>
-                      {coupon.isActive ? 'Active' : 'Inactive'}
-                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleToggleCoupon(coupon.code, coupon.isActive)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                          coupon.isActive
+                            ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200'
+                            : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
+                        }`}
+                      >
+                        {coupon.isActive ? 'Disable' : 'Enable'}
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteCoupon(coupon.code)}
+                        className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 transition-all"
+                        title="Delete coupon"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

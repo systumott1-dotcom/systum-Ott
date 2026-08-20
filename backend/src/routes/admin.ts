@@ -353,6 +353,31 @@ adminRouter.patch('/orders/:id/status', async (req, res) => {
   }
 });
 
+// DELETE /api/admin/orders/:id - Permanently delete an order
+adminRouter.delete('/orders/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isDbConnected = mongoose.connection.readyState === 1;
+
+    if (isDbConnected) {
+      const deleted = await Order.findOneAndDelete({ $or: [{ id }, { _id: id }] });
+      if (!deleted) {
+        return res.status(404).json({ success: false, message: 'Order not found' });
+      }
+      return res.json({ success: true, message: `Order #${id} deleted permanently` });
+    }
+
+    const index = adminOrders.findIndex((o) => o.id === id);
+    if (index === -1) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    adminOrders.splice(index, 1);
+    res.json({ success: true, message: `Order #${id} deleted permanently` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete order' });
+  }
+});
+
 // POST /api/admin/upload-image
 adminRouter.post('/upload-image', async (req, res) => {
   try {
@@ -406,6 +431,63 @@ adminRouter.post('/coupons', async (req, res) => {
     res.status(201).json({ success: true, coupon: newCoupon });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to create coupon' });
+  }
+});
+
+// DELETE /api/admin/coupons/:code - Delete a coupon
+adminRouter.delete('/coupons/:code', async (req, res) => {
+  try {
+    const { code } = req.params;
+    const upperCode = code.toUpperCase().trim();
+    const isDbConnected = mongoose.connection.readyState === 1;
+
+    if (isDbConnected) {
+      const deleted = await Coupon.findOneAndDelete({ code: upperCode });
+      if (!deleted) {
+        return res.status(404).json({ success: false, message: 'Coupon not found' });
+      }
+      return res.json({ success: true, message: `Coupon "${upperCode}" deleted successfully` });
+    }
+
+    const index = adminCoupons.findIndex((c) => c.code === upperCode);
+    if (index === -1) {
+      return res.status(404).json({ success: false, message: 'Coupon not found' });
+    }
+    adminCoupons.splice(index, 1);
+    res.json({ success: true, message: `Coupon "${upperCode}" deleted successfully` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to delete coupon' });
+  }
+});
+
+// PATCH /api/admin/coupons/:code/toggle - Toggle active status
+adminRouter.patch('/coupons/:code/toggle', async (req, res) => {
+  try {
+    const { code } = req.params;
+    const { isActive } = req.body;
+    const upperCode = code.toUpperCase().trim();
+    const isDbConnected = mongoose.connection.readyState === 1;
+
+    if (isDbConnected) {
+      const updated = await Coupon.findOneAndUpdate(
+        { code: upperCode },
+        { isActive: Boolean(isActive) },
+        { new: true }
+      );
+      if (!updated) {
+        return res.status(404).json({ success: false, message: 'Coupon not found' });
+      }
+      return res.json({ success: true, coupon: updated });
+    }
+
+    const coupon = adminCoupons.find((c) => c.code === upperCode);
+    if (!coupon) {
+      return res.status(404).json({ success: false, message: 'Coupon not found' });
+    }
+    coupon.isActive = Boolean(isActive);
+    res.json({ success: true, coupon });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update coupon' });
   }
 });
 
