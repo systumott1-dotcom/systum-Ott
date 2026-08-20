@@ -76,19 +76,19 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
             <div className="flex items-center gap-4 pt-4 justify-center lg:justify-start">
               <div className="flex -space-x-2 overflow-hidden">
                 <img
-                  className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover"
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-                  alt="Customer"
+                  className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover bg-sky-100"
+                  src="https://api.dicebear.com/7.x/bottts/svg?seed=Aman&backgroundColor=b6e3f4"
+                  alt="Avatar"
                 />
                 <img
-                  className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover"
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
-                  alt="Customer"
+                  className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover bg-rose-100"
+                  src="https://api.dicebear.com/7.x/adventurer/svg?seed=Shadow&backgroundColor=ffd5dc"
+                  alt="Avatar"
                 />
                 <img
-                  className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover"
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80"
-                  alt="Customer"
+                  className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover bg-purple-100"
+                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Zara&backgroundColor=c0aede"
+                  alt="Avatar"
                 />
                 <div className="h-8 w-8 rounded-full bg-brand-600 ring-2 ring-white flex items-center justify-center text-[10px] font-bold text-white">
                   +4.5k

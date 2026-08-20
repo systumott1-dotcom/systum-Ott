@@ -65,6 +65,6 @@ export const uploadImageToCloudinary = async (
     // Fallback gracefully for valid image base64
     return fileDataOrBase64.startsWith('http') || fileDataOrBase64.startsWith('data:image/')
       ? fileDataOrBase64
-      : 'https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=500&auto=format&fit=crop&q=80';
+      : 'https://api.dicebear.com/7.x/bottts/svg?seed=SystumFallback&backgroundColor=b6e3f4';
   }
 };

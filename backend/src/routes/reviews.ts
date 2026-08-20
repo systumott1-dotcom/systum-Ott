@@ -87,7 +87,7 @@ reviewsRouter.get('/', async (req, res) => {
 
 // POST /api/reviews - Submit a new review with optional screenshot
 reviewsRouter.post('/', async (req, res) => {
-  const { productId, productTitle, rating, comment, authorName, userEmail, screenshot, screenshotUrl } = req.body;
+  const { productId, productTitle, rating, comment, authorName, userEmail, screenshot, screenshotUrl, avatar } = req.body;
 
   if (!productId || !comment || !authorName) {
     return res.status(400).json({
@@ -99,6 +99,8 @@ reviewsRouter.post('/', async (req, res) => {
   const reviewRating = Number(rating) >= 1 && Number(rating) <= 5 ? Number(rating) : 5;
   const reviewId = `rev-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
   const isDbConnected = mongoose.connection.readyState === 1;
+
+  const defaultCartoonAvatar = avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(authorName)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
 
   try {
     // Handle Screenshot upload to Cloudinary if base64 provided
@@ -130,7 +132,7 @@ reviewsRouter.post('/', async (req, res) => {
         userEmail: userEmail ? userEmail.trim().toLowerCase() : undefined,
         rating: reviewRating,
         comment: comment.trim(),
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(authorName)}`,
+        avatar: defaultCartoonAvatar,
         screenshotUrl: uploadedScreenshotUrl || undefined,
         imageUrl: uploadedScreenshotUrl || undefined,
         isVerified: true,
@@ -156,7 +158,7 @@ reviewsRouter.post('/', async (req, res) => {
       userEmail: userEmail ? userEmail.trim().toLowerCase() : undefined,
       rating: reviewRating,
       comment: comment.trim(),
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(authorName)}`,
+      avatar: defaultCartoonAvatar,
       screenshotUrl: uploadedScreenshotUrl || undefined,
       imageUrl: uploadedScreenshotUrl || undefined,
       isVerified: true,

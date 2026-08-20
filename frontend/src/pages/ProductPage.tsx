@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { compressImage, getImageFromPasteEvent, isAllowedImageFile } from '../utils/imageCompressor';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
+import { CARTOON_AVATARS, getSafeCartoonAvatar } from '../components/ReviewsSection';
 
 interface ProductPageProps {
   productIdOrSlug: string;
@@ -92,6 +93,8 @@ export const ProductPage: React.FC<ProductPageProps> = ({
   const [newRating, setNewRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [authorName, setAuthorName] = useState(user?.name || '');
+  const [selectedAvatarUrl, setSelectedAvatarUrl] = useState<string>(CARTOON_AVATARS[0].url);
+  const [selectedAvatarName, setSelectedAvatarName] = useState<string>(CARTOON_AVATARS[0].name);
   const [reviewComment, setReviewComment] = useState('');
   const [screenshotBase64, setScreenshotBase64] = useState<string>('');
   const [screenshotPreview, setScreenshotPreview] = useState<string>('');
@@ -204,6 +207,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
           userEmail: user?.email,
           rating: newRating,
           comment: reviewComment.trim(),
+          avatar: selectedAvatarUrl,
           screenshot: screenshotBase64 || undefined,
         }),
       });
@@ -982,6 +986,54 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                   </div>
                 )}
 
+                {/* Cartoon PFP / Avatar Selection */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-brand-600" />
+                      <span>Choose Your Cartoon Avatar / PFP</span>
+                    </span>
+                    <span className="text-[10px] text-brand-600 font-bold bg-brand-50 px-2 py-0.5 rounded-full border border-brand-200">
+                      {selectedAvatarName}
+                    </span>
+                  </label>
+                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-2xl">
+                    {CARTOON_AVATARS.map((av) => {
+                      const isSelected = selectedAvatarUrl === av.url;
+                      return (
+                        <button
+                          key={av.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedAvatarUrl(av.url);
+                            setSelectedAvatarName(av.name);
+                          }}
+                          className={`relative p-1 rounded-xl transition-all flex flex-col items-center gap-1 group cursor-pointer ${
+                            isSelected
+                              ? 'bg-white ring-2 ring-brand-600 shadow-md scale-105'
+                              : 'hover:bg-white hover:shadow-xs opacity-75 hover:opacity-100'
+                          }`}
+                          title={av.name}
+                        >
+                          <img
+                            src={av.url}
+                            alt={av.name}
+                            className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg object-cover"
+                          />
+                          <span className="text-[9px] font-bold text-slate-600 truncate max-w-full block">
+                            {av.name}
+                          </span>
+                          {isSelected && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-600 text-white rounded-full flex items-center justify-center text-[8px] font-bold shadow-xs">
+                              ✓
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Your Review / Feedback *
@@ -1132,7 +1184,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-3">
                           <img
-                            src={rev.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(rev.authorName)}`}
+                            src={getSafeCartoonAvatar(rev.avatar, rev.authorName)}
                             alt={rev.authorName}
                             className="w-10 h-10 rounded-full object-cover border border-slate-200 bg-slate-50 shrink-0"
                           />

@@ -48,6 +48,24 @@ const POPULAR_PRODUCTS = [
   'Other Subscription'
 ];
 
+export const CARTOON_AVATARS = [
+  { id: 'cyber-bot', name: 'Cyber Bot', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=CyberBot&backgroundColor=b6e3f4' },
+  { id: 'shadow-ninja', name: 'Ninja', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Shadow&backgroundColor=ffd5dc' },
+  { id: 'gamer-dude', name: 'Gamer', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=GamerDude&backgroundColor=c0aede' },
+  { id: 'star-girl', name: 'Star Girl', url: 'https://api.dicebear.com/7.x/lorelei/svg?seed=StarGirl&backgroundColor=ffdfbf' },
+  { id: 'neon-mecha', name: 'Neon Mecha', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=NeonMecha&backgroundColor=d1d4f9' },
+  { id: 'wizard', name: 'Wizard', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Wizard&backgroundColor=b6e3f4' },
+  { id: 'sparky', name: 'Sparky 3D', url: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Sparky&backgroundColor=ffd5dc' },
+  { id: 'cool-cat', name: 'Cool Guy', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=CoolGuy&backgroundColor=ffdfbf' },
+];
+
+export const getSafeCartoonAvatar = (avatarUrl?: string, seedName?: string) => {
+  if (avatarUrl && !avatarUrl.includes('unsplash.com')) {
+    return avatarUrl;
+  }
+  return `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(seedName || 'Buyer')}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
+};
+
 export const ReviewsSection: React.FC = () => {
   const toast = useToast();
   const { user, isAdmin, token, setIsAuthModalOpen, setAuthModalTab } = useAuth();
@@ -58,6 +76,8 @@ export const ReviewsSection: React.FC = () => {
   // Review Form Modal State
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const [authorName, setAuthorName] = useState(user?.name || '');
+  const [selectedAvatarUrl, setSelectedAvatarUrl] = useState<string>(CARTOON_AVATARS[0].url);
+  const [selectedAvatarName, setSelectedAvatarName] = useState<string>(CARTOON_AVATARS[0].name);
   const [selectedProduct, setSelectedProduct] = useState(POPULAR_PRODUCTS[0]);
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
@@ -90,7 +110,7 @@ export const ReviewsSection: React.FC = () => {
             id: r.id || `api-rev-${idx}`,
             author: r.authorName || r.author || 'Verified Buyer',
             userEmail: r.userEmail,
-            avatar: r.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(r.authorName || r.author || 'Buyer')}`,
+            avatar: getSafeCartoonAvatar(r.avatar, r.authorName || r.author || 'Buyer'),
             rating: r.rating || 5,
             date: r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent',
             location: r.location || 'India',
@@ -172,6 +192,7 @@ export const ReviewsSection: React.FC = () => {
           userEmail: user?.email,
           rating,
           comment: comment.trim(),
+          avatar: selectedAvatarUrl,
           screenshot: screenshotBase64 || undefined,
         }),
       });
@@ -466,6 +487,54 @@ export const ReviewsSection: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {/* Cartoon PFP / Avatar Selection */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-brand-600" />
+                    <span>Choose Your Cartoon Avatar / PFP</span>
+                  </span>
+                  <span className="text-[10px] text-brand-600 font-bold bg-brand-50 px-2 py-0.5 rounded-full border border-brand-200">
+                    {selectedAvatarName}
+                  </span>
+                </label>
+                <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-2xl">
+                  {CARTOON_AVATARS.map((av) => {
+                    const isSelected = selectedAvatarUrl === av.url;
+                    return (
+                      <button
+                        key={av.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedAvatarUrl(av.url);
+                          setSelectedAvatarName(av.name);
+                        }}
+                        className={`relative p-1 rounded-xl transition-all flex flex-col items-center gap-1 group cursor-pointer ${
+                          isSelected
+                            ? 'bg-white ring-2 ring-brand-600 shadow-md scale-105'
+                            : 'hover:bg-white hover:shadow-xs opacity-75 hover:opacity-100'
+                        }`}
+                        title={av.name}
+                      >
+                        <img
+                          src={av.url}
+                          alt={av.name}
+                          className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg object-cover"
+                        />
+                        <span className="text-[9px] font-bold text-slate-600 truncate max-w-full block">
+                          {av.name}
+                        </span>
+                        {isSelected && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-600 text-white rounded-full flex items-center justify-center text-[8px] font-bold shadow-xs">
+                            ✓
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               {/* Star Rating Selector */}
               <div>
