@@ -9,6 +9,8 @@ export interface IReview extends Document {
   rating: number;
   comment: string;
   avatar?: string;
+  screenshotUrl?: string;
+  imageUrl?: string;
   isVerified?: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -24,6 +26,8 @@ const ReviewSchema: Schema = new Schema(
     rating: { type: Number, required: true, min: 1, max: 5, default: 5 },
     comment: { type: String, required: true, trim: true },
     avatar: { type: String },
+    screenshotUrl: { type: String },
+    imageUrl: { type: String },
     isVerified: { type: Boolean, default: true },
   },
   { timestamps: true }

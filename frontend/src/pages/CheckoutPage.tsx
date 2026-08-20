@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 
 import { usePaymentConfig } from '../hooks/usePaymentConfig';
+import { compressImage, getImageFromPasteEvent } from '../utils/imageCompressor';
 
 interface CheckoutPageProps {
   onBackToStore: () => void;
@@ -156,25 +157,29 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
         warrantyDays: 30,
       }));
 
+  const handleProcessPaymentScreenshot = async (file: File) => {
+    setScreenshotError('');
+    try {
+      const res = await compressImage(file, 1400, 1400, 0.82);
+      setPaymentScreenshot(res.base64);
+      setScreenshotPreview(res.base64);
+      toast.success(`Payment screenshot attached! Compressed to ${res.compressedSizeKb} KB (${Math.round((1 - res.compressedSizeKb / res.originalSizeKb) * 100)}% saved) 📸`);
+    } catch {
+      toast.error('Failed to process screenshot image.');
+    }
+  };
+
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (file) handleProcessPaymentScreenshot(file);
+  };
 
-    if (file.size > 8 * 1024 * 1024) {
-      setScreenshotError('Screenshot size must be under 8MB');
-      toast.error('File too large. Please upload an image under 8MB.');
-      return;
+  const handleScreenshotPaste = (e: React.ClipboardEvent) => {
+    const file = getImageFromPasteEvent(e);
+    if (file) {
+      e.preventDefault();
+      handleProcessPaymentScreenshot(file);
     }
-
-    setScreenshotError('');
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setPaymentScreenshot(base64);
-      setScreenshotPreview(base64);
-      toast.success('Payment screenshot uploaded! 📸');
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleRemoveScreenshot = () => {
@@ -917,7 +922,9 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
                     </label>
 
                     {!screenshotPreview ? (
-                      <label className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
+                      <label 
+                        onPaste={handleScreenshotPaste}
+                        className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
                         screenshotError 
                           ? 'border-rose-400 bg-rose-50/40 text-rose-700' 
                           : 'border-slate-300 hover:border-brand-500 bg-slate-50 hover:bg-brand-50/20 text-slate-600'
@@ -927,10 +934,10 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
                         </div>
                         <div className="text-center">
                           <span className="text-xs font-extrabold text-slate-800 block">
-                            Click to upload screenshot proof
+                            Click to upload or <span className="text-brand-600">Paste (Ctrl+V) Screenshot</span>
                           </span>
                           <span className="text-[10px] text-slate-400">
-                            PNG, JPG, JPEG up to 8MB
+                            Auto-compressed to KB while preserving crystal-clear sharpness
                           </span>
                         </div>
                         <input

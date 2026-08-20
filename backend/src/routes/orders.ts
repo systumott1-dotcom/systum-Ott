@@ -2,6 +2,7 @@ import { Router } from 'express';
 import mongoose from 'mongoose';
 import { Order } from '../models/Order.js';
 import { uploadImageToCloudinary } from '../services/cloudinary.js';
+import { sendAdminNewOrderReceiptEmail } from '../services/email.js';
 
 export const ordersRouter = Router();
 
@@ -185,6 +186,23 @@ ordersRouter.post('/', async (req, res) => {
         deliveryNotes: `Preference: ${deliveryPreference || 'whatsapp'}`,
       });
 
+      // Send complete order receipt to Admin email asynchronously
+      sendAdminNewOrderReceiptEmail({
+        orderId,
+        customerName: name,
+        customerPhone: whatsapp,
+        customerEmail: email,
+        items: items.map((i: any) => ({
+          title: i.productTitle || i.title || 'Digital Subscription',
+          plan: i.planName || i.plan || 'Standard',
+          price: Number(i.price) || 0,
+          quantity: Number(i.quantity) || 1,
+        })),
+        totalAmount,
+        paymentScreenshotUrl: uploadedScreenshotUrl,
+        purchaseDate,
+      }).catch((err) => console.error('Admin receipt dispatch error:', err));
+
       return res.status(201).json({
         success: true,
         message: 'Order recorded successfully.',
@@ -216,6 +234,23 @@ ordersRouter.post('/', async (req, res) => {
     };
 
     inMemoryOrders.push(newOrder);
+
+    // Send complete order receipt to Admin email asynchronously
+    sendAdminNewOrderReceiptEmail({
+      orderId,
+      customerName: name,
+      customerPhone: whatsapp,
+      customerEmail: email,
+      items: items.map((i: any) => ({
+        title: i.productTitle || i.title || 'Digital Subscription',
+        plan: i.planName || i.plan || 'Standard',
+        price: Number(i.price) || 0,
+        quantity: Number(i.quantity) || 1,
+      })),
+      totalAmount,
+      paymentScreenshotUrl: uploadedScreenshotUrl,
+      purchaseDate,
+    }).catch((err) => console.error('Admin receipt dispatch error:', err));
 
     res.status(201).json({
       success: true,

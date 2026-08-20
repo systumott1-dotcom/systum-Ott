@@ -148,10 +148,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             
             {/* Minimal Brand Logo */}
             <a
-              href="#"
+              href="/"
               className="flex items-center gap-2.5 group shrink-0"
               onClick={(e) => {
                 e.preventDefault();
+                if (window.location.pathname !== '/') {
+                  window.history.pushState({}, '', '/');
+                  window.dispatchEvent(new PopStateEvent('popstate'));
+                }
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
             >

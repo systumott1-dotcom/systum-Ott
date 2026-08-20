@@ -185,3 +185,114 @@ export const sendTestEmail = async (toEmail: string): Promise<{ success: boolean
     return { success: false, error: error?.message || 'Failed to send test email' };
   }
 };
+
+export interface AdminOrderReceiptPayload {
+  orderId: string;
+  customerName: string;
+  customerPhone: string;
+  customerEmail?: string;
+  items: Array<{ title: string; plan: string; price: number; quantity: number }>;
+  totalAmount: number;
+  paymentScreenshotUrl?: string;
+  purchaseDate: string;
+}
+
+/**
+ * Automatically sends complete order receipt and customer dispatch link to Admin's Gmail on every new order
+ */
+export const sendAdminNewOrderReceiptEmail = async (payload: AdminOrderReceiptPayload): Promise<boolean> => {
+  const resend = getResendClient();
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SUPPORT_EMAIL || 'systumott1@gmail.com';
+
+  if (!resend) {
+    console.log(`ℹ️ Resend not configured. Mocking new order receipt to admin (${adminEmail}) for Order #${payload.orderId}`);
+    return true;
+  }
+
+  try {
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+    const itemsHtml = payload.items
+      .map(
+        (i) => `<tr>
+          <td style="padding: 10px 8px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #1e293b;">${i.title} (${i.plan})</td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid #e2e8f0; text-align: center; color: #475569;">${i.quantity}</td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: bold; color: #0f172a;">₹${i.price * i.quantity}</td>
+        </tr>`
+      )
+      .join('');
+
+    const cleanPhone = payload.customerPhone.replace(/\D/g, '');
+    const waUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(`Hi ${payload.customerName}, thanks for your order #${payload.orderId} on Systum OTT! Here are your credentials:`)}`;
+
+    const screenshotHtml = payload.paymentScreenshotUrl
+      ? `<div style="margin: 20px 0; padding: 14px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+          <h4 style="margin: 0 0 10px 0; color: #0f172a;">📸 Payment Screenshot Proof:</h4>
+          <p style="margin: 0 0 10px 0;"><a href="${payload.paymentScreenshotUrl}" target="_blank" style="color: #7c3aed; font-weight: bold; text-decoration: underline;">Open High-Res Screenshot ↗</a></p>
+          <div>
+            <img src="${payload.paymentScreenshotUrl}" alt="Payment Proof" style="max-width: 100%; max-height: 380px; border-radius: 8px; border: 1px solid #cbd5e1; display: block;" />
+          </div>
+        </div>`
+      : '';
+
+    await resend.emails.send({
+      from: `Systum OTT Orders <${fromEmail}>`,
+      to: adminEmail,
+      subject: `🚨 NEW ORDER #${payload.orderId} (₹${payload.totalAmount}) - ${payload.customerName}`,
+      html: `
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background: #ffffff;">
+          <div style="background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #ffffff; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <h2 style="margin: 0; font-size: 20px;">🎉 New Customer Order Received!</h2>
+            <p style="margin: 6px 0 0 0; opacity: 0.9; font-size: 13px;">Order ID: <strong>#${payload.orderId}</strong> · ${payload.purchaseDate}</p>
+          </div>
+
+          <div style="margin-bottom: 20px; padding: 14px; background: #f8fafc; border-radius: 10px; font-size: 13px; color: #334155;">
+            <p style="margin: 0 0 6px 0;"><strong>Customer Name:</strong> ${payload.customerName}</p>
+            <p style="margin: 0 0 6px 0;"><strong>WhatsApp Number:</strong> <a href="https://wa.me/91${cleanPhone}" style="color: #16a34a; font-weight: bold; text-decoration: none;">+91 ${payload.customerPhone}</a></p>
+            ${payload.customerEmail ? `<p style="margin: 0 0 6px 0;"><strong>Email:</strong> ${payload.customerEmail}</p>` : ''}
+            <p style="margin: 0;"><strong>Total Amount Paid:</strong> <span style="color: #16a34a; font-size: 16px; font-weight: 800;">₹${payload.totalAmount}</span></p>
+          </div>
+
+          <h4 style="margin: 20px 0 8px 0; color: #0f172a;">📦 Ordered Subscriptions:</h4>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 20px;">
+            <thead>
+              <tr style="background-color: #f1f5f9; color: #475569;">
+                <th style="padding: 10px 8px; text-align: left;">Item</th>
+                <th style="padding: 10px 8px; text-align: center;">Qty</th>
+                <th style="padding: 10px 8px; text-align: right;">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" style="padding: 12px 8px; font-weight: bold; text-align: right; color: #1e293b;">Total:</td>
+                <td style="padding: 12px 8px; font-weight: bold; text-align: right; color: #16a34a; font-size: 16px;">₹${payload.totalAmount}</td>
+              </tr>
+            </tfoot>
+          </table>
+
+          ${screenshotHtml}
+
+          <div style="margin-top: 24px; text-align: center;">
+            <a href="${waUrl}" style="display: inline-block; background-color: #16a34a; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px;">
+              💬 Open WhatsApp to Deliver Order
+            </a>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 24px 0;" />
+          <p style="text-align: center; font-size: 11px; color: #94a3b8; margin: 0;">
+            Systum OTT Admin Notification Desk · Automated Dispatch System
+          </p>
+        </div>
+      `,
+    });
+
+    console.log(`✉️ New order receipt notification successfully sent to Admin (${adminEmail}) for Order #${payload.orderId}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Resend Admin Order Receipt Error:', error);
+    return false;
+  }
+};
+

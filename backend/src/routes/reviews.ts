@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { Review } from '../models/Review.js';
 import { Product } from '../models/Product.js';
 import { REVIEWS as INITIAL_REVIEWS } from '../data/mockData.js';
+import { uploadImageToCloudinary } from '../services/cloudinary.js';
 
 export const reviewsRouter = Router();
 
@@ -16,6 +17,8 @@ interface LocalReview {
   rating: number;
   comment: string;
   avatar?: string;
+  screenshotUrl?: string;
+  imageUrl?: string;
   isVerified: boolean;
   createdAt: string;
 }
@@ -82,9 +85,9 @@ reviewsRouter.get('/', async (req, res) => {
   }
 });
 
-// POST /api/reviews - Submit a new review
+// POST /api/reviews - Submit a new review with optional screenshot
 reviewsRouter.post('/', async (req, res) => {
-  const { productId, productTitle, rating, comment, authorName, userEmail } = req.body;
+  const { productId, productTitle, rating, comment, authorName, userEmail, screenshot, screenshotUrl } = req.body;
 
   if (!productId || !comment || !authorName) {
     return res.status(400).json({
@@ -98,6 +101,18 @@ reviewsRouter.post('/', async (req, res) => {
   const isDbConnected = mongoose.connection.readyState === 1;
 
   try {
+    // Handle Screenshot upload to Cloudinary if base64 provided
+    let uploadedScreenshotUrl = screenshotUrl || '';
+    const rawImage = screenshot || screenshotUrl;
+    if (typeof rawImage === 'string' && rawImage.startsWith('data:image')) {
+      try {
+        uploadedScreenshotUrl = await uploadImageToCloudinary(rawImage, 'systum_ott_reviews');
+      } catch (uploadErr) {
+        console.error('Cloudinary review screenshot upload error:', uploadErr);
+        uploadedScreenshotUrl = rawImage;
+      }
+    }
+
     if (isDbConnected) {
       const newReview = await Review.create({
         id: reviewId,
@@ -108,6 +123,8 @@ reviewsRouter.post('/', async (req, res) => {
         rating: reviewRating,
         comment: comment.trim(),
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(authorName)}`,
+        screenshotUrl: uploadedScreenshotUrl || undefined,
+        imageUrl: uploadedScreenshotUrl || undefined,
         isVerified: true,
       });
 
@@ -132,6 +149,8 @@ reviewsRouter.post('/', async (req, res) => {
       rating: reviewRating,
       comment: comment.trim(),
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(authorName)}`,
+      screenshotUrl: uploadedScreenshotUrl || undefined,
+      imageUrl: uploadedScreenshotUrl || undefined,
       isVerified: true,
       createdAt: new Date().toISOString(),
     };
