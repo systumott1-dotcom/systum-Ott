@@ -159,7 +159,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       { name: '1 Month Access', validity: '30 Days', originalPrice: 649, discountedPrice: 99, isPopular: true },
       { name: '3 Months Access', validity: '90 Days', originalPrice: 1799, discountedPrice: 269 },
     ] as ProductPlan[],
-    featuresText: '4K Ultra HD\nPersonal Screen PIN\n100% Replacement Warranty',
+    featuresText: '4K Ultra HD\nPersonal Screen PIN\n100% Replacement Warranty\nCompatible with all devices – Mobile, Smart TV, Laptop, Tablet\n2 Device Login Access – use on any one device at a time\nFull 100% WhatsApp support provided for any access-related inquiry',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
@@ -390,7 +390,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
           { name: '1 Month Access', validity: '30 Days', originalPrice: 649, discountedPrice: 99, isPopular: true },
           { name: '3 Months Access', validity: '90 Days', originalPrice: 1799, discountedPrice: 269 },
         ],
-        featuresText: '4K Ultra HD\nPersonal Screen PIN\n100% Replacement Warranty',
+        featuresText: '4K Ultra HD\nPersonal Screen PIN\n100% Replacement Warranty\nCompatible with all devices – Mobile, Smart TV, Laptop, Tablet\n2 Device Login Access – use on any one device at a time\nFull 100% WhatsApp support provided for any access-related inquiry',
       });
     } catch (err: any) {
       console.error('Save product error:', err);
@@ -1018,7 +1018,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                       { name: '1 Month Access', validity: '30 Days', originalPrice: 649, discountedPrice: 99, isPopular: true },
                       { name: '3 Months Access', validity: '90 Days', originalPrice: 1799, discountedPrice: 269 },
                     ],
-                    featuresText: '4K Ultra HD\nPersonal Screen PIN\n100% Replacement Warranty',
+                    featuresText: '4K Ultra HD\nPersonal Screen PIN\n100% Replacement Warranty\nCompatible with all devices – Mobile, Smart TV, Laptop, Tablet\n2 Device Login Access – use on any one device at a time\nFull 100% WhatsApp support provided for any access-related inquiry',
                   });
                   setImageFile(null);
                   setImagePreview('');
@@ -1221,9 +1221,71 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                       </div>
                     </div>
 
-                    <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Features (one per line)</label>
-                      <textarea value={productForm.featuresText} onChange={(e) => setProductForm({...productForm, featuresText: e.target.value})} rows={3} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-mono" placeholder="4K Ultra HD\nPersonal Screen PIN\n100% Warranty" />
+                    {/* About This Plan / Features List Editor */}
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <label className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            <span>"About This Plan" Checklist & Bullet Points</span>
+                          </label>
+                          <span className="text-[10px] text-slate-500">
+                            Enter every point on a new line. These points display directly under "About This Plan" on the product detail page.
+                          </span>
+                        </div>
+                      </div>
+
+                      <textarea
+                        value={productForm.featuresText}
+                        onChange={(e) => setProductForm({ ...productForm, featuresText: e.target.value })}
+                        rows={6}
+                        className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 leading-relaxed text-slate-800"
+                        placeholder="4K Ultra HD&#10;Personal Screen PIN&#10;100% Replacement Warranty&#10;Compatible with all devices – Mobile, Smart TV, Laptop, Tablet&#10;2 Device Login Access – use on any one device at a time&#10;Full 100% WhatsApp support provided for any access-related inquiry"
+                      />
+
+                      {/* Quick Add Helper Chips */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        <span className="text-[10px] font-bold text-slate-400">Quick Templates:</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setProductForm({
+                              ...productForm,
+                              featuresText:
+                                '4K Ultra HD\nPersonal Screen PIN\n100% Replacement Warranty\nCompatible with all devices – Mobile, Smart TV, Laptop, Tablet\n2 Device Login Access – use on any one device at a time\nFull 100% WhatsApp support provided for any access-related inquiry',
+                            })
+                          }
+                          className="px-2 py-0.5 bg-white hover:bg-brand-50 border border-slate-200 hover:border-brand-300 rounded text-[10px] font-bold text-slate-600 hover:text-brand-700 shadow-2xs cursor-pointer"
+                        >
+                          + OTT Template
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setProductForm({
+                              ...productForm,
+                              featuresText:
+                                '100% Genuine Official License / Activation Key\nFull Access to All Premium Tools & Features\nWindows & Mac OS Compatible\nInstant Key Delivery via WhatsApp\n100% Replacement Warranty throughout validity',
+                            })
+                          }
+                          className="px-2 py-0.5 bg-white hover:bg-brand-50 border border-slate-200 hover:border-brand-300 rounded text-[10px] font-bold text-slate-600 hover:text-brand-700 shadow-2xs cursor-pointer"
+                        >
+                          + Software Template
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setProductForm({
+                              ...productForm,
+                              featuresText:
+                                'Ad-Free Unlimited Music Streaming\nVery High Quality Audio (320kbps)\nOffline Song Downloads\nWorks on Mobile, PC, Tablet, Smart TV\n100% Replacement Guarantee',
+                            })
+                          }
+                          className="px-2 py-0.5 bg-white hover:bg-brand-50 border border-slate-200 hover:border-brand-300 rounded text-[10px] font-bold text-slate-600 hover:text-brand-700 shadow-2xs cursor-pointer"
+                        >
+                          + Music Template
+                        </button>
+                      </div>
                     </div>
 
                     {/* SEO & Search Tags */}

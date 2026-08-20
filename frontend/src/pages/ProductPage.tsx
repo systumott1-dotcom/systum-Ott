@@ -612,39 +612,70 @@ export const ProductPage: React.FC<ProductPageProps> = ({
               </div>
 
               {/* ABOUT THIS PLAN SECTION */}
-              <div className="pt-6 border-t border-slate-100 space-y-5 text-left">
+              {/* ABOUT THIS PLAN SECTION */}
+              <div className="pt-6 border-t border-slate-100 space-y-4 text-left">
                 <h3 className="text-base font-extrabold text-slate-900">
                   About This Plan
                 </h3>
 
                 {/* Features Checklist */}
                 <div className="space-y-2.5 text-xs sm:text-sm text-slate-700">
-                  <div className="flex items-center gap-2 font-bold text-slate-900">
+                  <div className="flex items-center gap-2 font-extrabold text-slate-900">
                     <Lock className="w-4 h-4 text-brand-600 shrink-0" />
                     <span>{product.title} – {product.accountType}</span>
                   </div>
 
-                  {product.features.map((feat, i) => (
-                    <div key={i} className="flex items-start gap-2.5 font-medium">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span>{feat}</span>
-                    </div>
-                  ))}
+                  {product.features && product.features.length > 0 ? (
+                    product.features.map((feat, i) => {
+                      const lower = feat.toLowerCase();
+                      let icon = <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />;
+                      if (lower.includes('lock') || lower.includes('private') || lower.includes('pin') || lower.includes('shared') || lower.includes('profile')) {
+                        icon = <Lock className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />;
+                      } else if (lower.includes('tv') || lower.includes('login access') || lower.includes('screen')) {
+                        icon = <Tv className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />;
+                      } else if (lower.includes('compatible') || lower.includes('mobile') || lower.includes('laptop') || lower.includes('tablet') || lower.includes('device')) {
+                        icon = <Smartphone className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />;
+                      } else if (lower.includes('whatsapp') || lower.includes('support') || lower.includes('chat') || lower.includes('help')) {
+                        icon = <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />;
+                      } else if (lower.includes('warranty') || lower.includes('replacement') || lower.includes('guarantee')) {
+                        icon = <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />;
+                      }
 
-                  <div className="flex items-start gap-2.5 font-medium">
-                    <Smartphone className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />
-                    <span>Compatible with all devices – Mobile, Smart TV, Laptop, Tablet</span>
-                  </div>
-
-                  <div className="flex items-start gap-2.5 font-medium">
-                    <Tv className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />
-                    <span>2 Device Login Access – use on any one device at a time</span>
-                  </div>
-
-                  <div className="flex items-start gap-2.5 font-medium">
-                    <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>Full 100% WhatsApp support provided for any access-related inquiry</span>
-                  </div>
+                      return (
+                        <div key={i} className="flex items-start gap-2.5 font-medium">
+                          {icon}
+                          <span>{feat}</span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <>
+                      <div className="flex items-start gap-2.5 font-medium">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>4K Ultra HD & Dolby Atmos</span>
+                      </div>
+                      <div className="flex items-start gap-2.5 font-medium">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>Personal Screen PIN</span>
+                      </div>
+                      <div className="flex items-start gap-2.5 font-medium">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>100% Replacement Warranty</span>
+                      </div>
+                      <div className="flex items-start gap-2.5 font-medium">
+                        <Smartphone className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />
+                        <span>Compatible with all devices – Mobile, Smart TV, Laptop, Tablet</span>
+                      </div>
+                      <div className="flex items-start gap-2.5 font-medium">
+                        <Tv className="w-4 h-4 text-brand-600 shrink-0 mt-0.5" />
+                        <span>2 Device Login Access – use on any one device at a time</span>
+                      </div>
+                      <div className="flex items-start gap-2.5 font-medium">
+                        <MessageCircle className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <span>Full 100% WhatsApp support provided for any access-related inquiry</span>
+                      </div>
+                    </>
+                  )}
                 </div>
 
               </div>
