@@ -27,7 +27,10 @@ import {
   Users,
   UserX,
   UserCheck,
-  Ban
+  Ban,
+  QrCode,
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 import type { Product, ProductPlan } from '../types';
 import { CATEGORIES } from '../data/products';
@@ -88,13 +91,23 @@ interface AdminDashboardProps {
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore }) => {
   const { user, logout, token } = useAuth();
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'stats' | 'products' | 'orders' | 'coupons' | 'users'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'products' | 'orders' | 'coupons' | 'users' | 'payment'>('stats');
   const [saving, setSaving] = useState(false);
 
   // Stats State
   const [stats, setStats] = useState<AdminStats>({
     totalRevenue: 0, totalOrders: 0, pendingOrders: 0, deliveredOrders: 0, productsCount: 0,
   });
+
+  // Payment & Dynamic UPI Settings State
+  const [paymentConfig, setPaymentConfig] = useState({
+    upiId: 'systummott@nyes',
+    payeeName: 'Systum OTT India',
+    qrMode: 'dynamic' as 'dynamic' | 'custom',
+    customQrUrl: 'https://res.cloudinary.com/juvd58wl/image/upload/v1787206357/systum_ott_assets/systum_ott_official_qr_v2.jpg',
+  });
+  const [savingPaymentSettings, setSavingPaymentSettings] = useState(false);
+  const [testAmount, setTestAmount] = useState(99);
 
   // Users State
   const [usersList, setUsersList] = useState<AdminUserData[]>([]);
@@ -168,6 +181,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       .then((d) => { if (d.success && d.stats) setStats(d.stats); })
       .catch(() => {});
 
+    // Fetch payment settings
+    fetch('/api/settings/payment')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.paymentConfig?.upiId) {
+          setPaymentConfig({
+            upiId: d.paymentConfig.upiId,
+            payeeName: d.paymentConfig.payeeName || 'Systum OTT India',
+            qrMode: d.paymentConfig.qrMode || 'dynamic',
+            customQrUrl: d.paymentConfig.customQrUrl || '',
+          });
+        }
+      })
+      .catch(() => {});
+
     // Fetch orders
     fetch('/api/admin/orders', { headers: apiHeaders() })
       .then((r) => r.json())
@@ -196,6 +224,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       .catch(() => {})
       .finally(() => setUsersLoading(false));
   }, [token, apiHeaders]);
+
+  // Save payment settings
+  const handleSavePaymentSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!paymentConfig.upiId.trim()) {
+      toast.warning('Please enter a valid UPI ID (e.g. yourname@oksbi)');
+      return;
+    }
+    setSavingPaymentSettings(true);
+    try {
+      const res = await fetch('/api/settings/payment', {
+        method: 'PUT',
+        headers: apiHeaders(),
+        body: JSON.stringify(paymentConfig),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Active UPI ID updated to ${paymentConfig.upiId}! All checkout QR codes are dynamically updated.`);
+      } else {
+        toast.error(data.message || 'Failed to update payment settings');
+      }
+    } catch {
+      toast.error('Network error saving payment settings');
+    } finally {
+      setSavingPaymentSettings(false);
+    }
+  };
 
   // Handle image file selection
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -652,6 +707,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     { id: 'products' as const, label: 'Products', icon: Package },
     { id: 'orders' as const, label: 'Orders', icon: ShoppingBag },
     { id: 'coupons' as const, label: 'Coupons', icon: Tag },
+    { id: 'payment' as const, label: 'Payment & UPI', icon: QrCode },
     { id: 'users' as const, label: 'Users & Bans', icon: Users },
   ];
 
@@ -1415,6 +1471,236 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* PAYMENT & DYNAMIC UPI SETTINGS TAB */}
+        {activeTab === 'payment' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                  <QrCode className="w-6 h-6 text-brand-600" />
+                  <span>Payment & Dynamic UPI QR Settings</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Change your active receiving UPI ID anytime. QR codes and checkout payment links update immediately store-wide.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Column: Settings Form */}
+              <form onSubmit={handleSavePaymentSettings} className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-xs space-y-6">
+                
+                {/* Mode Selector */}
+                <div>
+                  <label className="text-xs font-extrabold text-slate-900 uppercase tracking-wider block mb-2">
+                    QR Code Generation Mode
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentConfig({ ...paymentConfig, qrMode: 'dynamic' })}
+                      className={`p-4 rounded-2xl border text-left transition-all ${
+                        paymentConfig.qrMode === 'dynamic'
+                          ? 'border-brand-600 bg-brand-50/70 ring-2 ring-brand-500/20'
+                          : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
+                          <Sparkles className="w-4 h-4 text-brand-600" /> Dynamic NPCI QR
+                        </span>
+                        {paymentConfig.qrMode === 'dynamic' && (
+                          <span className="text-[10px] font-black uppercase text-brand-700 bg-brand-100 px-2 py-0.5 rounded-full">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-500 leading-relaxed">
+                        Auto-generates real-time QR code with customer's exact order price pre-loaded for error-free 1-scan payments.
+                      </p>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setPaymentConfig({ ...paymentConfig, qrMode: 'custom' })}
+                      className={`p-4 rounded-2xl border text-left transition-all ${
+                        paymentConfig.qrMode === 'custom'
+                          ? 'border-brand-600 bg-brand-50/70 ring-2 ring-brand-500/20'
+                          : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
+                          <ImageIcon className="w-4 h-4 text-brand-600" /> Custom Static Card
+                        </span>
+                        {paymentConfig.qrMode === 'custom' && (
+                          <span className="text-[10px] font-black uppercase text-brand-700 bg-brand-100 px-2 py-0.5 rounded-full">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-500 leading-relaxed">
+                        Displays your uploaded custom QR card image from Cloudinary on checkout.
+                      </p>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Receiving UPI ID Input */}
+                <div>
+                  <label className="text-xs font-bold text-slate-800 block mb-1.5 flex items-center justify-between">
+                    <span>Receiving UPI ID *</span>
+                    <span className="text-[11px] text-brand-600 font-bold">Live Synced</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      required
+                      type="text"
+                      value={paymentConfig.upiId}
+                      onChange={(e) => setPaymentConfig({ ...paymentConfig, upiId: e.target.value.toLowerCase().replace(/\s+/g, '') })}
+                      placeholder="e.g. systummott@nyes or yourname@oksbi"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-mono font-bold text-slate-900 focus:outline-none focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Enter your active VPA address. Supports Paytm, PhonePe, Google Pay, BHIM, Navi, Cred, and Bank handles.
+                  </p>
+                </div>
+
+                {/* Payee / Store Display Name */}
+                <div>
+                  <label className="text-xs font-bold text-slate-800 block mb-1.5">
+                    Payee / Merchant Business Name
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentConfig.payeeName}
+                    onChange={(e) => setPaymentConfig({ ...paymentConfig, payeeName: e.target.value })}
+                    placeholder="Systum OTT India"
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-slate-900 focus:outline-none focus:bg-white focus:border-brand-500"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Displayed inside customer UPI apps when scanning (e.g. "Paying to Systum OTT India").
+                  </p>
+                </div>
+
+                {/* Custom QR Image URL (if custom mode) */}
+                {paymentConfig.qrMode === 'custom' && (
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 block mb-1.5">
+                      Custom QR Code Image URL (Cloudinary)
+                    </label>
+                    <input
+                      type="url"
+                      value={paymentConfig.customQrUrl}
+                      onChange={(e) => setPaymentConfig({ ...paymentConfig, customQrUrl: e.target.value })}
+                      placeholder="https://res.cloudinary.com/.../qr.jpg"
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-mono text-slate-900 focus:outline-none focus:bg-white focus:border-brand-500"
+                    />
+                  </div>
+                )}
+
+                {/* Save CTA */}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-[11px] text-slate-500">
+                    Changes take effect across all checkouts immediately.
+                  </span>
+                  <button
+                    type="submit"
+                    disabled={savingPaymentSettings}
+                    className="px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl text-xs font-extrabold shadow-lg shadow-brand-600/25 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    {savingPaymentSettings ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4 stroke-[2.5]" />
+                        <span>Save Payment Settings</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+              </form>
+
+              {/* Right Column: Live Instant QR Preview */}
+              <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-xs space-y-5">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <RefreshCw className="w-4 h-4 text-emerald-600" />
+                    <span>Real-Time Live QR Preview</span>
+                  </span>
+                  <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Live Output
+                  </span>
+                </div>
+
+                <div className="text-center space-y-4">
+                  <div className="p-3.5 bg-white rounded-3xl border-2 border-slate-200 shadow-md inline-block max-w-[240px] sm:max-w-[260px]">
+                    <img
+                      src={
+                        paymentConfig.qrMode === 'custom' && paymentConfig.customQrUrl
+                          ? paymentConfig.customQrUrl
+                          : `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=${encodeURIComponent(
+                              `upi://pay?pa=${paymentConfig.upiId.trim().toLowerCase()}&pn=${encodeURIComponent(
+                                paymentConfig.payeeName.trim() || 'Systum OTT India'
+                              )}&am=${testAmount}&cu=INR&tn=Subscription%20Order`
+                            )}`
+                      }
+                      alt="Live Generated UPI QR Code"
+                      className="w-full h-auto object-contain mx-auto rounded-2xl"
+                    />
+                  </div>
+
+                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-left space-y-1.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-400 font-bold">Target UPI:</span>
+                      <span className="font-mono font-extrabold text-brand-700">{paymentConfig.upiId || 'Not set'}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-400 font-bold">Payee:</span>
+                      <span className="font-bold text-slate-800">{paymentConfig.payeeName || 'Systum OTT India'}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-400 font-bold">Mode:</span>
+                      <span className="font-bold text-emerald-600">
+                        {paymentConfig.qrMode === 'dynamic' ? '⚡ Dynamic NPCI Amount QR' : '🖼️ Static Card'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Test Scan Amount Slider */}
+                  <div className="space-y-1.5 text-left pt-2 border-t border-slate-100">
+                    <div className="flex justify-between text-xs font-bold text-slate-700">
+                      <span>Test Dynamic QR Price:</span>
+                      <span className="text-brand-600 font-black">₹{testAmount}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="1999"
+                      step="1"
+                      value={testAmount}
+                      onChange={(e) => setTestAmount(Number(e.target.value))}
+                      className="w-full accent-brand-600 cursor-pointer"
+                    />
+                    <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                      <span>₹1 (Test)</span>
+                      <span>₹99 (1 Mo)</span>
+                      <span>₹269 (3 Mo)</span>
+                      <span>₹1999 (Max)</span>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

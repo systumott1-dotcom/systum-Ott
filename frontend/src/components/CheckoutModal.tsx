@@ -17,9 +17,11 @@ import confetti from 'canvas-confetti';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 import { useToast } from '../context/ToastContext';
+import { usePaymentConfig } from '../hooks/usePaymentConfig';
 
 export const CheckoutModal: React.FC = () => {
   const toast = useToast();
+  const { paymentConfig, getDynamicQrUrl } = usePaymentConfig();
   const {
     cart,
     checkoutItem,
@@ -71,9 +73,10 @@ export const CheckoutModal: React.FC = () => {
 
   const isDirectBuy = !!checkoutItem;
   const finalPrice = isDirectBuy ? checkoutItem.plan.discountedPrice : totalAmount;
-  const upiId = 'systummott@nyes';
-  const officialQrImageUrl = 'https://res.cloudinary.com/juvd58wl/image/upload/v1787206357/systum_ott_assets/systum_ott_official_qr_v2.jpg';
-  const localFallbackQrUrl = '/images/systum_ott_official_qr.jpg';
+  const upiId = paymentConfig.upiId || 'systummott@nyes';
+  const qrDisplayUrl = paymentConfig.qrMode === 'custom' && paymentConfig.customQrUrl
+    ? paymentConfig.customQrUrl
+    : getDynamicQrUrl(finalPrice);
 
   const handleCopyUPI = () => {
     navigator.clipboard.writeText(upiId);
@@ -287,9 +290,9 @@ export const CheckoutModal: React.FC = () => {
               <div className="text-center py-2">
                 <div className="p-2.5 bg-white rounded-2xl border-2 border-slate-200 shadow-sm inline-block max-w-[220px]">
                   <img
-                    src={officialQrImageUrl}
+                    src={qrDisplayUrl}
                     onError={(e) => {
-                      e.currentTarget.src = localFallbackQrUrl;
+                      e.currentTarget.src = getDynamicQrUrl(finalPrice);
                     }}
                     alt="Systum OTT UPI QR Code"
                     className="w-full h-auto object-contain rounded-xl"

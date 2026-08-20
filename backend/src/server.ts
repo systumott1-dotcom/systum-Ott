@@ -7,6 +7,7 @@ import { ordersRouter } from './routes/orders.js';
 import { faqsRouter } from './routes/faqs.js';
 import { reviewsRouter } from './routes/reviews.js';
 import { couponsRouter } from './routes/coupons.js';
+import { settingsRouter } from './routes/settings.js';
 import { authRouter } from './routes/auth.js';
 import { adminRouter } from './routes/admin.js';
 
@@ -48,6 +49,7 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/faqs', faqsRouter);
 app.use('/api/reviews', reviewsRouter);
 app.use('/api/coupons', couponsRouter);
+app.use('/api/settings', settingsRouter);
 
 // 404 handler
 app.use((_req, res) => {

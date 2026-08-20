@@ -26,6 +26,8 @@ import {
   AlertCircle 
 } from 'lucide-react';
 
+import { usePaymentConfig } from '../hooks/usePaymentConfig';
+
 interface CheckoutPageProps {
   onBackToStore: () => void;
 }
@@ -39,6 +41,7 @@ interface ActiveCoupon {
 
 export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => {
   const toast = useToast();
+  const { paymentConfig, getDynamicQrUrl, getUpiPayUrl } = usePaymentConfig();
   const {
     cart,
     checkoutItem,
@@ -115,10 +118,11 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
   }
 
   const finalAmount = Math.max(0, rawSubtotal - calculatedDiscount);
-  const upiId = 'systummott@nyes';
-  const officialQrImageUrl = 'https://res.cloudinary.com/juvd58wl/image/upload/v1787206357/systum_ott_assets/systum_ott_official_qr_v2.jpg';
-  const localFallbackQrUrl = '/images/systum_ott_official_qr.jpg';
-  const upiPayUrl = `upi://pay?pa=${upiId}&pn=Systum%20OTT%20India&am=${finalAmount}&cu=INR&tn=Order%20Subscription`;
+  const upiId = paymentConfig.upiId || 'systummott@nyes';
+  const qrDisplayUrl = paymentConfig.qrMode === 'custom' && paymentConfig.customQrUrl
+    ? paymentConfig.customQrUrl
+    : getDynamicQrUrl(finalAmount);
+  const upiPayUrl = getUpiPayUrl(finalAmount);
 
   const items = isDirectBuy
     ? [
@@ -845,9 +849,9 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
                   <div className="text-center space-y-3">
                     <div className="p-3.5 bg-white rounded-3xl border-2 border-slate-200 shadow-md inline-block relative group max-w-[260px] sm:max-w-[290px]">
                       <img
-                        src={officialQrImageUrl}
+                        src={qrDisplayUrl}
                         onError={(e) => {
-                          e.currentTarget.src = localFallbackQrUrl;
+                          e.currentTarget.src = getDynamicQrUrl(finalAmount);
                         }}
                         alt="Systum OTT UPI QR Code"
                         className="w-full h-auto object-contain mx-auto rounded-2xl"
