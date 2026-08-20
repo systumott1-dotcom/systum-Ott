@@ -674,11 +674,11 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                       <ShieldCheck className="w-4 h-4 text-emerald-600" />
                     </div>
                     <div className="min-w-0">
-                      <h5 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight truncate">
-                        Full Warranty
+                      <h5 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight truncate" title={product.warrantyType || 'Full Warranty'}>
+                        {product.warrantyType || 'Full Warranty'}
                       </h5>
                       <p className="text-[10px] sm:text-xs text-slate-500 font-medium leading-tight mt-0.5">
-                        Duration covered
+                        {product.hasWarranty !== false ? 'Replacement Guarantee' : 'Non-Replaceable'}
                       </p>
                     </div>
                   </div>

@@ -1258,74 +1258,68 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     </div>
 
                     {/* Warranty & Replacement Settings */}
-                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
                       <div className="flex items-center justify-between">
                         <label className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
                           <Shield className="w-4 h-4 text-brand-600" />
                           <span>Warranty & Replacement Policy</span>
                         </label>
-                        <span className="text-[10px] text-slate-500 font-semibold">Type custom or select preset</span>
+                        <span className="text-[10px] text-slate-500 font-semibold">Custom duration or 1-click preset</span>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="sm:col-span-2">
+                      <div className="space-y-2.5">
+                        <div>
                           <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                            Warranty Title / Details (Type Manually)
+                            Custom Warranty (e.g. 1 Month 21 Days, 1 Year 2 Months, 3 Days, Full Replacement)
                           </label>
                           <input
                             type="text"
                             list="warranty-presets"
                             value={productForm.warrantyType}
                             onChange={(e) => setProductForm({ ...productForm, warrantyType: e.target.value })}
-                            placeholder="e.g. 100% Full-Term Replacement, 7 Days Warranty, No Warranty..."
-                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+                            placeholder="e.g. 1 Month 21 Days Warranty, 1 Year 2 Months Warranty, 3 Days..."
+                            className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-brand-700 bg-white focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
                           />
                           <datalist id="warranty-presets">
-                            <option value="100% Full-Term Replacement Warranty" />
-                            <option value="Full-Term Replacement Warranty" />
+                            <option value="1 Month 21 Days Replacement Warranty" />
+                            <option value="1 Year 2 Months Replacement Warranty" />
+                            <option value="3 Days Replacement Warranty" />
                             <option value="7 Days Replacement Warranty" />
+                            <option value="15 Days Replacement Warranty" />
                             <option value="30 Days Replacement Warranty" />
                             <option value="1 Year Replacement Warranty" />
-                            <option value="Lifetime Replacement Guarantee" />
+                            <option value="100% Full-Term Replacement Warranty" />
                             <option value="No Warranty / As-Is (Non-Replaceable)" />
                           </datalist>
 
                           {/* Quick selection tags */}
-                          <div className="flex flex-wrap gap-1.5 mt-2">
+                          <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+                            <span className="text-[10px] font-bold text-slate-400">Quick Presets:</span>
                             {[
-                              'Full-Term Replacement',
+                              '3 Days Warranty',
                               '7 Days Warranty',
+                              '15 Days Warranty',
+                              '1 Month 21 Days Warranty',
                               '30 Days Warranty',
+                              '1 Year 2 Months Warranty',
+                              '1 Year Full Warranty',
+                              '100% Full-Term Replacement',
                               'No Warranty / As-Is',
                             ].map((preset) => (
                               <button
                                 key={preset}
                                 type="button"
                                 onClick={() => setProductForm({ ...productForm, warrantyType: preset })}
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border transition-colors ${
+                                className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer shadow-2xs ${
                                   productForm.warrantyType === preset
-                                    ? 'bg-brand-50 text-brand-700 border-brand-300'
-                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                                    ? 'bg-brand-600 text-white border-brand-600 shadow-xs'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-brand-50 hover:text-brand-700 hover:border-brand-300'
                                 }`}
                               >
                                 {preset}
                               </button>
                             ))}
                           </div>
-                        </div>
-
-                        <div>
-                          <label className="text-[11px] font-bold text-slate-600 block mb-1">Warranty Period (Days)</label>
-                          <input
-                            type="number"
-                            value={productForm.warrantyDays}
-                            onChange={(e) => setProductForm({ ...productForm, warrantyDays: Number(e.target.value) })}
-                            placeholder="e.g. 30, 90, 365"
-                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white font-mono"
-                          />
-                          <span className="text-[10px] text-slate-400 mt-1 block">
-                            Set 0 for non-warranty products
-                          </span>
                         </div>
                       </div>
                     </div>
