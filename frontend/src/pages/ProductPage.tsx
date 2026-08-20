@@ -720,6 +720,148 @@ export const ProductPage: React.FC<ProductPageProps> = ({
 
         </div>
 
+        {/* ================= YOU MIGHT ALSO LIKE CAROUSEL ================= */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-16 pt-10 border-t border-slate-200">
+            {/* Section Header */}
+            <div className="flex items-center justify-between gap-4 mb-5">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-6 bg-brand-600 rounded-full" />
+                <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5">
+                  <Sparkles className="w-5 h-5 text-brand-600 shrink-0" />
+                  <span>You Might <span className="text-brand-600">Also Like</span></span>
+                </h2>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Scroll Left */}
+                <button
+                  type="button"
+                  onClick={() => scrollRelated('left')}
+                  className="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 shadow-xs transition-all cursor-pointer active:scale-95"
+                  aria-label="Previous items"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {/* Scroll Right */}
+                <button
+                  type="button"
+                  onClick={() => scrollRelated('right')}
+                  className="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 shadow-xs transition-all cursor-pointer active:scale-95"
+                  aria-label="Next items"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+
+                {/* View All */}
+                <button
+                  type="button"
+                  onClick={onBackToHome}
+                  className="px-3.5 py-1.5 rounded-xl border border-slate-200 hover:border-brand-300 hover:bg-brand-50 bg-white text-xs font-bold text-slate-700 hover:text-brand-700 shadow-xs transition-all cursor-pointer active:scale-95"
+                >
+                  View All
+                </button>
+              </div>
+            </div>
+
+            {/* Horizontal Carousel */}
+            <div
+              ref={relatedScrollRef}
+              className="flex gap-3.5 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-4 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0"
+            >
+              {relatedProducts.map((relProduct) => {
+                const primaryPlan = relProduct.plans[0] || { discountedPrice: 99, originalPrice: 199 };
+                const discount = primaryPlan.originalPrice > primaryPlan.discountedPrice
+                  ? Math.round(((primaryPlan.originalPrice - primaryPlan.discountedPrice) / primaryPlan.originalPrice) * 100)
+                  : 0;
+
+                const categoryLabel = relProduct.category === 'ott'
+                  ? 'OTT APPS'
+                  : relProduct.category === 'music'
+                  ? 'MUSIC APPS'
+                  : relProduct.category === 'software'
+                  ? 'SOFTWARE & TOOLS'
+                  : relProduct.category === 'combo'
+                  ? 'ALL-IN-ONE COMBO'
+                  : relProduct.category === 'adult'
+                  ? 'ADULT 18+'
+                  : 'PREMIUM ACCESS';
+
+                return (
+                  <div
+                    key={relProduct.id}
+                    onClick={() => onNavigateProduct(relProduct.slug || relProduct.id)}
+                    className="w-44 sm:w-52 shrink-0 bg-white rounded-3xl border border-slate-200 p-3 sm:p-3.5 flex flex-col justify-between hover:shadow-xl hover:border-brand-300 transition-all duration-300 group cursor-pointer"
+                  >
+                    <div>
+                      {/* Image / Thumbnail Container */}
+                      <div className="relative h-28 sm:h-32 rounded-2xl overflow-hidden bg-slate-900 flex items-center justify-center mb-2.5 border border-slate-100/80 shadow-xs">
+                        {discount > 0 && (
+                          <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md bg-[#E50914] text-white font-black text-[9px] sm:text-[10px] uppercase shadow-xs tracking-wider">
+                            {discount}% OFF
+                          </span>
+                        )}
+
+                        {relProduct.imageUrl ? (
+                          <img
+                            src={relProduct.imageUrl}
+                            alt={relProduct.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-white font-black text-xl bg-gradient-to-br from-slate-900 to-indigo-950">
+                            {relProduct.title.slice(0, 2)}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Category Label */}
+                      <span className="text-[9px] sm:text-[10px] font-extrabold text-[#9C7A4A] uppercase tracking-wider block truncate">
+                        {categoryLabel}
+                      </span>
+
+                      {/* Product Title */}
+                      <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 line-clamp-1 mt-0.5 group-hover:text-brand-600 transition-colors">
+                        {relProduct.title}
+                      </h4>
+
+                      {/* Pricing Row */}
+                      <div className="flex items-baseline gap-1.5 mt-1.5 mb-2.5">
+                        <span className="text-sm sm:text-base font-black text-slate-900">
+                          ₹{primaryPlan.discountedPrice}
+                        </span>
+                        {primaryPlan.originalPrice > primaryPlan.discountedPrice && (
+                          <span className="text-[10px] sm:text-xs text-slate-400 line-through font-medium">
+                            ₹{primaryPlan.originalPrice}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Buy Now Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        buyNow(relProduct, primaryPlan);
+                      }}
+                      className="w-full py-2.5 sm:py-3 px-3 rounded-xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-black flex items-center justify-center gap-1.5 shadow-md shadow-brand-600/25 active:scale-95 transition-all cursor-pointer"
+                    >
+                      <Zap className="w-3.5 h-3.5 fill-white shrink-0" />
+                      <span>Buy Now</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Bottom Colorful Gradient Accent Bar */}
+            <div className="h-1 w-full bg-gradient-to-r from-brand-500 via-indigo-500 to-purple-600 rounded-full mt-6 opacity-75" />
+          </div>
+        )}
+
         {/* CUSTOMER REVIEWS & RATINGS SECTION */}
         <div className="mt-16 pt-12 border-t border-slate-200">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -1128,148 +1270,6 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                 />
               </div>
             </div>
-          </div>
-        )}
-
-        {/* ================= YOU MIGHT ALSO LIKE CAROUSEL ================= */}
-        {relatedProducts.length > 0 && (
-          <div className="mt-16 pt-10 border-t border-slate-200">
-                 {/* Section Header */}
-            <div className="flex items-center justify-between gap-4 mb-5">
-              <div className="flex items-center gap-2">
-                <div className="w-2.5 h-6 bg-brand-600 rounded-full" />
-                <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5">
-                  <Sparkles className="w-5 h-5 text-brand-600 shrink-0" />
-                  <span>You Might <span className="text-brand-600">Also Like</span></span>
-                </h2>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {/* Scroll Left */}
-                <button
-                  type="button"
-                  onClick={() => scrollRelated('left')}
-                  className="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 shadow-xs transition-all cursor-pointer active:scale-95"
-                  aria-label="Previous items"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-
-                {/* Scroll Right */}
-                <button
-                  type="button"
-                  onClick={() => scrollRelated('right')}
-                  className="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 shadow-xs transition-all cursor-pointer active:scale-95"
-                  aria-label="Next items"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-
-                {/* View All */}
-                <button
-                  type="button"
-                  onClick={onBackToHome}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-200 hover:border-brand-300 hover:bg-brand-50 bg-white text-xs font-bold text-slate-700 hover:text-brand-700 shadow-xs transition-all cursor-pointer active:scale-95"
-                >
-                  View All
-                </button>
-              </div>
-            </div>
-
-            {/* Horizontal Carousel */}
-            <div
-              ref={relatedScrollRef}
-              className="flex gap-3.5 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-4 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0"
-            >
-              {relatedProducts.map((relProduct) => {
-                const primaryPlan = relProduct.plans[0] || { discountedPrice: 99, originalPrice: 199 };
-                const discount = primaryPlan.originalPrice > primaryPlan.discountedPrice
-                  ? Math.round(((primaryPlan.originalPrice - primaryPlan.discountedPrice) / primaryPlan.originalPrice) * 100)
-                  : 0;
-
-                const categoryLabel = relProduct.category === 'ott'
-                  ? 'OTT APPS'
-                  : relProduct.category === 'music'
-                  ? 'MUSIC APPS'
-                  : relProduct.category === 'software'
-                  ? 'SOFTWARE & TOOLS'
-                  : relProduct.category === 'combo'
-                  ? 'ALL-IN-ONE COMBO'
-                  : relProduct.category === 'adult'
-                  ? 'ADULT 18+'
-                  : 'PREMIUM ACCESS';
-
-                return (
-                  <div
-                    key={relProduct.id}
-                    onClick={() => onNavigateProduct(relProduct.slug || relProduct.id)}
-                    className="w-44 sm:w-52 shrink-0 bg-white rounded-3xl border border-slate-200 p-3 sm:p-3.5 flex flex-col justify-between hover:shadow-xl hover:border-brand-300 transition-all duration-300 group cursor-pointer"
-                  >
-                    <div>
-                      {/* Image / Thumbnail Container */}
-                      <div className="relative h-28 sm:h-32 rounded-2xl overflow-hidden bg-slate-900 flex items-center justify-center mb-2.5 border border-slate-100/80 shadow-xs">
-                        {discount > 0 && (
-                          <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md bg-[#E50914] text-white font-black text-[9px] sm:text-[10px] uppercase shadow-xs tracking-wider">
-                            {discount}% OFF
-                          </span>
-                        )}
-
-                        {relProduct.imageUrl ? (
-                          <img
-                            src={relProduct.imageUrl}
-                            alt={relProduct.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-white font-black text-xl bg-gradient-to-br from-slate-900 to-indigo-950">
-                            {relProduct.title.slice(0, 2)}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Category Label */}
-                      <span className="text-[9px] sm:text-[10px] font-extrabold text-[#9C7A4A] uppercase tracking-wider block truncate">
-                        {categoryLabel}
-                      </span>
-
-                      {/* Product Title */}
-                      <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 line-clamp-1 mt-0.5 group-hover:text-brand-600 transition-colors">
-                        {relProduct.title}
-                      </h4>
-
-                      {/* Pricing Row */}
-                      <div className="flex items-baseline gap-1.5 mt-1.5 mb-2.5">
-                        <span className="text-sm sm:text-base font-black text-slate-900">
-                          ₹{primaryPlan.discountedPrice}
-                        </span>
-                        {primaryPlan.originalPrice > primaryPlan.discountedPrice && (
-                          <span className="text-[10px] sm:text-xs text-slate-400 line-through font-medium">
-                            ₹{primaryPlan.originalPrice}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Buy Now Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        buyNow(relProduct, primaryPlan);
-                      }}
-                      className="w-full py-2.5 sm:py-3 px-3 rounded-xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-black flex items-center justify-center gap-1.5 shadow-md shadow-brand-600/25 active:scale-95 transition-all cursor-pointer"
-                    >
-                      <Zap className="w-3.5 h-3.5 fill-white shrink-0" />
-                      <span>Buy Now</span>
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Bottom Colorful Gradient Accent Bar */}
-            <div className="h-1 w-full bg-gradient-to-r from-brand-500 via-indigo-500 to-purple-600 rounded-full mt-6 opacity-75" />
           </div>
         )}
 
