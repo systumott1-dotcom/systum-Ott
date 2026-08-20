@@ -38,15 +38,15 @@ export const CartDrawer: React.FC = () => {
 
   if (!isCartOpen) return null;
 
-  const handleApplyPromo = (e: React.FormEvent) => {
+  const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!promoInput.trim()) return;
-    const success = applyPromoCode(promoInput);
-    if (success) {
+    const res = await applyPromoCode(promoInput, subtotal);
+    if (res.success) {
       setPromoError('');
       setPromoInput('');
     } else {
-      setPromoError('Invalid coupon. Try EXTRA10 or SUPER50');
+      setPromoError(res.message || 'Invalid coupon code');
     }
   };
 

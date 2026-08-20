@@ -4,7 +4,16 @@ import { Coupon } from '../models/Coupon.js';
 
 export const couponsRouter = Router();
 
-const DEFAULT_COUPONS = [
+export interface InMemoryCoupon {
+  code: string;
+  type: 'percentage' | 'flat';
+  value: number;
+  minOrderValue?: number;
+  isActive: boolean;
+  usageCount?: number;
+}
+
+export const inMemoryCoupons: InMemoryCoupon[] = [
   { code: 'SAVE10', type: 'percentage', value: 10, minOrderValue: 0, isActive: true },
   { code: 'EXTRA10', type: 'percentage', value: 10, minOrderValue: 0, isActive: true },
   { code: 'SUPER50', type: 'flat', value: 50, minOrderValue: 499, isActive: true },
@@ -18,9 +27,9 @@ couponsRouter.get('/', async (_req, res) => {
       const activeCoupons = await Coupon.find({ isActive: true }).select('code type value minOrderValue');
       return res.json({ success: true, coupons: activeCoupons });
     }
-    res.json({ success: true, coupons: DEFAULT_COUPONS.filter((c) => c.isActive) });
+    res.json({ success: true, coupons: inMemoryCoupons.filter((c) => c.isActive) });
   } catch (error) {
-    res.json({ success: true, coupons: DEFAULT_COUPONS });
+    res.json({ success: true, coupons: inMemoryCoupons.filter((c) => c.isActive) });
   }
 });
 
@@ -41,7 +50,7 @@ couponsRouter.post('/validate', async (req, res) => {
     if (isDbConnected) {
       matchedCoupon = await Coupon.findOne({ code: upper, isActive: true });
     } else {
-      matchedCoupon = DEFAULT_COUPONS.find((c) => c.code === upper && c.isActive);
+      matchedCoupon = inMemoryCoupons.find((c) => c.code === upper && c.isActive);
     }
 
     if (!matchedCoupon) {
@@ -60,12 +69,15 @@ couponsRouter.post('/validate', async (req, res) => {
     if (matchedCoupon.type === 'percentage') {
       calculatedDiscount = Math.round((subtotal * matchedCoupon.value) / 100);
     } else {
-      calculatedDiscount = matchedCoupon.value;
+      calculatedDiscount = Math.min(subtotal, matchedCoupon.value);
     }
 
     res.json({
       success: true,
       code: upper,
+      type: matchedCoupon.type,
+      value: matchedCoupon.value,
+      minOrderValue: matchedCoupon.minOrderValue || 0,
       discountAmount: calculatedDiscount,
       message: `Coupon '${upper}' applied successfully!`,
     });

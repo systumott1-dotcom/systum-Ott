@@ -42,10 +42,10 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
   const {
     cart,
     checkoutItem,
-    totalAmount,
     subtotal,
     discount,
     appliedPromo,
+    appliedCoupon,
     applyPromoCode,
     removePromoCode,
     clearCart,
@@ -102,6 +102,25 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
   } | null>(null);
 
   const isDirectBuy = !!checkoutItem;
+  const rawSubtotal = isDirectBuy ? checkoutItem.plan.discountedPrice : subtotal;
+
+  let calculatedDiscount = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.type === 'percentage') {
+      calculatedDiscount = Math.round((rawSubtotal * appliedCoupon.value) / 100);
+    } else {
+      calculatedDiscount = Math.min(rawSubtotal, appliedCoupon.value);
+    }
+  } else {
+    calculatedDiscount = discount;
+  }
+
+  const finalAmount = Math.max(0, rawSubtotal - calculatedDiscount);
+  const upiId = 'systummott@nyes';
+  const officialQrImageUrl = 'https://res.cloudinary.com/juvd58wl/image/upload/v1787203998/systum_ott_assets/systum_ott_official_qr.jpg';
+  const localFallbackQrUrl = '/images/systum_ott_official_qr.jpg';
+  const upiPayUrl = `upi://pay?pa=${upiId}&pn=Systum%20OTT%20India&am=${finalAmount}&cu=INR&tn=Order%20Subscription`;
+
   const items = isDirectBuy
     ? [
         {
@@ -133,12 +152,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
         warrantyType: 'Full-Term Replacement Warranty',
         warrantyDays: 30,
       }));
-
-  const finalAmount = isDirectBuy ? checkoutItem.plan.discountedPrice : totalAmount;
-  const upiId = 'systummott@nyes';
-  const officialQrImageUrl = 'https://res.cloudinary.com/juvd58wl/image/upload/v1787203998/systum_ott_assets/systum_ott_official_qr.jpg';
-  const localFallbackQrUrl = '/images/systum_ott_official_qr.jpg';
-  const upiPayUrl = `upi://pay?pa=${upiId}&pn=Systum%20OTT%20India&am=${finalAmount}&cu=INR&tn=Order%20Subscription`;
 
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -180,27 +193,27 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
     setTimeout(() => setCopiedPhone(false), 2000);
   };
 
-  const handleApplyCoupon = (e?: React.FormEvent) => {
+  const handleApplyCoupon = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!couponInput.trim()) return;
-    const ok = applyPromoCode(couponInput);
-    if (ok) {
-      toast.success(`Coupon ${couponInput.toUpperCase()} applied successfully! 🎉`);
+    const res = await applyPromoCode(couponInput, rawSubtotal);
+    if (res.success) {
+      toast.success(res.message || `Coupon ${couponInput.toUpperCase()} applied! Saved ₹${res.discount || calculatedDiscount} 🎉`);
       setCouponInput('');
       confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
     } else {
-      toast.error('Invalid or expired coupon code.');
+      toast.error(res.message || 'Invalid or expired coupon code.');
     }
   };
 
-  const handleApplyQuickCoupon = (code: string) => {
-    const ok = applyPromoCode(code);
-    if (ok) {
-      toast.success(`Coupon ${code} applied successfully! 🎉`);
+  const handleApplyQuickCoupon = async (code: string) => {
+    const res = await applyPromoCode(code, rawSubtotal);
+    if (res.success) {
+      toast.success(res.message || `Coupon ${code} applied successfully! Saved ₹${res.discount || calculatedDiscount} 🎉`);
       setIsOfferTrayOpen(false);
       confetti({ particleCount: 70, spread: 70, origin: { y: 0.7 } });
     } else {
-      toast.error(`Could not apply coupon ${code}. Check minimum order requirement.`);
+      toast.error(res.message || `Could not apply coupon ${code}. Check minimum order requirement.`);
     }
   };
 
@@ -731,7 +744,7 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
                       <div className="flex items-center justify-between mt-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-bold">
                         <span className="flex items-center gap-1.5">
                           <Tag className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Code '{appliedPromo}' applied (-₹{discount})</span>
+                          <span>Code '{appliedPromo}' applied (-₹{calculatedDiscount})</span>
                         </span>
                         <button type="button" onClick={removePromoCode} className="text-rose-500 hover:text-rose-700 text-xs">
                           Remove
@@ -744,12 +757,12 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
                   <div className="space-y-2 pt-3 border-t border-slate-100 text-xs">
                     <div className="flex justify-between text-slate-600">
                       <span>Subtotal</span>
-                      <span className="font-bold">₹{subtotal || finalAmount + discount}</span>
+                      <span className="font-bold">₹{rawSubtotal}</span>
                     </div>
-                    {discount > 0 && (
+                    {calculatedDiscount > 0 && (
                       <div className="flex justify-between text-emerald-600 font-bold">
                         <span>Coupon Discount</span>
-                        <span>-₹{discount}</span>
+                        <span>-₹{calculatedDiscount}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-200">

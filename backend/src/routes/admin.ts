@@ -5,6 +5,7 @@ import { Order } from '../models/Order.js';
 import { Coupon } from '../models/Coupon.js';
 import { User } from '../models/User.js';
 import { inMemoryUsers } from './auth.js';
+import { inMemoryCoupons } from './coupons.js';
 import { PRODUCTS } from '../data/mockData.js';
 import { uploadImageToCloudinary } from '../services/cloudinary.js';
 import { sendOrderEmail, sendTestEmail } from '../services/email.js';
@@ -17,10 +18,7 @@ adminRouter.use(requireAdmin);
 
 // In-memory fallback stores
 let adminProducts = [...PRODUCTS];
-const adminCoupons = [
-  { code: 'EXTRA10', type: 'percentage' as const, value: 10, minOrderValue: 0, isActive: true },
-  { code: 'SUPER50', type: 'flat' as const, value: 50, minOrderValue: 500, isActive: true },
-];
+const adminCoupons = inMemoryCoupons;
 interface AdminOrderType {
   id: string;
   customerName: string;

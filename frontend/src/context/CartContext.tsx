@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { CartItem, Product, ProductPlan } from '../types';
 
+export interface AppliedCouponInfo {
+  code: string;
+  type: 'percentage' | 'flat';
+  value: number;
+  minOrderValue?: number;
+  discountAmount?: number;
+}
+
 interface CartContextType {
   cart: CartItem[];
   addToCart: (product: Product, plan: ProductPlan) => void;
@@ -13,7 +21,8 @@ interface CartContextType {
   totalAmount: number;
   promoCode: string;
   appliedPromo: string | null;
-  applyPromoCode: (code: string) => boolean;
+  appliedCoupon: AppliedCouponInfo | null;
+  applyPromoCode: (code: string, customSubtotal?: number) => Promise<{ success: boolean; message?: string; discount?: number }>;
   removePromoCode: () => void;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
@@ -44,13 +53,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCouponInfo | null>(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [checkoutItem, setCheckoutItem] = useState<{ product: Product; plan: ProductPlan } | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    } catch (e) {
+      console.error('Failed to save cart to localStorage', e);
+    }
   }, [cart]);
 
   const addToCart = (product: Product, plan: ProductPlan) => {
@@ -102,32 +116,102 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearCart = () => {
     setCart([]);
     setAppliedPromo(null);
+    setAppliedCoupon(null);
   };
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   
   let discount = 0;
-  if (appliedPromo === 'EXTRA10' || appliedPromo === 'SAVE10') {
+  if (appliedCoupon) {
+    if (appliedCoupon.type === 'percentage') {
+      discount = Math.round((subtotal * appliedCoupon.value) / 100);
+    } else {
+      discount = Math.min(subtotal, appliedCoupon.value);
+    }
+  } else if (appliedPromo === 'EXTRA10' || appliedPromo === 'SAVE10') {
     discount = Math.round(subtotal * 0.1);
-  } else if (appliedPromo === 'SUPER50' && subtotal >= 500) {
+  } else if (appliedPromo === 'SUPER50' && subtotal >= 499) {
     discount = 50;
   }
 
   const totalAmount = Math.max(0, subtotal - discount);
 
-  const applyPromoCode = (code: string): boolean => {
+  const applyPromoCode = async (
+    code: string,
+    customSubtotal?: number
+  ): Promise<{ success: boolean; message?: string; discount?: number }> => {
     const trimmed = code.trim().toUpperCase();
-    if (trimmed === 'EXTRA10' || trimmed === 'SAVE10' || trimmed === 'SUPER50') {
-      setAppliedPromo(trimmed);
-      setPromoCode('');
-      return true;
+    if (!trimmed) {
+      return { success: false, message: 'Please enter a coupon code' };
     }
-    return false;
+
+    const effectiveSubtotal = customSubtotal !== undefined 
+      ? customSubtotal 
+      : (checkoutItem ? checkoutItem.plan.discountedPrice : subtotal);
+
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: trimmed, subtotal: effectiveSubtotal }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        const couponInfo: AppliedCouponInfo = {
+          code: data.code || trimmed,
+          type: data.type || (trimmed === 'SUPER50' ? 'flat' : 'percentage'),
+          value: Number(data.value) || 10,
+          minOrderValue: Number(data.minOrderValue) || 0,
+          discountAmount: data.discountAmount,
+        };
+        setAppliedPromo(trimmed);
+        setAppliedCoupon(couponInfo);
+        setPromoCode('');
+        return { success: true, discount: data.discountAmount, message: data.message };
+      } else {
+        return { success: false, message: data.message || 'Invalid or expired coupon code' };
+      }
+    } catch {
+      // Fallback offline validation
+      if (trimmed === 'EXTRA10' || trimmed === 'SAVE10' || trimmed.startsWith('SAVE')) {
+        const value = trimmed === 'SAVE80' ? 80 : 10;
+        const calcDiscount = Math.round((effectiveSubtotal * value) / 100);
+        const couponInfo: AppliedCouponInfo = {
+          code: trimmed,
+          type: 'percentage',
+          value,
+          minOrderValue: 0,
+          discountAmount: calcDiscount,
+        };
+        setAppliedPromo(trimmed);
+        setAppliedCoupon(couponInfo);
+        setPromoCode('');
+        return { success: true, discount: calcDiscount };
+      } else if (trimmed === 'SUPER50') {
+        if (effectiveSubtotal < 499) {
+          return { success: false, message: "Coupon 'SUPER50' requires a minimum order of ₹499" };
+        }
+        const couponInfo: AppliedCouponInfo = {
+          code: trimmed,
+          type: 'flat',
+          value: 50,
+          minOrderValue: 499,
+          discountAmount: 50,
+        };
+        setAppliedPromo(trimmed);
+        setAppliedCoupon(couponInfo);
+        setPromoCode('');
+        return { success: true, discount: 50 };
+      }
+      return { success: false, message: 'Invalid or expired coupon code' };
+    }
   };
 
   const removePromoCode = () => {
     setAppliedPromo(null);
+    setAppliedCoupon(null);
   };
 
   const buyNow = (product: Product, plan: ProductPlan) => {
@@ -158,11 +242,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (discount > 0) {
         message += `*Discount (${appliedPromo}):* -₹${discount}\n`;
       }
-      message += `*Final Payable Amount:* ₹${totalAmount}\n\n`;
+      message += `*Total Payable:* ₹${totalAmount}\n\n`;
     }
 
-    message += `Please provide UPI payment details / QR code to complete my order. Thank you!`;
-
+    message += `I want to complete payment and get instant delivery on WhatsApp.`;
     return `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(message)}`;
   };
 
@@ -180,6 +263,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         totalAmount,
         promoCode,
         appliedPromo,
+        appliedCoupon,
         applyPromoCode,
         removePromoCode,
         isCartOpen,
@@ -201,6 +285,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (!context) throw new Error('useCart must be used within CartProvider');
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
   return context;
 };
