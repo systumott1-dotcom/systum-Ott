@@ -296,3 +296,57 @@ export const sendAdminNewOrderReceiptEmail = async (payload: AdminOrderReceiptPa
   }
 };
 
+/**
+ * Send security OTP email to Admin for Email / Password modification
+ */
+export const sendAdminOtpEmail = async (toEmail: string, otp: string, actionType: 'email' | 'password'): Promise<boolean> => {
+  const resend = getResendClient();
+
+  if (!resend) {
+    console.log(`ℹ️ Resend API key not configured. Mocking Admin OTP email to ${toEmail} for ${actionType} change: ${otp}`);
+    return true;
+  }
+
+  try {
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+    const actionLabel = actionType === 'email' ? 'Change Admin Email Address' : 'Change Admin Password';
+    
+    await resend.emails.send({
+      from: `Systum OTT Security <${fromEmail}>`,
+      to: toEmail,
+      subject: `🛡️ [Security Alert] 6-Digit OTP to ${actionLabel} - Systum OTT`,
+      html: `
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 16px; background: #ffffff;">
+          <div style="text-align: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 16px; margin-bottom: 24px;">
+            <h2 style="color: #7c3aed; margin: 0; font-size: 22px;">Systum OTT Admin Security</h2>
+            <p style="color: #64748b; font-size: 12px; margin: 4px 0 0 0;">Authorized Administrative Actions</p>
+          </div>
+
+          <p style="color: #1e293b; font-size: 14px; margin-bottom: 12px;">Hello Admin,</p>
+          <p style="color: #475569; font-size: 13px; line-height: 1.6;">A security request was initiated to <strong>${actionLabel}</strong> on your Systum OTT store.</p>
+          <p style="color: #475569; font-size: 13px; line-height: 1.6;">Please use the one-time verification code below to authorize this change:</p>
+
+          <div style="margin: 24px 0; padding: 18px; background: #f5f3ff; border: 2px dashed #c4b5fd; border-radius: 12px; text-align: center;">
+            <span style="font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #6d28d9; font-family: monospace;">${otp}</span>
+            <p style="font-size: 11px; color: #7c3aed; margin: 8px 0 0 0; font-weight: 600;">Valid for 15 minutes only · Do not share</p>
+          </div>
+
+          <p style="color: #e11d48; font-size: 12px; font-weight: 600; line-height: 1.5;">⚠️ If you did NOT perform this action, someone may be attempting to access your admin account. Please immediately secure your credentials.</p>
+
+          <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 24px 0;" />
+          <p style="text-align: center; font-size: 11px; color: #94a3b8; margin: 0;">
+            © ${new Date().getFullYear()} Systum OTT India Administration
+          </p>
+        </div>
+      `,
+    });
+
+    console.log(`✉️ Admin OTP dispatched to ${toEmail}`);
+    return true;
+  } catch (error) {
+    console.error('❌ Resend Admin OTP Dispatch Error:', error);
+    return false;
+  }
+};
+
+

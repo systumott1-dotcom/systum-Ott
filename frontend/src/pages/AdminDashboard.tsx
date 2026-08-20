@@ -30,7 +30,9 @@ import {
   Ban,
   QrCode,
   Sparkles,
-  RefreshCw
+  RefreshCw,
+  Lock,
+  KeyRound
 } from 'lucide-react';
 import type { Product, ProductPlan } from '../types';
 import { CATEGORIES } from '../data/products';
@@ -91,8 +93,22 @@ interface AdminDashboardProps {
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore }) => {
   const { user, logout, token } = useAuth();
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'stats' | 'products' | 'orders' | 'coupons' | 'users' | 'payment'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'products' | 'orders' | 'coupons' | 'users' | 'payment' | 'security'>('stats');
   const [saving, setSaving] = useState(false);
+
+  // Admin Security & Credentials State
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [isSendingEmailOtp, setIsSendingEmailOtp] = useState(false);
+  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+
+  const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [confirmAdminPassword, setConfirmAdminPassword] = useState('');
+  const [passwordOtp, setPasswordOtp] = useState('');
+  const [passwordOtpSent, setPasswordOtpSent] = useState(false);
+  const [isSendingPasswordOtp, setIsSendingPasswordOtp] = useState(false);
+  const [isVerifyingPassword, setIsVerifyingPassword] = useState(false);
 
   // Stats State
   const [stats, setStats] = useState<AdminStats>({
@@ -707,6 +723,127 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     }
   };
 
+  // Admin Security Handlers
+  const handleSendEmailOtp = async () => {
+    if (!newAdminEmail.trim() || !newAdminEmail.includes('@')) {
+      toast.error('Please enter a valid new email address.');
+      return;
+    }
+    setIsSendingEmailOtp(true);
+    try {
+      const res = await fetch('/api/admin/security/request-otp', {
+        method: 'POST',
+        headers: apiHeaders(),
+        body: JSON.stringify({ action: 'email', newEmail: newAdminEmail.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEmailOtpSent(true);
+        toast.success(data.message || `6-digit security code sent to ${user?.email}`);
+      } else {
+        toast.error(data.message || 'Failed to send verification code.');
+      }
+    } catch {
+      toast.error('Network error sending security code.');
+    } finally {
+      setIsSendingEmailOtp(false);
+    }
+  };
+
+  const handleVerifyChangeEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailOtp.trim()) {
+      toast.error('Please enter the 6-digit verification code.');
+      return;
+    }
+    setIsVerifyingEmail(true);
+    try {
+      const res = await fetch('/api/admin/security/verify-change-email', {
+        method: 'POST',
+        headers: apiHeaders(),
+        body: JSON.stringify({ newEmail: newAdminEmail.trim(), otp: emailOtp.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token);
+        }
+        toast.success(data.message || 'Admin email updated successfully! 🎉');
+        setEmailOtpSent(false);
+        setEmailOtp('');
+        setNewAdminEmail('');
+        setTimeout(() => window.location.reload(), 1200);
+      } else {
+        toast.error(data.message || 'Invalid or expired verification code.');
+      }
+    } catch {
+      toast.error('Network error verifying code.');
+    } finally {
+      setIsVerifyingEmail(false);
+    }
+  };
+
+  const handleSendPasswordOtp = async () => {
+    setIsSendingPasswordOtp(true);
+    try {
+      const res = await fetch('/api/admin/security/request-otp', {
+        method: 'POST',
+        headers: apiHeaders(),
+        body: JSON.stringify({ action: 'password' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPasswordOtpSent(true);
+        toast.success(data.message || `6-digit security code sent to ${user?.email}`);
+      } else {
+        toast.error(data.message || 'Failed to send verification code.');
+      }
+    } catch {
+      toast.error('Network error sending security code.');
+    } finally {
+      setIsSendingPasswordOtp(false);
+    }
+  };
+
+  const handleVerifyChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordOtp.trim() || !newAdminPassword.trim()) {
+      toast.error('Please enter the verification code and new password.');
+      return;
+    }
+    if (newAdminPassword.length < 6) {
+      toast.error('Password must be at least 6 characters long.');
+      return;
+    }
+    if (newAdminPassword !== confirmAdminPassword) {
+      toast.error('Passwords do not match. Please re-enter.');
+      return;
+    }
+
+    setIsVerifyingPassword(true);
+    try {
+      const res = await fetch('/api/admin/security/verify-change-password', {
+        method: 'POST',
+        headers: apiHeaders(),
+        body: JSON.stringify({ newPassword: newAdminPassword.trim(), otp: passwordOtp.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || 'Admin password updated successfully! 🔒');
+        setPasswordOtpSent(false);
+        setPasswordOtp('');
+        setNewAdminPassword('');
+        setConfirmAdminPassword('');
+      } else {
+        toast.error(data.message || 'Invalid or expired verification code.');
+      }
+    } catch {
+      toast.error('Network error updating password.');
+    } finally {
+      setIsVerifyingPassword(false);
+    }
+  };
+
   const tabs = [
     { id: 'stats' as const, label: 'Dashboard', icon: TrendingUp },
     { id: 'products' as const, label: 'Products', icon: Package },
@@ -714,6 +851,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     { id: 'coupons' as const, label: 'Coupons', icon: Tag },
     { id: 'payment' as const, label: 'Payment & UPI', icon: QrCode },
     { id: 'users' as const, label: 'Users & Bans', icon: Users },
+    { id: 'security' as const, label: 'Security & Password', icon: KeyRound },
   ];
 
   return (
@@ -1937,6 +2075,245 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ADMIN SECURITY & CREDENTIALS TAB */}
+        {activeTab === 'security' && (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                <KeyRound className="w-5 h-5 text-brand-600" />
+                <span>Admin Security & Credentials Manager</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Manage your administrative login email and master account password. All changes strictly require email OTP verification.
+              </p>
+            </div>
+
+            {/* Current Account Details Card */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-brand-50 border border-brand-200 flex items-center justify-center text-brand-700 font-black text-lg shrink-0">
+                  {user?.name?.charAt(0) || 'A'}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-extrabold text-sm text-slate-900">{user?.name || 'Systum Admin'}</h4>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                      Master Admin
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-slate-400" />
+                    <span className="font-mono font-bold text-slate-700">{user?.email || 'systumott1@gmail.com'}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-xs text-emerald-700 font-bold bg-emerald-50 px-3.5 py-2 rounded-2xl border border-emerald-200 flex items-center gap-1.5 self-start sm:self-center">
+                <Shield className="w-4 h-4 text-emerald-600" />
+                <span>OTP Protected & 256-Bit Encrypted</span>
+              </div>
+            </div>
+
+            {/* 2-Column Grid: Change Email & Change Password */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              
+              {/* Box 1: Change Admin Email */}
+              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
+                <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900 border-b border-slate-100 pb-3">
+                  <Mail className="w-4 h-4 text-brand-600" />
+                  <span>Change Admin Email Address</span>
+                </div>
+
+                <form onSubmit={handleVerifyChangeEmail} className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1.5">New Admin Email *</label>
+                    <input
+                      required
+                      type="email"
+                      value={newAdminEmail}
+                      onChange={(e) => setNewAdminEmail(e.target.value)}
+                      placeholder="e.g. newadmin@gmail.com"
+                      disabled={emailOtpSent}
+                      className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono focus:outline-none focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60"
+                    />
+                  </div>
+
+                  {!emailOtpSent ? (
+                    <button
+                      type="button"
+                      onClick={handleSendEmailOtp}
+                      disabled={isSendingEmailOtp || !newAdminEmail.trim()}
+                      className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {isSendingEmailOtp ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Sending 6-Digit OTP to Current Email...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="w-4 h-4 text-brand-300" />
+                          <span>Send 6-Digit OTP to Current Email</span>
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <div className="space-y-3 p-4 bg-purple-50/70 border border-purple-200/80 rounded-2xl animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between text-xs text-purple-900 font-bold">
+                        <span>OTP dispatched to {user?.email}</span>
+                        <button
+                          type="button"
+                          onClick={() => setEmailOtpSent(false)}
+                          className="text-[11px] text-brand-600 hover:underline"
+                        >
+                          Change Email
+                        </button>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-slate-700 block mb-1">Enter 6-Digit OTP Code *</label>
+                        <input
+                          required
+                          type="text"
+                          maxLength={6}
+                          value={emailOtp}
+                          onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          placeholder="123456"
+                          className="w-full px-3.5 py-2.5 bg-white border border-purple-300 rounded-xl text-center text-lg font-black font-mono tracking-widest text-purple-950 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isVerifyingEmail || emailOtp.length !== 6}
+                        className="w-full py-3 px-4 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      >
+                        {isVerifyingEmail ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Updating Admin Email...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-4 h-4 stroke-[2.5]" />
+                            <span>Verify OTP & Update Email</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </form>
+              </div>
+
+              {/* Box 2: Change Admin Password */}
+              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200 shadow-sm space-y-5">
+                <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900 border-b border-slate-100 pb-3">
+                  <Lock className="w-4 h-4 text-brand-600" />
+                  <span>Change Admin Master Password</span>
+                </div>
+
+                <form onSubmit={handleVerifyChangePassword} className="space-y-4">
+                  {!passwordOtpSent ? (
+                    <div className="space-y-3">
+                      <p className="text-xs text-slate-500">
+                        Click below to receive a 6-digit security authorization code on your admin email (<strong className="text-slate-800 font-mono">{user?.email || 'systumott1@gmail.com'}</strong>).
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={handleSendPasswordOtp}
+                        disabled={isSendingPasswordOtp}
+                        className="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      >
+                        {isSendingPasswordOtp ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Sending 6-Digit OTP Code...</span>
+                          </>
+                        ) : (
+                          <>
+                            <KeyRound className="w-4 h-4 text-brand-300" />
+                            <span>Send Password Reset OTP to Email</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5 p-4 bg-purple-50/70 border border-purple-200/80 rounded-2xl animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between text-xs text-purple-900 font-bold">
+                        <span>OTP dispatched to {user?.email}</span>
+                        <button
+                          type="button"
+                          onClick={() => setPasswordOtpSent(false)}
+                          className="text-[11px] text-brand-600 hover:underline"
+                        >
+                          Resend
+                        </button>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-slate-700 block mb-1">Enter 6-Digit OTP Code *</label>
+                        <input
+                          required
+                          type="text"
+                          maxLength={6}
+                          value={passwordOtp}
+                          onChange={(e) => setPasswordOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          placeholder="123456"
+                          className="w-full px-3.5 py-2.5 bg-white border border-purple-300 rounded-xl text-center text-lg font-black font-mono tracking-widest text-purple-950 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-slate-700 block mb-1">New Password (min 6 chars) *</label>
+                        <input
+                          required
+                          type="password"
+                          value={newAdminPassword}
+                          onChange={(e) => setNewAdminPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-slate-700 block mb-1">Confirm New Password *</label>
+                        <input
+                          required
+                          type="password"
+                          value={confirmAdminPassword}
+                          onChange={(e) => setConfirmAdminPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isVerifyingPassword || passwordOtp.length !== 6 || !newAdminPassword || newAdminPassword.length < 6}
+                        className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      >
+                        {isVerifyingPassword ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Updating Admin Password...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-4 h-4 stroke-[2.5]" />
+                            <span>Verify OTP & Change Password</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </form>
+              </div>
+
+            </div>
           </div>
         )}
       </div>

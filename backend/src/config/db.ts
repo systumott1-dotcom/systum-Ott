@@ -25,19 +25,33 @@ export const connectDB = async () => {
       console.log(`✅ Seeded ${PRODUCTS.length} subscriptions into MongoDB!`);
     }
 
-    // Auto-seed default admin user if no admin exists
-    const adminCount = await User.countDocuments({ role: 'admin' });
-    if (adminCount === 0) {
-      console.log('🌱 Seeding initial admin into MongoDB Atlas...');
-      const hashedPassword = await bcrypt.hash('admin1234', 10);
-      await User.create({
-        name: 'Systum Admin',
-        email: 'admin@systumott.in',
-        password: hashedPassword,
-        role: 'admin',
-        phone: '9306022703',
-      });
-      console.log('✅ Admin user created: admin@systumott.in / admin1234');
+    // Auto-seed default admin user (systumott1@gmail.com)
+    const targetAdminEmail = 'systumott1@gmail.com';
+    let adminUser = await User.findOne({ email: targetAdminEmail });
+
+    if (!adminUser) {
+      // Check if legacy admin existed to migrate it
+      const legacyAdmin = await User.findOne({ email: 'admin@systumott.in' });
+      if (legacyAdmin) {
+        legacyAdmin.email = targetAdminEmail;
+        legacyAdmin.role = 'admin';
+        await legacyAdmin.save();
+        console.log(`✅ Migrated admin email to: ${targetAdminEmail}`);
+      } else {
+        console.log('🌱 Seeding initial admin into MongoDB Atlas...');
+        const hashedPassword = await bcrypt.hash('admin1234', 10);
+        await User.create({
+          name: 'Systum Admin',
+          email: targetAdminEmail,
+          passwordHash: hashedPassword,
+          role: 'admin',
+          phone: '9306022703',
+        });
+        console.log(`✅ Admin user created: ${targetAdminEmail} / admin1234`);
+      }
+    } else if (adminUser.role !== 'admin') {
+      adminUser.role = 'admin';
+      await adminUser.save();
     }
 
     // Auto-seed coupons if empty

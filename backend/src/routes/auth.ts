@@ -31,7 +31,7 @@ export const inMemoryUsers: InMemoryUserType[] = [
   {
     id: 'admin-default-1',
     name: 'Systum Admin',
-    email: 'admin@systumott.in',
+    email: 'systumott1@gmail.com',
     passwordHash: bcrypt.hashSync('admin1234', 10),
     phone: '9306022703',
     role: 'admin',

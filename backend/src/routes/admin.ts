@@ -1,5 +1,8 @@
 import { Router } from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { requireAdmin } from '../middleware/auth.js';
+import type { AuthRequest } from '../middleware/auth.js';
 import { Product } from '../models/Product.js';
 import { Order } from '../models/Order.js';
 import { Coupon } from '../models/Coupon.js';
@@ -8,7 +11,7 @@ import { inMemoryUsers } from './auth.js';
 import { inMemoryCoupons } from './coupons.js';
 import { PRODUCTS } from '../data/mockData.js';
 import { uploadImageToCloudinary } from '../services/cloudinary.js';
-import { sendOrderEmail, sendTestEmail } from '../services/email.js';
+import { sendOrderEmail, sendTestEmail, sendAdminOtpEmail } from '../services/email.js';
 import mongoose from 'mongoose';
 
 export const adminRouter = Router();
@@ -625,5 +628,189 @@ adminRouter.delete('/users/:id', async (req, res) => {
   } catch (error) {
     console.error('Delete user error:', error);
     res.status(500).json({ success: false, message: 'Failed to delete user account' });
+  }
+});
+
+// In-memory OTP storage for Admin Security Changes (15 minutes validity)
+const adminSecurityOtpStore = new Map<string, { otp: string; action: 'email' | 'password'; newEmail?: string; expiresAt: number }>();
+
+// POST /api/admin/security/request-otp - Send 6-digit OTP to Admin Email
+adminRouter.post('/security/request-otp', async (req: AuthRequest, res) => {
+  try {
+    const { action, newEmail } = req.body; // 'email' | 'password'
+    if (!req.user?.email) {
+      return res.status(401).json({ success: false, message: 'Admin authentication required' });
+    }
+
+    if (action !== 'email' && action !== 'password') {
+      return res.status(400).json({ success: false, message: 'Invalid action type. Must be email or password.' });
+    }
+
+    if (action === 'email' && (!newEmail || !newEmail.includes('@'))) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid new email address.' });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 15 * 60 * 1000;
+    const adminEmail = req.user.email.toLowerCase().trim();
+
+    adminSecurityOtpStore.set(adminEmail, {
+      otp,
+      action,
+      newEmail: newEmail ? newEmail.toLowerCase().trim() : undefined,
+      expiresAt,
+    });
+
+    await sendAdminOtpEmail(adminEmail, otp, action);
+
+    res.json({
+      success: true,
+      message: `A 6-digit security code has been sent to ${adminEmail}. Please check your inbox.`,
+    });
+  } catch (err: any) {
+    console.error('Request security OTP error:', err);
+    res.status(500).json({ success: false, message: 'Failed to dispatch security code.' });
+  }
+});
+
+// POST /api/admin/security/verify-change-email - Verify OTP & update admin email
+adminRouter.post('/security/verify-change-email', async (req: AuthRequest, res) => {
+  try {
+    const { newEmail, otp } = req.body;
+    if (!req.user?.email) {
+      return res.status(401).json({ success: false, message: 'Admin authentication required' });
+    }
+    if (!newEmail || !otp) {
+      return res.status(400).json({ success: false, message: 'New email and 6-digit OTP code are required.' });
+    }
+
+    const currentAdminEmail = req.user.email.toLowerCase().trim();
+    const targetNewEmail = newEmail.toLowerCase().trim();
+    const stored = adminSecurityOtpStore.get(currentAdminEmail);
+
+    if (!stored || stored.action !== 'email') {
+      return res.status(400).json({ success: false, message: 'No active email change request found. Please request a new OTP code.' });
+    }
+
+    if (Date.now() > stored.expiresAt) {
+      adminSecurityOtpStore.delete(currentAdminEmail);
+      return res.status(400).json({ success: false, message: 'The security verification code has expired. Please request a new code.' });
+    }
+
+    if (stored.otp !== otp.trim()) {
+      return res.status(400).json({ success: false, message: 'Invalid 6-digit verification code. Please check your email.' });
+    }
+
+    const isDbConnected = mongoose.connection.readyState === 1;
+    if (isDbConnected) {
+      const existing = await User.findOne({ email: targetNewEmail });
+      if (existing && existing._id.toString() !== req.user.id) {
+        return res.status(400).json({ success: false, message: 'An account with this new email already exists.' });
+      }
+
+      const updatedUser = await User.findOneAndUpdate(
+        { $or: [{ _id: req.user.id }, { email: currentAdminEmail }] },
+        { email: targetNewEmail },
+        { new: true }
+      );
+
+      if (!updatedUser) {
+        return res.status(404).json({ success: false, message: 'Admin record not found.' });
+      }
+
+      adminSecurityOtpStore.delete(currentAdminEmail);
+
+      const secret = process.env.JWT_SECRET || 'systum_ott_default_secret_2026';
+      const newToken = jwt.sign(
+        { id: updatedUser._id.toString(), email: updatedUser.email, role: updatedUser.role, name: updatedUser.name },
+        secret,
+        { expiresIn: '7d' }
+      );
+
+      return res.json({
+        success: true,
+        message: `Admin email successfully updated to ${targetNewEmail}!`,
+        token: newToken,
+        user: { id: updatedUser._id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role },
+      });
+    }
+
+    // In-memory fallback
+    const user = inMemoryUsers.find((u) => u.email === currentAdminEmail || u.id === req.user?.id);
+    if (user) {
+      user.email = targetNewEmail;
+    }
+    adminSecurityOtpStore.delete(currentAdminEmail);
+
+    const secret = process.env.JWT_SECRET || 'systum_ott_default_secret_2026';
+    const newToken = jwt.sign(
+      { id: req.user.id, email: targetNewEmail, role: 'admin', name: req.user.name },
+      secret,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      success: true,
+      message: `Admin email successfully updated to ${targetNewEmail}!`,
+      token: newToken,
+      user: { id: req.user.id, name: req.user.name, email: targetNewEmail, role: 'admin' },
+    });
+  } catch (err: any) {
+    console.error('Verify change email error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update admin email.' });
+  }
+});
+
+// POST /api/admin/security/verify-change-password - Verify OTP & update admin password
+adminRouter.post('/security/verify-change-password', async (req: AuthRequest, res) => {
+  try {
+    const { newPassword, otp } = req.body;
+    if (!req.user?.email) {
+      return res.status(401).json({ success: false, message: 'Admin authentication required' });
+    }
+    if (!newPassword || newPassword.length < 6 || !otp) {
+      return res.status(400).json({ success: false, message: 'New password (min 6 chars) and 6-digit OTP code are required.' });
+    }
+
+    const currentAdminEmail = req.user.email.toLowerCase().trim();
+    const stored = adminSecurityOtpStore.get(currentAdminEmail);
+
+    if (!stored || stored.action !== 'password') {
+      return res.status(400).json({ success: false, message: 'No active password change request found. Please request a new OTP code.' });
+    }
+
+    if (Date.now() > stored.expiresAt) {
+      adminSecurityOtpStore.delete(currentAdminEmail);
+      return res.status(400).json({ success: false, message: 'The security verification code has expired. Please request a new code.' });
+    }
+
+    if (stored.otp !== otp.trim()) {
+      return res.status(400).json({ success: false, message: 'Invalid 6-digit verification code. Please check your email.' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const isDbConnected = mongoose.connection.readyState === 1;
+
+    if (isDbConnected) {
+      await User.findOneAndUpdate(
+        { $or: [{ _id: req.user.id }, { email: currentAdminEmail }] },
+        { passwordHash }
+      );
+    } else {
+      const user = inMemoryUsers.find((u) => u.email === currentAdminEmail || u.id === req.user?.id);
+      if (user) {
+        user.passwordHash = passwordHash;
+      }
+    }
+
+    adminSecurityOtpStore.delete(currentAdminEmail);
+
+    res.json({
+      success: true,
+      message: 'Admin password updated successfully! Please keep your new password safe.',
+    });
+  } catch (err: any) {
+    console.error('Verify change password error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update admin password.' });
   }
 });
