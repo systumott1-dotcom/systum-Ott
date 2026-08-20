@@ -100,6 +100,16 @@ export const ProductPage: React.FC<ProductPageProps> = ({
   const [visibleCount, setVisibleCount] = useState<number>(6);
   const [lightboxImage, setLightboxImage] = useState<{ url: string; author: string } | null>(null);
 
+  // Carousel ref and related products memo (must be called before any early return)
+  const relatedScrollRef = useRef<HTMLDivElement>(null);
+
+  const relatedProducts = useMemo(() => {
+    if (!product) return [];
+    const sameCategory = products.filter((p) => p.id !== product.id && p.category === product.category);
+    const otherProducts = products.filter((p) => p.id !== product.id && p.category !== product.category);
+    return [...sameCategory, ...otherProducts].slice(0, 12);
+  }, [products, product]);
+
   useBodyScrollLock(Boolean(lightboxImage));
 
   // Sync authorName when logged in user changes
@@ -293,22 +303,12 @@ export const ProductPage: React.FC<ProductPageProps> = ({
     buyNow(product, selectedPlan);
   };
 
-  const relatedScrollRef = useRef<HTMLDivElement>(null);
-
   const scrollRelated = (direction: 'left' | 'right') => {
     if (relatedScrollRef.current) {
       const scrollAmount = direction === 'left' ? -350 : 350;
       relatedScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
   };
-
-  // Related products from same category + popular catalog products (up to 12 items for full carousel)
-  const relatedProducts = useMemo(() => {
-    if (!product) return [];
-    const sameCategory = products.filter((p) => p.id !== product.id && p.category === product.category);
-    const otherProducts = products.filter((p) => p.id !== product.id && p.category !== product.category);
-    return [...sameCategory, ...otherProducts].slice(0, 12);
-  }, [products, product]);
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-32 relative">
