@@ -197,9 +197,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <button
             type="button"
             onClick={handleBuyNow}
-            className="w-full py-2.5 sm:py-3 px-3 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-brand-600/20 transition-all transform group-hover:shadow-lg active:scale-95 flex items-center justify-center gap-1.5"
+            className="w-full py-3 sm:py-3.5 px-4 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-black shadow-md shadow-brand-600/25 transition-all transform group-hover:shadow-lg active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <Zap className="w-3.5 h-3.5 fill-white" />
+            <Zap className="w-4 h-4 fill-white" />
             <span>Buy Now</span>
           </button>
         </div>

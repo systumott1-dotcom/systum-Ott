@@ -533,9 +533,9 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                   <button
                     type="button"
                     onClick={handleBuyNow}
-                    className="py-3.5 px-5 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-sm font-extrabold shadow-lg shadow-brand-600/25 transition-all transform hover:-translate-y-0.5 active:scale-98 flex items-center justify-center gap-2"
+                    className="py-4 px-6 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-base font-black shadow-xl shadow-brand-600/30 transition-all transform hover:-translate-y-0.5 active:scale-98 flex items-center justify-center gap-2.5 cursor-pointer"
                   >
-                    <Zap className="w-4 h-4 fill-white" />
+                    <Zap className="w-5 h-5 fill-white" />
                     <span>Buy Now · ₹{selectedPlan.discountedPrice}</span>
                   </button>
 
@@ -1220,9 +1220,9 @@ export const ProductPage: React.FC<ProductPageProps> = ({
             <button
               type="button"
               onClick={handleBuyNow}
-              className="py-2.5 sm:py-3 px-5 sm:px-6 rounded-xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-brand-600/25 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-1.5 sm:gap-2 cursor-pointer"
+              className="py-3 sm:py-3.5 px-6 sm:px-8 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-sm sm:text-base font-black shadow-xl shadow-brand-600/30 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2 cursor-pointer"
             >
-              <Zap className="w-4 h-4 fill-white" />
+              <Zap className="w-4 h-4 sm:w-5 sm:h-5 fill-white shrink-0" />
               <span>Buy Now · ₹{selectedPlan.discountedPrice}</span>
             </button>
           </div>
