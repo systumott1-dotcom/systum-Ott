@@ -1,4 +1,4 @@
-export type CategoryId = 'all' | 'ott' | 'software' | 'combo' | 'combos' | 'music' | 'ai' | 'gaming' | 'education' | 'adult' | 'other';
+export type CategoryId = 'all' | 'ott' | 'software' | 'combo' | 'music' | 'adult' | 'other';
 
 export interface Category {
   id: CategoryId;

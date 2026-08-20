@@ -295,7 +295,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
     .slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20">
+    <div className="min-h-screen bg-slate-50/50 pb-32 relative">
       
       {/* Top Breadcrumbs & Back Bar */}
       <div className="bg-white border-b border-slate-200 sticky top-20 z-20 shadow-2xs">
@@ -1132,6 +1132,97 @@ export const ProductPage: React.FC<ProductPageProps> = ({
           </div>
         )}
 
+      </div>
+
+      {/* ================= FIXED STICKY BUY BAR (ZERO SCROLLING NEEDED) ================= */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-2xl px-4 py-3 sm:py-3.5 transition-all">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-6">
+          {/* Left: Product & Plan Info */}
+          <div className="flex items-center gap-3 min-w-0">
+            {product.imageUrl ? (
+              <img src={product.imageUrl} alt={product.title} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border border-slate-200 shrink-0" />
+            ) : (
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 shrink-0 font-bold text-xs">
+                {product.title.slice(0, 2)}
+              </div>
+            )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
+                  {product.title}
+                </span>
+                <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200 shrink-0">
+                  {selectedPlan.validity || selectedPlan.name}
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2 mt-0.5">
+                <span className="font-black text-sm sm:text-lg text-slate-900">
+                  ₹{selectedPlan.discountedPrice}
+                </span>
+                {selectedPlan.originalPrice > selectedPlan.discountedPrice && (
+                  <span className="text-[10px] sm:text-xs text-slate-400 line-through">
+                    ₹{selectedPlan.originalPrice}
+                  </span>
+                )}
+                {discountPercent > 0 && (
+                  <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
+                    {discountPercent}% OFF
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Plan Switcher + Quick Actions */}
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Quick Plan Selector (if multiple plans) */}
+            {product.plans.length > 1 && (
+              <select
+                value={selectedPlanIndex}
+                onChange={(e) => setSelectedPlanIndex(Number(e.target.value))}
+                className="hidden md:block px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
+                aria-label="Select Plan"
+              >
+                {product.plans.map((p, idx) => (
+                  <option key={idx} value={idx}>
+                    {p.validity || p.name} — ₹{p.discountedPrice}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className={`hidden sm:flex py-2.5 sm:py-3 px-4 rounded-xl border text-xs font-bold transition-all items-center gap-1.5 shadow-xs cursor-pointer ${
+                isAdded
+                  ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
+                  : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800'
+              }`}
+            >
+              {isAdded ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Added</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="w-3.5 h-3.5 text-brand-600" />
+                  <span>Add to Cart</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              className="py-2.5 sm:py-3 px-5 sm:px-6 rounded-xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-extrabold shadow-lg shadow-brand-600/25 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-1.5 sm:gap-2 cursor-pointer"
+            >
+              <Zap className="w-4 h-4 fill-white" />
+              <span>Buy Now · ₹{selectedPlan.discountedPrice}</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

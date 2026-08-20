@@ -68,7 +68,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
               >
                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                 <WhatsAppIcon className="w-5 h-5 text-[#25D366] fill-[#25D366] group-hover:scale-110 transition-transform" />
-                <span>Chat on WhatsApp</span>
+                <span>Join Community</span>
               </a>
             </div>
 

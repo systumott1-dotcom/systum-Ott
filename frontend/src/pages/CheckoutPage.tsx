@@ -548,7 +548,7 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/60 pb-20 relative">
+    <div className="min-h-screen bg-slate-50/60 pb-32 relative">
       
       {/* Top Header & Breadcrumb Progress */}
       <div className="bg-white border-b border-slate-200 sticky top-20 z-20 shadow-2xs">
@@ -1014,9 +1014,62 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
 
       </div>
 
+      {/* ================= FIXED STICKY ACTION BAR FOR CHECKOUT & PAYMENT ================= */}
+      {currentStep !== 'success' && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-2xl px-4 py-3 sm:py-3.5">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div>
+              <span className="text-[10px] sm:text-xs font-bold text-slate-500 block uppercase tracking-wider">
+                {currentStep === 'checkout' ? 'Order Total' : 'UPI Payable Amount'}
+              </span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-base sm:text-xl font-black text-slate-900">
+                  ₹{finalAmount}
+                </span>
+                <span className="text-[11px] text-slate-400 font-semibold">
+                  ({items.length} {items.length === 1 ? 'item' : 'items'})
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              {currentStep === 'checkout' ? (
+                <button
+                  type="button"
+                  onClick={handleProceedToPayment}
+                  className="py-3 px-5 sm:px-8 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-brand-600/25 transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer active:scale-95"
+                >
+                  <span>Proceed to Payment</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSubmitOrder}
+                  disabled={isSubmitting}
+                  className="py-3 px-5 sm:px-8 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs sm:text-sm shadow-lg shadow-emerald-600/25 transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer active:scale-95 disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Verifying...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 stroke-[2.5]" />
+                      <span>Confirm & Place Order</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ================= FLOATING ACTIVE OFFERS BUTTON (LEFT SIDE TO AVOID WHATSAPP OVERLAP) ================= */}
       {activeCoupons.length > 0 && currentStep !== 'success' && (
-        <div className="fixed bottom-6 left-4 sm:left-8 z-30">
+        <div className="fixed bottom-20 sm:bottom-24 left-4 sm:left-8 z-30">
           <button
             type="button"
             onClick={() => setIsOfferTrayOpen(true)}

@@ -114,10 +114,17 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const handleViewAllResults = () => {
     setIsSearchExpanded(false);
-    const shopSection = document.getElementById('shop-section');
-    if (shopSection) {
-      shopSection.scrollIntoView({ behavior: 'smooth' });
+    onSelectCategory('all');
+    if (window.location.pathname !== '/') {
+      window.history.pushState({}, '', '/');
+      window.dispatchEvent(new PopStateEvent('popstate'));
     }
+    setTimeout(() => {
+      const shopSection = document.getElementById('shop-section');
+      if (shopSection) {
+        shopSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   const navCategories = [
@@ -234,6 +241,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                         type="text"
                         value={searchQuery}
                         onChange={(e) => onSearchChange(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleViewAllResults();
+                          }
+                        }}
                         placeholder="Search Netflix, Adobe, ChatGPT, Prime..."
                         className="w-48 sm:w-72 md:w-80 lg:w-96 pl-9 pr-8 py-2 bg-slate-50 border border-brand-500 rounded-xl text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-500/20 shadow-lg transition-all"
                       />

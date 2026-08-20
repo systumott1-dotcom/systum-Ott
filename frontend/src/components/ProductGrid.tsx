@@ -38,7 +38,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
           const matchDesc = product.shortDescription.toLowerCase().includes(q);
           const matchFeatures = product.features.some((f) => f.toLowerCase().includes(q));
           const matchType = product.accountType.toLowerCase().includes(q);
-          return matchTitle || matchDesc || matchFeatures || matchType;
+          const matchTags = product.tags && product.tags.some((t: string) => t.toLowerCase().includes(q));
+          return matchTitle || matchDesc || matchFeatures || matchType || matchTags;
         }
         return true;
       })
