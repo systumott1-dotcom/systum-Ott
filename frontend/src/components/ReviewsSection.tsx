@@ -488,13 +488,10 @@ export const ReviewsSection: React.FC = () => {
                 </div>
               )}
 
-              {/* Cartoon PFP / Avatar Selection */}
+              {/* Avatar / PFP Selection */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-brand-600" />
-                    <span>Choose Your Cartoon Avatar / PFP</span>
-                  </span>
+                  <span>Choose Your Avatar / PFP</span>
                   <span className="text-[10px] text-brand-600 font-bold bg-brand-50 px-2 py-0.5 rounded-full border border-brand-200">
                     {selectedAvatarName}
                   </span>

@@ -9,7 +9,6 @@ import {
   Lock, 
   Trash2, 
   ShieldCheck, 
-  Sparkles, 
   KeyRound, 
   AlertTriangle,
   Loader2,
@@ -242,14 +241,8 @@ export const ProfileModal: React.FC = () => {
               
               {/* Cartoon PFP Grid */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-2 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-brand-600" />
-                    <span>Choose Your Cartoon Avatar / PFP</span>
-                  </span>
-                  <span className="text-[10px] text-brand-600 font-bold bg-brand-50 px-2 py-0.5 rounded-full border border-brand-200">
-                    Dicebear Library
-                  </span>
+                <label className="block text-xs font-bold text-slate-700 mb-2">
+                  Choose Your Avatar / PFP
                 </label>
 
                 <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
