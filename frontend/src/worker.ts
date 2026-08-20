@@ -1,14 +1,13 @@
 export default {
-  async fetch(request: Request, env: any): Promise<Response> {
+  async fetch(request: Request, env: any, ctx: any): Promise<Response> {
     const url = new URL(request.url);
+    const backendBase = env.BACKEND_API_URL || 'https://systum-ott.onrender.com';
 
-    // Proxy all /api/* requests to the Render backend API
+    // 1. Proxy all /api/* requests directly to Render backend
     if (url.pathname.startsWith('/api/')) {
-      const backendBase = env.BACKEND_API_URL || 'https://systum-ott.onrender.com';
       const targetUrl = new URL(url.pathname + url.search, backendBase);
 
       const headers = new Headers(request.headers);
-      // Ensure host header matches the target
       headers.set('host', targetUrl.host);
 
       const init: RequestInit = {
@@ -25,7 +24,6 @@ export default {
 
       try {
         const response = await fetch(targetUrl.toString(), init);
-        // Clone response to add CORS if needed
         const responseHeaders = new Headers(response.headers);
         responseHeaders.set('Access-Control-Allow-Origin', '*');
         responseHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
@@ -40,7 +38,7 @@ export default {
         return new Response(
           JSON.stringify({
             success: false,
-            message: 'Backend server is starting up on Render or connecting. Please try again in 15 seconds.',
+            message: 'Backend server is starting up on Render or connecting. Please try again in 10 seconds.',
             error: err?.message,
           }),
           {
@@ -51,7 +49,28 @@ export default {
       }
     }
 
-    // Serve static assets via Cloudflare Pages / Workers Assets
-    return env.ASSETS.fetch(request);
+    // 2. Pre-warm Render backend on initial page visit (fire-and-forget in background)
+    if (url.pathname === '/' || !url.pathname.includes('.')) {
+      const prewarmPromise = fetch(`${backendBase}/api/health`).catch(() => {});
+      if (ctx && typeof ctx.waitUntil === 'function') {
+        ctx.waitUntil(prewarmPromise);
+      }
+    }
+
+    // 3. Serve static assets with high-efficiency caching
+    const assetResponse = await env.ASSETS.fetch(request);
+    
+    // Add aggressive caching for immutable static assets (JS, CSS, fonts, SVG)
+    if (url.pathname.startsWith('/assets/') || url.pathname.match(/\.(js|css|woff2?|svg|png|jpg|webp)$/i)) {
+      const cachedHeaders = new Headers(assetResponse.headers);
+      cachedHeaders.set('Cache-Control', 'public, max-age=31536000, immutable');
+      return new Response(assetResponse.body, {
+        status: assetResponse.status,
+        statusText: assetResponse.statusText,
+        headers: cachedHeaders,
+      });
+    }
+
+    return assetResponse;
   },
 };

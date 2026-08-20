@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastProvider } from './context/ToastContext';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -35,6 +35,21 @@ function Storefront() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activePolicy, setActivePolicy] = useState<PolicyType>(null);
   const [isOrderHistoryOpen, setIsOrderHistoryOpen] = useState(false);
+
+  // Immediate pre-warm ping on initial site visit so Render backend is fully awake
+  useEffect(() => {
+    // Ping health endpoint silently the moment the user opens the website
+    fetch('/api/health').catch(() => {});
+
+    // Periodic gentle keep-alive ping every 4.5 minutes while user has the store open
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetch('/api/health').catch(() => {});
+      }
+    }, 270000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleExploreShop = () => {
     if (router.route !== 'home') {
