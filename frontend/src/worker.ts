@@ -73,4 +73,20 @@ export default {
 
     return assetResponse;
   },
+
+  // 4. Cloudflare Cron Trigger (Runs periodically to keep Render backend 100% awake 24/7)
+  async scheduled(_event: any, env: any, ctx: any): Promise<void> {
+    const backendBase = env.BACKEND_API_URL || 'https://systum-ott.onrender.com';
+    const pingPromise = fetch(`${backendBase}/api/health`, {
+      headers: { 'User-Agent': 'Cloudflare-KeepAlive-Cron/1.0' },
+    }).then((res) => {
+      console.log(`Render Keep-Alive Cron Status: ${res.status}`);
+    }).catch((err) => {
+      console.error('Render Keep-Alive Cron Ping Error:', err);
+    });
+
+    if (ctx && typeof ctx.waitUntil === 'function') {
+      ctx.waitUntil(pingPromise);
+    }
+  },
 };
