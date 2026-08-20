@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 
 import { usePaymentConfig } from '../hooks/usePaymentConfig';
-import { compressImage, getImageFromPasteEvent } from '../utils/imageCompressor';
+import { compressImage, getImageFromPasteEvent, isAllowedImageFile } from '../utils/imageCompressor';
 
 interface CheckoutPageProps {
   onBackToStore: () => void;
@@ -159,13 +159,19 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
 
   const handleProcessPaymentScreenshot = async (file: File) => {
     setScreenshotError('');
+    if (!isAllowedImageFile(file)) {
+      setScreenshotError('Invalid file format. Only PNG, JPEG, JPG, and WebP images are allowed.');
+      toast.error('Invalid file format. Only PNG, JPEG, JPG, and WebP images are allowed.');
+      return;
+    }
     try {
       const res = await compressImage(file, 1400, 1400, 0.82);
       setPaymentScreenshot(res.base64);
       setScreenshotPreview(res.base64);
       toast.success(`Payment screenshot attached! Compressed to ${res.compressedSizeKb} KB (${Math.round((1 - res.compressedSizeKb / res.originalSizeKb) * 100)}% saved) 📸`);
-    } catch {
-      toast.error('Failed to process screenshot image.');
+    } catch (err: any) {
+      setScreenshotError(err?.message || 'Failed to process screenshot image.');
+      toast.error(err?.message || 'Failed to process screenshot image.');
     }
   };
 
@@ -942,7 +948,7 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
                         </div>
                         <input
                           type="file"
-                          accept="image/*"
+                          accept="image/png, image/jpeg, image/jpg, image/webp"
                           onChange={handleScreenshotChange}
                           className="hidden"
                         />

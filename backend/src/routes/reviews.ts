@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import { Review } from '../models/Review.js';
 import { Product } from '../models/Product.js';
 import { REVIEWS as INITIAL_REVIEWS } from '../data/mockData.js';
-import { uploadImageToCloudinary } from '../services/cloudinary.js';
+import { uploadImageToCloudinary, isAllowedImagePayload } from '../services/cloudinary.js';
 
 export const reviewsRouter = Router();
 
@@ -104,12 +104,20 @@ reviewsRouter.post('/', async (req, res) => {
     // Handle Screenshot upload to Cloudinary if base64 provided
     let uploadedScreenshotUrl = screenshotUrl || '';
     const rawImage = screenshot || screenshotUrl;
-    if (typeof rawImage === 'string' && rawImage.startsWith('data:image')) {
-      try {
-        uploadedScreenshotUrl = await uploadImageToCloudinary(rawImage, 'systum_ott_reviews');
-      } catch (uploadErr) {
-        console.error('Cloudinary review screenshot upload error:', uploadErr);
-        uploadedScreenshotUrl = rawImage;
+    if (rawImage) {
+      if (!isAllowedImagePayload(rawImage)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid screenshot format. Only PNG, JPEG, JPG, and WebP images are allowed.',
+        });
+      }
+      if (typeof rawImage === 'string' && rawImage.startsWith('data:image')) {
+        try {
+          uploadedScreenshotUrl = await uploadImageToCloudinary(rawImage, 'systum_ott_reviews');
+        } catch (uploadErr) {
+          console.error('Cloudinary review screenshot upload error:', uploadErr);
+          uploadedScreenshotUrl = rawImage;
+        }
       }
     }
 

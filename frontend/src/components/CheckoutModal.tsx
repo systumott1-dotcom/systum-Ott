@@ -18,6 +18,7 @@ import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 import { useToast } from '../context/ToastContext';
 import { usePaymentConfig } from '../hooks/usePaymentConfig';
+import { isAllowedImageFile } from '../utils/imageCompressor';
 
 export const CheckoutModal: React.FC = () => {
   const toast = useToast();
@@ -46,6 +47,12 @@ export const CheckoutModal: React.FC = () => {
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!isAllowedImageFile(file)) {
+      setScreenshotError('Invalid file format. Only PNG, JPEG, JPG, and WebP images are allowed.');
+      toast.error('Invalid file format. Only PNG, JPEG, JPG, and WebP images are allowed.');
+      return;
+    }
 
     if (file.size > 8 * 1024 * 1024) {
       setScreenshotError('Screenshot size must be under 8MB');
@@ -368,7 +375,7 @@ export const CheckoutModal: React.FC = () => {
                     <span className="text-[9px] text-slate-400">PNG, JPG, JPEG or WEBP (Max 8MB)</span>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/png, image/jpeg, image/jpg, image/webp"
                       onChange={handleScreenshotChange}
                       className="hidden"
                       required

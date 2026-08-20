@@ -1,8 +1,21 @@
 /**
- * High-performance browser-based image compression utility.
- * Resizes large images (e.g. 5MB-15MB phone camera/desktop screenshots)
- * down to ~80KB-200KB WebP/JPEG while preserving text and UI sharpness.
+ * Allowed MIME types and extensions for security: PNG, JPEG, JPG, WebP
+ * Strictly prevents zip folders, executables, scripts, or non-image files.
  */
+export const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+export const ALLOWED_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp'];
+
+export function isAllowedImageFile(file: File | Blob): boolean {
+  if (!file) return false;
+  if (file.type && ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase())) {
+    return true;
+  }
+  if ('name' in file && typeof file.name === 'string') {
+    const lowerName = file.name.toLowerCase();
+    return ALLOWED_IMAGE_EXTENSIONS.some((ext) => lowerName.endsWith(ext));
+  }
+  return false;
+}
 
 export interface CompressionResult {
   base64: string;
@@ -18,6 +31,10 @@ export async function compressImage(
   maxHeight = 1400,
   quality = 0.82
 ): Promise<CompressionResult> {
+  if (!isAllowedImageFile(fileOrBlob)) {
+    throw new Error('Invalid file format. Only PNG, JPEG, JPG, and WebP images are allowed.');
+  }
+
   const originalSizeKb = Math.round(fileOrBlob.size / 1024);
 
   return new Promise((resolve, reject) => {

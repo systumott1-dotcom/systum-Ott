@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
 import { Order } from '../models/Order.js';
-import { uploadImageToCloudinary } from '../services/cloudinary.js';
+import { uploadImageToCloudinary, isAllowedImagePayload } from '../services/cloudinary.js';
 import { sendAdminNewOrderReceiptEmail } from '../services/email.js';
 
 export const ordersRouter = Router();
@@ -132,6 +132,14 @@ ordersRouter.post('/', async (req, res) => {
     return res.status(400).json({
       success: false,
       message: 'Payment screenshot is mandatory. Please upload a screenshot of your completed UPI payment.',
+    });
+  }
+
+  // Strictly allow PNG, JPEG, JPG, WebP images only
+  if (!isAllowedImagePayload(rawScreenshot)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid payment proof format. Only PNG, JPEG, JPG, and WebP images are allowed.',
     });
   }
 

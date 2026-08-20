@@ -38,6 +38,7 @@ import type { Product, ProductPlan } from '../types';
 import { CATEGORIES } from '../data/products';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { useToast } from '../context/ToastContext';
+import { isAllowedImageFile } from '../utils/imageCompressor';
 
 interface AdminStats {
   totalRevenue: number;
@@ -273,6 +274,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!isAllowedImageFile(file)) {
+      toast.error('Invalid file format. Only PNG, JPEG, JPG, and WebP images are allowed.');
+      e.target.value = '';
+      return;
+    }
     setImageFile(file);
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result as string);
@@ -1029,7 +1035,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                         <label className="flex items-center gap-2 px-4 py-3 bg-slate-50 hover:bg-slate-100 border border-dashed border-slate-300 rounded-xl cursor-pointer text-xs font-bold text-slate-600">
                           <ImageIcon className="w-4 h-4" />
                           {imageFile ? imageFile.name : 'Choose Image'}
-                          <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+                          <input type="file" accept="image/png, image/jpeg, image/jpg, image/webp" onChange={handleImageSelect} className="hidden" />
                         </label>
                       </div>
                     </div>

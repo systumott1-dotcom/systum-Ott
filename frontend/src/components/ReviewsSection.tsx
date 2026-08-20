@@ -15,7 +15,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { REVIEWS as INITIAL_REVIEWS } from '../data/reviews';
-import { compressImage, getImageFromPasteEvent } from '../utils/imageCompressor';
+import { compressImage, getImageFromPasteEvent, isAllowedImageFile } from '../utils/imageCompressor';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
@@ -115,6 +115,10 @@ export const ReviewsSection: React.FC = () => {
 
   // Process and compress image file
   const handleProcessImage = async (file: File) => {
+    if (!isAllowedImageFile(file)) {
+      toast.error('Invalid file format. Only PNG, JPEG, JPG, and WebP images are allowed.');
+      return;
+    }
     setCompressing(true);
     try {
       const res = await compressImage(file, 1400, 1400, 0.82);
@@ -122,8 +126,8 @@ export const ReviewsSection: React.FC = () => {
       setScreenshotPreview(res.base64);
       setCompressionInfo({ orig: res.originalSizeKb, comp: res.compressedSizeKb });
       toast.success(`Screenshot attached! Compressed to ${res.compressedSizeKb} KB (${Math.round((1 - res.compressedSizeKb / res.originalSizeKb) * 100)}% smaller) 📸`);
-    } catch {
-      toast.error('Failed to process screenshot');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to process screenshot');
     } finally {
       setCompressing(false);
     }
@@ -540,7 +544,7 @@ export const ReviewsSection: React.FC = () => {
                   <label className="border-2 border-dashed border-slate-200 hover:border-brand-500 bg-slate-50 hover:bg-brand-50/40 rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer transition-all text-center group">
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/png, image/jpeg, image/jpg, image/webp"
                       onChange={handleFileChange}
                       className="hidden"
                     />

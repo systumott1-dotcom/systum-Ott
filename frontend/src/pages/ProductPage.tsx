@@ -34,7 +34,7 @@ import {
   ChevronUp,
   Loader2
 } from 'lucide-react';
-import { compressImage, getImageFromPasteEvent } from '../utils/imageCompressor';
+import { compressImage, getImageFromPasteEvent, isAllowedImageFile } from '../utils/imageCompressor';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 interface ProductPageProps {
@@ -140,6 +140,10 @@ export const ProductPage: React.FC<ProductPageProps> = ({
 
   // Image compression processor
   const handleProcessImage = async (file: File) => {
+    if (!isAllowedImageFile(file)) {
+      toast.error('Invalid file format. Only PNG, JPEG, JPG, and WebP images are allowed.');
+      return;
+    }
     setCompressing(true);
     try {
       const res = await compressImage(file, 1400, 1400, 0.82);
@@ -147,8 +151,8 @@ export const ProductPage: React.FC<ProductPageProps> = ({
       setScreenshotPreview(res.base64);
       setCompressionInfo({ orig: res.originalSizeKb, comp: res.compressedSizeKb });
       toast.success(`Screenshot attached! Compressed to ${res.compressedSizeKb} KB (${Math.round((1 - res.compressedSizeKb / res.originalSizeKb) * 100)}% saved) 📸`);
-    } catch {
-      toast.error('Failed to process screenshot');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to process screenshot');
     } finally {
       setCompressing(false);
     }
@@ -840,7 +844,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                     >
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/png, image/jpeg, image/jpg, image/webp"
                         onChange={handleFileChange}
                         className="hidden"
                       />
