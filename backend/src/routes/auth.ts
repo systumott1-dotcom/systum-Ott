@@ -210,7 +210,7 @@ const resetOtpStore = new Map<string, { otp: string; expiresAt: number }>();
 
 // POST /api/auth/forgot-password - Send password reset OTP to email / Gmail
 authRouter.post('/forgot-password', async (req, res) => {
-  const { email } = req.body;
+  const { email, isAdminRequest } = req.body;
 
   if (!email || typeof email !== 'string') {
     return res.status(400).json({ success: false, message: 'Please provide a valid email address.' });
@@ -220,21 +220,36 @@ authRouter.post('/forgot-password', async (req, res) => {
 
   try {
     const isDbConnected = mongoose.connection.readyState === 1;
-    let userExists = false;
+    let foundUser: any = null;
 
     if (isDbConnected) {
-      const user = await User.findOne({ email: normalizedEmail });
-      if (user) userExists = true;
+      foundUser = await User.findOne({ email: normalizedEmail });
     } else {
-      const user = inMemoryUsers.find((u) => u.email === normalizedEmail);
-      if (user) userExists = true;
+      foundUser = inMemoryUsers.find((u) => u.email === normalizedEmail);
     }
 
-    if (!userExists) {
-      // Return success without revealing user existence to prevent enumeration
-      return res.json({
-        success: true,
-        message: 'If an account is associated with this email, a 6-digit password reset code has been sent.',
+    // If request is from Admin Panel
+    if (isAdminRequest) {
+      if (!foundUser || foundUser.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Unauthorized: This email address is not registered as an Administrator account.',
+        });
+      }
+    } else {
+      // Regular customer request
+      if (!foundUser) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized: No registered account found with this email address.',
+        });
+      }
+    }
+
+    if (foundUser.isBanned) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is suspended. Password reset is disabled.',
       });
     }
 
@@ -259,7 +274,7 @@ authRouter.post('/forgot-password', async (req, res) => {
 
 // POST /api/auth/reset-password - Verify OTP and update password
 authRouter.post('/reset-password', async (req, res) => {
-  const { email, otp, newPassword } = req.body;
+  const { email, otp, newPassword, isAdminRequest } = req.body;
 
   if (!email || !otp || !newPassword) {
     return res.status(400).json({ success: false, message: 'Email, OTP code, and new password are required.' });
@@ -300,15 +315,23 @@ authRouter.post('/reset-password', async (req, res) => {
 
     if (isDbConnected) {
       const user = await User.findOne({ email: normalizedEmail });
-      if (user) {
-        user.passwordHash = passwordHash;
-        await user.save();
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'Unauthorized: User account not found.' });
       }
+      if (isAdminRequest && user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Unauthorized: Administrator privileges required.' });
+      }
+      user.passwordHash = passwordHash;
+      await user.save();
     } else {
       const user = inMemoryUsers.find((u) => u.email === normalizedEmail);
-      if (user) {
-        user.passwordHash = passwordHash;
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'Unauthorized: User account not found.' });
       }
+      if (isAdminRequest && user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Unauthorized: Administrator privileges required.' });
+      }
+      user.passwordHash = passwordHash;
     }
 
     // Clean up OTP after successful reset

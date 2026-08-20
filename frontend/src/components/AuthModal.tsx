@@ -82,7 +82,10 @@ export const AuthModal: React.FC = () => {
       const res = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ 
+          email: email.trim(),
+          isAdminRequest: authModalTab === 'admin'
+        }),
       });
       const data = await res.json();
 
@@ -130,6 +133,7 @@ export const AuthModal: React.FC = () => {
           email: email.trim(),
           otp: resetOtp.trim(),
           newPassword: newPassword.trim(),
+          isAdminRequest: authModalTab === 'admin'
         }),
       });
       const data = await res.json();
