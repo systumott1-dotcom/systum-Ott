@@ -18,7 +18,7 @@ services:
       - key: WHATSAPP_SUPPORT_PHONE
         value: "919306022703"
       - key: UPI_ID
-        value: "systumott.pay@okhdfcbank"
+        value: "systummott@nyes"
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY

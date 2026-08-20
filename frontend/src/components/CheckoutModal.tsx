@@ -72,7 +72,9 @@ export const CheckoutModal: React.FC = () => {
 
   const isDirectBuy = !!checkoutItem;
   const finalPrice = isDirectBuy ? checkoutItem.plan.discountedPrice : totalAmount;
-  const upiId = 'systumott.pay@okhdfcbank';
+  const upiId = 'systummott@nyes';
+  const officialQrImageUrl = 'https://res.cloudinary.com/juvd58wl/image/upload/v1787203998/systum_ott_assets/systum_ott_official_qr.jpg';
+  const localFallbackQrUrl = '/images/systum_ott_official_qr.jpg';
 
   const handleCopyUPI = () => {
     navigator.clipboard.writeText(upiId);
@@ -283,6 +285,20 @@ export const CheckoutModal: React.FC = () => {
                 <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
                   Zero Transaction Fee
                 </span>
+              </div>
+
+              {/* Official QR Image Preview */}
+              <div className="text-center py-2">
+                <div className="p-2 bg-slate-950 rounded-2xl border border-slate-900 shadow-md inline-block max-w-[220px]">
+                  <img
+                    src={officialQrImageUrl}
+                    onError={(e) => {
+                      e.currentTarget.src = localFallbackQrUrl;
+                    }}
+                    alt="Systum OTT Official UPI QR Code"
+                    className="w-full h-auto object-contain rounded-lg"
+                  />
+                </div>
               </div>
 
               {/* UPI ID copy box */}

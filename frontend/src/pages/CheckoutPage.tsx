@@ -135,9 +135,10 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
       }));
 
   const finalAmount = isDirectBuy ? checkoutItem.plan.discountedPrice : totalAmount;
-  const upiId = 'systumott.pay@okhdfcbank';
+  const upiId = 'systummott@nyes';
+  const officialQrImageUrl = 'https://res.cloudinary.com/juvd58wl/image/upload/v1787203998/systum_ott_assets/systum_ott_official_qr.jpg';
+  const localFallbackQrUrl = '/images/systum_ott_official_qr.jpg';
   const upiPayUrl = `upi://pay?pa=${upiId}&pn=Systum%20OTT%20India&am=${finalAmount}&cu=INR&tn=Order%20Subscription`;
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(upiPayUrl)}`;
 
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -831,15 +832,18 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
 
                   {/* QR Code Container */}
                   <div className="text-center space-y-3">
-                    <div className="p-4 bg-white rounded-2xl border-2 border-slate-200 shadow-inner inline-block relative group">
+                    <div className="p-2 sm:p-3 bg-slate-950 rounded-2xl border-2 border-slate-900 shadow-xl inline-block relative group max-w-[280px] sm:max-w-[320px]">
                       <img
-                        src={qrCodeUrl}
-                        alt="UPI QR Code"
-                        className="w-48 h-48 sm:w-56 sm:h-56 object-contain mx-auto rounded-lg"
+                        src={officialQrImageUrl}
+                        onError={(e) => {
+                          e.currentTarget.src = localFallbackQrUrl;
+                        }}
+                        alt="Systum OTT Official UPI QR Code"
+                        className="w-full h-auto object-contain mx-auto rounded-xl shadow-md"
                       />
                     </div>
                     <span className="text-xs text-slate-500 font-bold block">
-                      Works with Google Pay, PhonePe, Paytm, BHIM & all UPI apps
+                      Scan via GPay, PhonePe, Paytm, BHIM or any UPI app
                     </span>
                   </div>
 
