@@ -22,7 +22,7 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
   if (token === 'mock_admin_token_jwt' || token === 'admin_token_master_2026') {
     req.user = {
       id: 'admin-1',
-      email: 'admin@systumott.in',
+      email: 'systumott1@gmail.com',
       role: 'admin',
       name: 'Systum Admin',
     };
