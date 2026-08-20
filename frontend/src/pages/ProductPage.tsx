@@ -1272,52 +1272,55 @@ export const ProductPage: React.FC<ProductPageProps> = ({
 
       </div>
 
-      {/* ================= FIXED STICKY ACTION BAR ================= */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-2xl px-4 py-3 transition-all">
-        <div className="max-w-2xl mx-auto space-y-2.5">
-          {/* Top Line: Title & Price & Plan Selector */}
-          <div className="flex items-baseline justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <h3 className="font-black text-xs sm:text-sm md:text-base text-slate-900 truncate">
-                {product.title}
-              </h3>
-              {/* Quick Plan Selector on Desktop */}
-              {product.plans.length > 1 && (
-                <select
-                  value={selectedPlanIndex}
-                  onChange={(e) => setSelectedPlanIndex(Number(e.target.value))}
-                  className="hidden md:block px-2 py-1 bg-slate-100 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-800 focus:outline-none cursor-pointer shrink-0"
-                  aria-label="Select Plan"
-                >
-                  {product.plans.map((p, idx) => (
-                    <option key={idx} value={idx}>
-                      {p.validity || p.name} — ₹{p.discountedPrice}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            <div className="flex items-baseline gap-2 shrink-0">
-              <span className="font-black text-base sm:text-xl text-[#7a1c28]">
-                ₹{selectedPlan.discountedPrice}
-              </span>
-              {selectedPlan.originalPrice > selectedPlan.discountedPrice && (
-                <span className="text-xs sm:text-sm text-slate-400 line-through font-semibold">
-                  ₹{selectedPlan.originalPrice}
-                </span>
-              )}
-            </div>
+      {/* ================= FIXED STICKY ACTION BAR (MATCHES REFERENCE EXACTLY) ================= */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-2xl px-4 py-2.5 sm:py-3 transition-all">
+        <div className="max-w-xl mx-auto space-y-1.5 sm:space-y-2">
+          {/* Top Line: Title */}
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="font-extrabold text-xs sm:text-sm md:text-base text-slate-900 truncate">
+              {product.title}
+            </h3>
+            {product.plans.length > 1 && (
+              <select
+                value={selectedPlanIndex}
+                onChange={(e) => setSelectedPlanIndex(Number(e.target.value))}
+                className="hidden md:block px-2 py-0.5 bg-slate-100 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-800 focus:outline-none cursor-pointer shrink-0"
+                aria-label="Select Plan"
+              >
+                {product.plans.map((p, idx) => (
+                  <option key={idx} value={idx}>
+                    {p.validity || p.name} — ₹{p.discountedPrice}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
-          {/* Dual Action Buttons Row (Matching Reference Design) */}
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5">
+          {/* Second Line: Price & Discount % OFF Tag */}
+          <div className="flex items-baseline gap-2">
+            <span className="font-black text-base sm:text-xl text-[#7a1c28]">
+              ₹{selectedPlan.discountedPrice}
+            </span>
+            {selectedPlan.originalPrice > selectedPlan.discountedPrice && (
+              <span className="text-xs sm:text-sm text-slate-400 line-through font-semibold">
+                ₹{selectedPlan.originalPrice}
+              </span>
+            )}
+            {discountPercent > 0 && (
+              <span className="text-[10px] sm:text-xs font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                {discountPercent}% OFF
+              </span>
+            )}
+          </div>
+
+          {/* Dual Action Buttons Row (Add to Cart + Buy Now) */}
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5 pt-0.5">
             {/* Add to Cart Button */}
             <button
               type="button"
               onClick={handleAddToCart}
               disabled={product.inStock === false}
-              className={`py-3 sm:py-3.5 px-3 rounded-2xl sm:rounded-3xl border text-xs sm:text-sm md:text-base font-black transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xs cursor-pointer ${
+              className={`w-full py-3 sm:py-3.5 px-3 rounded-2xl border text-xs sm:text-sm md:text-base font-extrabold transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xs cursor-pointer ${
                 product.inStock === false
                   ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
                   : isAdded
@@ -1343,7 +1346,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
               type="button"
               onClick={handleBuyNow}
               disabled={product.inStock === false}
-              className={`py-3 sm:py-3.5 px-3 rounded-2xl sm:rounded-3xl text-xs sm:text-sm md:text-base font-black transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer ${
+              className={`w-full py-3 sm:py-3.5 px-3 rounded-2xl text-xs sm:text-sm md:text-base font-black transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer ${
                 product.inStock === false
                   ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60 shadow-none'
                   : 'bg-[#e5a93c] hover:bg-[#d89b2e] text-[#111827] shadow-lg shadow-amber-500/25 transform hover:-translate-y-0.5'
