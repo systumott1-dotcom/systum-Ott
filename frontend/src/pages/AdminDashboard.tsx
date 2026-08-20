@@ -134,6 +134,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     warrantyType: 'Full-Term Replacement',
     hasWarranty: true,
     warrantyDays: 30,
+    tagsText: 'netflix, 4k, ott, screen pin, instant delivery',
     plans: [
       { name: '1 Month Access', validity: '30 Days', originalPrice: 649, discountedPrice: 99, isPopular: true },
       { name: '3 Months Access', validity: '90 Days', originalPrice: 1799, discountedPrice: 269 },
@@ -295,6 +296,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       // Upload image first if a new file was selected
       const finalImageUrl = await uploadImage();
       const features = productForm.featuresText.split('\n').filter((f) => f.trim().length > 0);
+      const tags = productForm.tagsText.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean);
 
       const productPayload = {
         title: productForm.title,
@@ -310,6 +312,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         warrantyDays: Number(productForm.warrantyDays) || 30,
         hasWarranty: productForm.warrantyType !== 'No Warranty / As-Is',
         features,
+        tags,
         plans: productForm.plans,
       };
 
@@ -355,6 +358,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         warrantyType: 'Full-Term Replacement',
         hasWarranty: true,
         warrantyDays: 30,
+        tagsText: 'netflix, 4k, ott, screen pin, instant delivery',
         plans: [
           { name: '1 Month Access', validity: '30 Days', originalPrice: 649, discountedPrice: 99, isPopular: true },
           { name: '3 Months Access', validity: '90 Days', originalPrice: 1799, discountedPrice: 269 },
@@ -410,6 +414,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       warrantyType: product.warrantyType || (product.hasWarranty !== false ? 'Full-Term Replacement' : 'No Warranty / As-Is'),
       hasWarranty: product.hasWarranty !== false,
       warrantyDays: product.warrantyDays || 30,
+      tagsText: (product.tags || []).join(', '),
       plans: [...product.plans],
       featuresText: product.features.join('\n'),
     });
@@ -789,6 +794,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     warrantyType: 'Full-Term Replacement',
                     hasWarranty: true,
                     warrantyDays: 30,
+                    tagsText: 'netflix, 4k, ott, screen pin, instant delivery',
                     plans: [
                       { name: '1 Month Access', validity: '30 Days', originalPrice: 649, discountedPrice: 99, isPopular: true },
                       { name: '3 Months Access', validity: '90 Days', originalPrice: 1799, discountedPrice: 269 },
@@ -833,6 +839,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                       </span>
                     </div>
                     <p className="text-xs text-slate-600 line-clamp-2">{product.shortDescription}</p>
+                    {product.tags && product.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {product.tags.slice(0, 4).map((t, idx) => (
+                          <span key={idx} className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                            #{t}
+                          </span>
+                        ))}
+                        {product.tags.length > 4 && (
+                          <span className="text-[9px] text-slate-400 font-bold">+{product.tags.length - 4}</span>
+                        )}
+                      </div>
+                    )}
                     <div className="text-xs text-slate-700 font-semibold">
                       Plans: {product.plans.map((p) => `₹${p.discountedPrice}`).join(' / ')}
                     </div>
@@ -912,6 +930,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     <div>
                       <label className="text-xs font-bold text-slate-700 block mb-1">Features (one per line)</label>
                       <textarea value={productForm.featuresText} onChange={(e) => setProductForm({...productForm, featuresText: e.target.value})} rows={3} className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-mono" placeholder="4K Ultra HD\nPersonal Screen PIN\n100% Warranty" />
+                    </div>
+
+                    {/* SEO & Search Tags */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                          <Tag className="w-3.5 h-3.5 text-brand-600" />
+                          <span>SEO Keywords & Search Tags (Comma separated)</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400 font-semibold">Boosts Google SEO & store search</span>
+                      </div>
+                      <input
+                        type="text"
+                        value={productForm.tagsText}
+                        onChange={(e) => setProductForm({ ...productForm, tagsText: e.target.value })}
+                        className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                        placeholder="e.g. netflix, 4k ultra hd, private screen, cheap ott, 30 days"
+                      />
+                      {productForm.tagsText.trim() && (
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {productForm.tagsText.split(',').map((tag, idx) => {
+                            const cleanTag = tag.trim();
+                            if (!cleanTag) return null;
+                            return (
+                              <span key={idx} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-brand-50 text-brand-700 border border-brand-200 flex items-center gap-1">
+                                <span>#{cleanTag}</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
 
                     {/* Warranty & Replacement Settings */}

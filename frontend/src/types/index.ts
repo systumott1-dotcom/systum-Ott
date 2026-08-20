@@ -1,4 +1,4 @@
-export type CategoryId = 'all' | 'ott' | 'software' | 'combo' | 'music' | 'adult' | 'other';
+export type CategoryId = 'all' | 'ott' | 'software' | 'combo' | 'combos' | 'music' | 'ai' | 'gaming' | 'education' | 'adult' | 'other';
 
 export interface Category {
   id: CategoryId;
@@ -31,6 +31,7 @@ export interface Product {
   iconColor: string;
   iconName: string; // Lucide icon or custom vector identifier
   imageUrl?: string;
+  tags?: string[];
   plans: ProductPlan[];
   features: string[];
   instantDelivery: boolean;

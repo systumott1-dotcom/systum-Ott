@@ -38,9 +38,9 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
               <span>Systum OTT · Authorized Seller & Sourcing</span>
             </div>
 
-            {/* Main Headline */}
+            {/* Main SEO Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.15]">
-              Premium Digital Subscriptions at <br className="hidden sm:inline" />
+              Systum OTT India — Digital Subscriptions at <br className="hidden sm:inline" />
               <span className="gradient-text">Unbeatable Prices</span>
             </h1>
 

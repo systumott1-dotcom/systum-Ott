@@ -116,6 +116,13 @@ export const ProductPage: React.FC<ProductPageProps> = ({
       setSelectedPlanIndex(popularIdx >= 0 ? popularIdx : 0);
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
+      // Dynamic SEO Title & Meta Description for Product Page
+      document.title = `${product.title} | Buy Cheap Subscription India | Systum OTT`;
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        metaDesc.setAttribute('content', `Buy ${product.title} in India with instant WhatsApp delivery and full warranty. ${product.shortDescription}`);
+      }
+
       // Fetch reviews for this product
       setReviewsLoading(true);
       const targetId = product.slug || product.id;
@@ -422,6 +429,17 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight leading-snug">
                   {product.title}
                 </h1>
+
+                {/* Product SEO Tags */}
+                {product.tags && product.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {product.tags.map((tag, idx) => (
+                      <span key={idx} className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 border border-slate-200">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 {/* Price Display */}
                 <div className="flex items-baseline gap-2.5 mt-3 flex-wrap">

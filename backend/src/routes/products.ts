@@ -24,6 +24,8 @@ productsRouter.get('/', async (req, res) => {
         filter.$or = [
           { title: { $regex: q, $options: 'i' } },
           { shortDescription: { $regex: q, $options: 'i' } },
+          { tags: { $regex: q, $options: 'i' } },
+          { features: { $regex: q, $options: 'i' } },
         ];
       }
       const products = await Product.find(filter).sort({ createdAt: -1 });
@@ -41,6 +43,7 @@ productsRouter.get('/', async (req, res) => {
         (p) =>
           p.title.toLowerCase().includes(q) ||
           p.shortDescription.toLowerCase().includes(q) ||
+          ((p as any).tags && (p as any).tags.some((t: string) => t.toLowerCase().includes(q))) ||
           p.features.some((f: string) => f.toLowerCase().includes(q))
       );
     }

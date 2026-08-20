@@ -26,10 +26,28 @@ export const CATEGORIES: Category[] = [
     description: 'All-in-one bundled subscriptions with max savings',
   },
   {
+    id: 'ai',
+    name: 'AI Tools',
+    icon: 'Sparkles',
+    description: 'ChatGPT Plus, Midjourney, Claude Pro, Runway, Perplexity',
+  },
+  {
     id: 'music',
     name: 'Music',
     icon: 'Music',
     description: 'Spotify Premium, Apple Music, YouTube Premium, JioSaavn',
+  },
+  {
+    id: 'gaming',
+    name: 'Gaming',
+    icon: 'Gamepad2',
+    description: 'Xbox Game Pass, PlayStation Plus, Steam Keys & Discord Nitro',
+  },
+  {
+    id: 'education',
+    name: 'Education',
+    icon: 'GraduationCap',
+    description: 'Coursera Plus, Skillshare, LinkedIn Learning & Udemy',
   },
   {
     id: 'adult',
@@ -41,7 +59,7 @@ export const CATEGORIES: Category[] = [
     id: 'other',
     name: 'Other',
     icon: 'LayoutGrid',
-    description: 'AI Tools, Cloud, VPN, Education & Digital Utilities',
+    description: 'Cloud, VPN, Antivirus & Digital Utilities',
   },
 ];
 

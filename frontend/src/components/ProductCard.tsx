@@ -167,6 +167,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <h3 className="font-extrabold text-xs sm:text-sm md:text-base text-slate-900 group-hover:text-brand-600 transition-colors line-clamp-2 leading-snug mt-0.5 min-h-[2.4rem]">
             {product.title}
           </h3>
+
+          {/* Tags Pills */}
+          {product.tags && product.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              {product.tags.slice(0, 2).map((tag, idx) => (
+                <span key={idx} className="text-[9px] font-semibold px-1.5 py-0.2 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Pricing & CTA */}

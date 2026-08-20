@@ -32,6 +32,7 @@ export interface IProduct extends Document {
   plans: IProductPlan[];
   rating: number;
   reviewsCount: number;
+  tags?: string[];
   inStock: boolean;
   sourceVendor?: string;
   createdAt: Date;
@@ -68,6 +69,7 @@ const ProductSchema: Schema = new Schema(
     warrantyType: { type: String, default: 'Full-Term Replacement' },
     compatibility: [{ type: String }],
     features: [{ type: String }],
+    tags: [{ type: String, index: true }],
     plans: [ProductPlanSchema],
     rating: { type: Number, default: 5.0 },
     reviewsCount: { type: Number, default: 120 },

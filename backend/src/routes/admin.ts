@@ -165,12 +165,19 @@ adminRouter.post('/products', async (req, res) => {
       warrantyDays,
       compatibility,
       features,
+      tags,
       plans,
       sourceVendor,
     } = req.body;
 
     const id = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40) + `-${Date.now().toString().slice(-4)}`;
     const slug = id;
+
+    const parsedTags = Array.isArray(tags) 
+      ? tags.map((t: string) => t.trim().toLowerCase()).filter(Boolean)
+      : typeof tags === 'string'
+      ? tags.split(',').map((t: string) => t.trim().toLowerCase()).filter(Boolean)
+      : [];
 
     const newProductData = {
       id,
@@ -188,6 +195,7 @@ adminRouter.post('/products', async (req, res) => {
       warrantyDays: Number(warrantyDays) || 30,
       compatibility: compatibility || ['Smart TV', 'Android / iOS', 'PC / Mac'],
       features: features || ['Instant delivery', 'Full warranty'],
+      tags: parsedTags,
       plans: plans || [{ name: '1 Month Access', validity: '30 Days', originalPrice: 499, discountedPrice: 99, isPopular: true }],
       rating: 5.0,
       reviewsCount: 15,
