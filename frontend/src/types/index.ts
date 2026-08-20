@@ -42,6 +42,7 @@ export interface Product {
   compatibility: string[]; // e.g. ["Smart TV", "Mobile", "Laptop", "Tablet"]
   rating: number;
   reviewsCount: number;
+  inStock?: boolean;
 }
 
 export interface CartItem {

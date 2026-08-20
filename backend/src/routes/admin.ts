@@ -20,7 +20,7 @@ export const adminRouter = Router();
 adminRouter.use(requireAdmin);
 
 // In-memory fallback stores
-let adminProducts = [...PRODUCTS];
+let adminProducts: any[] = [...PRODUCTS];
 const adminCoupons = inMemoryCoupons;
 interface AdminOrderType {
   id: string;
@@ -202,7 +202,7 @@ adminRouter.post('/products', async (req, res) => {
       plans: plans || [{ name: '1 Month Access', validity: '30 Days', originalPrice: 499, discountedPrice: 99, isPopular: true }],
       rating: 5.0,
       reviewsCount: 15,
-      inStock: true,
+      inStock: req.body.inStock !== undefined ? Boolean(req.body.inStock) : true,
       sourceVendor: sourceVendor || 'Eneba / Volume Licensed',
     };
 
@@ -243,6 +243,34 @@ adminRouter.put('/products/:id', async (req, res) => {
     res.json({ success: true, product: adminProducts[index] });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to update product' });
+  }
+});
+
+// PATCH /api/admin/products/:id/stock (Toggle In Stock / Out of Stock)
+adminRouter.patch('/products/:id/stock', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { inStock } = req.body;
+    const isDbConnected = mongoose.connection.readyState === 1;
+
+    if (isDbConnected) {
+      const product = await Product.findOne({ id });
+      if (!product) {
+        return res.status(404).json({ success: false, message: 'Product not found' });
+      }
+      product.inStock = typeof inStock === 'boolean' ? inStock : !product.inStock;
+      await product.save();
+      return res.json({ success: true, inStock: product.inStock, product });
+    }
+
+    const index = adminProducts.findIndex((p) => p.id === id);
+    if (index === -1) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+    adminProducts[index].inStock = typeof inStock === 'boolean' ? inStock : !adminProducts[index].inStock;
+    res.json({ success: true, inStock: adminProducts[index].inStock, product: adminProducts[index] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update stock status' });
   }
 });
 

@@ -197,10 +197,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <button
             type="button"
             onClick={handleBuyNow}
-            className="w-full py-3 sm:py-3.5 px-4 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-black shadow-md shadow-brand-600/25 transition-all transform group-hover:shadow-lg active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+            disabled={product.inStock === false}
+            className={`w-full py-3 sm:py-3.5 px-4 rounded-2xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 ${
+              product.inStock === false
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
+                : 'bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white shadow-md shadow-brand-600/25 transform group-hover:shadow-lg active:scale-95 cursor-pointer'
+            }`}
           >
-            <Zap className="w-4 h-4 fill-white" />
-            <span>Buy Now</span>
+            <Zap className={`w-4 h-4 ${product.inStock === false ? 'fill-slate-400 text-slate-400' : 'fill-white text-white'}`} />
+            <span>{product.inStock === false ? 'Out of Stock' : 'Buy Now'}</span>
           </button>
         </div>
       </div>

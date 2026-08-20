@@ -431,9 +431,15 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                       {discountPercent}% OFF
                     </span>
                   )}
-                  <span className="text-[11px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                    IN STOCK
-                  </span>
+                  {product.inStock !== false ? (
+                    <span className="text-[11px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                      IN STOCK
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-black text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
+                      OUT OF STOCK
+                    </span>
+                  )}
                   {product.badge && (
                     <span className="text-[11px] font-bold text-brand-700 bg-brand-50 px-2.5 py-1 rounded-full border border-brand-200 flex items-center gap-1">
                       <Flame className="w-3 h-3 text-brand-600" />
@@ -541,36 +547,46 @@ export const ProductPage: React.FC<ProductPageProps> = ({
 
               {/* Primary Action Buttons */}
               <div className="pt-2 space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={handleBuyNow}
-                    className="py-4 px-6 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-base font-black shadow-xl shadow-brand-600/30 transition-all transform hover:-translate-y-0.5 active:scale-98 flex items-center justify-center gap-2.5 cursor-pointer"
-                  >
-                    <Zap className="w-5 h-5 fill-white" />
-                    <span>Buy Now · ₹{selectedPlan.discountedPrice}</span>
-                  </button>
-
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {/* Add to Cart Button */}
                   <button
                     type="button"
                     onClick={handleAddToCart}
-                    className={`py-3.5 px-5 rounded-2xl border text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-xs active:scale-98 ${
-                      isAdded
-                        ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
-                        : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800'
+                    disabled={product.inStock === false}
+                    className={`py-3.5 sm:py-4 px-5 rounded-2xl sm:rounded-3xl border text-sm sm:text-base font-black transition-all flex items-center justify-center gap-2.5 active:scale-98 shadow-xs cursor-pointer ${
+                      product.inStock === false
+                        ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
+                        : isAdded
+                        ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
+                        : 'bg-[#f4f5f8] hover:bg-[#e8eaf0] border-slate-200/90 text-[#1e1435]'
                     }`}
                   >
                     {isAdded ? (
                       <>
-                        <Check className="w-4 h-4 text-emerald-600" />
+                        <Check className="w-5 h-5 text-emerald-600 shrink-0" />
                         <span>Added to Cart!</span>
                       </>
                     ) : (
                       <>
-                        <ShoppingBag className="w-4 h-4 text-brand-600" />
-                        <span>Add to Cart</span>
+                        <ShoppingBag className="w-5 h-5 text-[#1e1435] fill-[#1e1435] shrink-0" />
+                        <span>{product.inStock === false ? 'Out of Stock' : 'Add to Cart'}</span>
                       </>
                     )}
+                  </button>
+
+                  {/* Buy Now Button */}
+                  <button
+                    type="button"
+                    onClick={handleBuyNow}
+                    disabled={product.inStock === false}
+                    className={`py-3.5 sm:py-4 px-6 rounded-2xl sm:rounded-3xl text-sm sm:text-base font-black transition-all flex items-center justify-center gap-2.5 active:scale-98 cursor-pointer ${
+                      product.inStock === false
+                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60 shadow-none'
+                        : 'bg-[#e5a93c] hover:bg-[#d89b2e] text-[#111827] shadow-xl shadow-amber-500/25 transform hover:-translate-y-0.5'
+                    }`}
+                  >
+                    <Zap className="w-5 h-5 fill-[#111827] text-[#111827] shrink-0" />
+                    <span>{product.inStock === false ? 'Out of Stock' : `Buy Now · ₹${selectedPlan.discountedPrice}`}</span>
                   </button>
                 </div>
               </div>
@@ -1256,92 +1272,85 @@ export const ProductPage: React.FC<ProductPageProps> = ({
 
       </div>
 
-      {/* ================= FIXED STICKY BUY BAR (ZERO SCROLLING NEEDED) ================= */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-2xl px-4 py-3 sm:py-3.5 transition-all">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-6">
-          {/* Left: Product & Plan Info */}
-          <div className="flex items-center gap-3 min-w-0">
-            {product.imageUrl ? (
-              <img src={product.imageUrl} alt={product.title} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border border-slate-200 shrink-0" />
-            ) : (
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 shrink-0 font-bold text-xs">
-                {product.title.slice(0, 2)}
-              </div>
-            )}
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
-                  {product.title}
+      {/* ================= FIXED STICKY ACTION BAR ================= */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-2xl px-4 py-3 transition-all">
+        <div className="max-w-2xl mx-auto space-y-2.5">
+          {/* Top Line: Title & Price & Plan Selector */}
+          <div className="flex items-baseline justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <h3 className="font-black text-xs sm:text-sm md:text-base text-slate-900 truncate">
+                {product.title}
+              </h3>
+              {/* Quick Plan Selector on Desktop */}
+              {product.plans.length > 1 && (
+                <select
+                  value={selectedPlanIndex}
+                  onChange={(e) => setSelectedPlanIndex(Number(e.target.value))}
+                  className="hidden md:block px-2 py-1 bg-slate-100 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-800 focus:outline-none cursor-pointer shrink-0"
+                  aria-label="Select Plan"
+                >
+                  {product.plans.map((p, idx) => (
+                    <option key={idx} value={idx}>
+                      {p.validity || p.name} — ₹{p.discountedPrice}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <div className="flex items-baseline gap-2 shrink-0">
+              <span className="font-black text-base sm:text-xl text-[#7a1c28]">
+                ₹{selectedPlan.discountedPrice}
+              </span>
+              {selectedPlan.originalPrice > selectedPlan.discountedPrice && (
+                <span className="text-xs sm:text-sm text-slate-400 line-through font-semibold">
+                  ₹{selectedPlan.originalPrice}
                 </span>
-                <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200 shrink-0">
-                  {selectedPlan.validity || selectedPlan.name}
-                </span>
-              </div>
-              <div className="flex items-baseline gap-2 mt-0.5">
-                <span className="font-black text-sm sm:text-lg text-slate-900">
-                  ₹{selectedPlan.discountedPrice}
-                </span>
-                {selectedPlan.originalPrice > selectedPlan.discountedPrice && (
-                  <span className="text-[10px] sm:text-xs text-slate-400 line-through">
-                    ₹{selectedPlan.originalPrice}
-                  </span>
-                )}
-                {discountPercent > 0 && (
-                  <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
-                    {discountPercent}% OFF
-                  </span>
-                )}
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Right: Plan Switcher + Quick Actions */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Quick Plan Selector (if multiple plans) */}
-            {product.plans.length > 1 && (
-              <select
-                value={selectedPlanIndex}
-                onChange={(e) => setSelectedPlanIndex(Number(e.target.value))}
-                className="hidden md:block px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
-                aria-label="Select Plan"
-              >
-                {product.plans.map((p, idx) => (
-                  <option key={idx} value={idx}>
-                    {p.validity || p.name} — ₹{p.discountedPrice}
-                  </option>
-                ))}
-              </select>
-            )}
-
+          {/* Dual Action Buttons Row (Matching Reference Design) */}
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5">
+            {/* Add to Cart Button */}
             <button
               type="button"
               onClick={handleAddToCart}
-              className={`hidden sm:flex py-2.5 sm:py-3 px-4 rounded-xl border text-xs font-bold transition-all items-center gap-1.5 shadow-xs cursor-pointer ${
-                isAdded
-                  ? 'bg-emerald-50 border-emerald-500 text-emerald-700'
-                  : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-800'
+              disabled={product.inStock === false}
+              className={`py-3 sm:py-3.5 px-3 rounded-2xl sm:rounded-3xl border text-xs sm:text-sm md:text-base font-black transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xs cursor-pointer ${
+                product.inStock === false
+                  ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
+                  : isAdded
+                  ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
+                  : 'bg-[#f4f5f8] hover:bg-[#e8eaf0] border-slate-200/90 text-[#1e1435]'
               }`}
             >
               {isAdded ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <Check className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 shrink-0" />
                   <span>Added</span>
                 </>
               ) : (
                 <>
-                  <ShoppingBag className="w-3.5 h-3.5 text-brand-600" />
-                  <span>Add to Cart</span>
+                  <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-[#1e1435] fill-[#1e1435] shrink-0" />
+                  <span>{product.inStock === false ? 'Out of Stock' : 'Add to Cart'}</span>
                 </>
               )}
             </button>
 
+            {/* Buy Now Button */}
             <button
               type="button"
               onClick={handleBuyNow}
-              className="py-3 sm:py-3.5 px-6 sm:px-8 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-sm sm:text-base font-black shadow-xl shadow-brand-600/30 transition-all transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2 cursor-pointer"
+              disabled={product.inStock === false}
+              className={`py-3 sm:py-3.5 px-3 rounded-2xl sm:rounded-3xl text-xs sm:text-sm md:text-base font-black transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer ${
+                product.inStock === false
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60 shadow-none'
+                  : 'bg-[#e5a93c] hover:bg-[#d89b2e] text-[#111827] shadow-lg shadow-amber-500/25 transform hover:-translate-y-0.5'
+              }`}
             >
-              <Zap className="w-4 h-4 sm:w-5 sm:h-5 fill-white shrink-0" />
-              <span>Buy Now · ₹{selectedPlan.discountedPrice}</span>
+              <Zap className="w-4 h-4 sm:w-5 sm:h-5 fill-[#111827] text-[#111827] shrink-0" />
+              <span>{product.inStock === false ? 'Out of Stock' : 'Buy Now'}</span>
             </button>
           </div>
         </div>

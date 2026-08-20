@@ -152,6 +152,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     hasWarranty: true,
     warrantyDays: 30,
     tagsText: 'netflix, 4k, ott, screen pin, instant delivery',
+    inStock: true,
     plans: [
       { name: '1 Month Access', validity: '30 Days', originalPrice: 649, discountedPrice: 99, isPopular: true },
       { name: '3 Months Access', validity: '90 Days', originalPrice: 1799, discountedPrice: 269 },
@@ -333,6 +334,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         warrantyType: productForm.warrantyType,
         warrantyDays: Number(productForm.warrantyDays) || 30,
         hasWarranty: productForm.warrantyType !== 'No Warranty / As-Is',
+        inStock: productForm.inStock !== false,
         features,
         tags,
         plans: productForm.plans,
@@ -381,6 +383,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
         hasWarranty: true,
         warrantyDays: 30,
         tagsText: 'netflix, 4k, ott, screen pin, instant delivery',
+        inStock: true,
         plans: [
           { name: '1 Month Access', validity: '30 Days', originalPrice: 649, discountedPrice: 99, isPopular: true },
           { name: '3 Months Access', validity: '90 Days', originalPrice: 1799, discountedPrice: 269 },
@@ -392,6 +395,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       toast.error(err?.message || 'Failed to save product. Backend server is starting up or unreachable.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleToggleStock = async (id: string, currentInStock: boolean) => {
+    const newStockState = !currentInStock;
+    try {
+      const res = await fetch(`/api/admin/products/${id}/stock`, {
+        method: 'PATCH',
+        headers: apiHeaders(),
+        body: JSON.stringify({ inStock: newStockState }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === id ? { ...p, inStock: newStockState } : p))
+        );
+        toast.success(newStockState ? 'Product marked as In Stock ✅' : 'Product marked as Out of Stock 🔴');
+      } else {
+        toast.error(data.message || 'Failed to update stock status');
+      }
+    } catch {
+      toast.error('Network error updating stock status');
     }
   };
 
@@ -437,6 +462,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       hasWarranty: product.hasWarranty !== false,
       warrantyDays: product.warrantyDays || 30,
       tagsText: (product.tags || []).join(', '),
+      inStock: product.inStock !== false,
       plans: [...product.plans],
       featuresText: product.features.join('\n'),
     });
@@ -939,6 +965,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     hasWarranty: true,
                     warrantyDays: 30,
                     tagsText: 'netflix, 4k, ott, screen pin, instant delivery',
+                    inStock: true,
                     plans: [
                       { name: '1 Month Access', validity: '30 Days', originalPrice: 649, discountedPrice: 99, isPopular: true },
                       { name: '3 Months Access', validity: '90 Days', originalPrice: 1799, discountedPrice: 269 },
@@ -973,14 +1000,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     {product.imageUrl && (
                       <img src={product.imageUrl} alt={product.title} className="w-full h-32 object-cover rounded-xl" />
                     )}
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between gap-2">
                       <div>
                         <h4 className="font-bold text-slate-900 text-sm">{product.title}</h4>
                         <p className="text-[11px] text-slate-500 mt-0.5">{product.category} · {product.accountType}</p>
                       </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
-                        {product.badge || 'Active'}
-                      </span>
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleStock(product.id, product.inStock !== false)}
+                          className={`text-[10px] font-black px-2.5 py-1 rounded-full border transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs ${
+                            product.inStock !== false
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
+                              : 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100'
+                          }`}
+                          title="Click to toggle Stock Status"
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${product.inStock !== false ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                          {product.inStock !== false ? 'In Stock' : 'Out of Stock'}
+                        </button>
+                        {product.badge && (
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
+                            {product.badge}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <p className="text-xs text-slate-600 line-clamp-2">{product.shortDescription}</p>
                     {product.tags && product.tags.length > 0 && (
@@ -1178,6 +1222,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                           </span>
                         </div>
                       </div>
+                    </div>
+
+                    {/* Stock Status Selector */}
+                    <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-xl">
+                      <div>
+                        <label className="text-xs font-bold text-slate-800 block">Inventory & Stock Availability</label>
+                        <span className="text-[10px] text-slate-500">Controls whether customers can buy this subscription on the storefront</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setProductForm({ ...productForm, inStock: !productForm.inStock })}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-extrabold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                          productForm.inStock
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                            : 'bg-rose-50 text-rose-700 border-rose-300'
+                        }`}
+                      >
+                        <span className={`w-2 h-2 rounded-full ${productForm.inStock ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                        {productForm.inStock ? 'In Stock (Available)' : 'Out of Stock (Unavailable)'}
+                      </button>
                     </div>
 
                     {/* Plans Editor */}
