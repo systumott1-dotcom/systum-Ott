@@ -20,6 +20,7 @@ export interface InMemoryUserType {
   email: string;
   passwordHash: string;
   phone?: string;
+  avatar?: string;
   role: 'customer' | 'admin';
   isBanned?: boolean;
   bannedAt?: Date;
@@ -34,13 +35,14 @@ export const inMemoryUsers: InMemoryUserType[] = [
     email: 'systumott1@gmail.com',
     passwordHash: bcrypt.hashSync('admin1234', 10),
     phone: '9306022703',
+    avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Admin&backgroundColor=b6e3f4',
     role: 'admin',
     isBanned: false,
     createdAt: new Date('2025-01-01').toISOString(),
   },
 ];
 
-const generateToken = (payload: { id: string; email: string; role: 'customer' | 'admin'; name: string }) => {
+const generateToken = (payload: { id: string; email: string; role: 'customer' | 'admin'; name: string; avatar?: string }) => {
   const secret = process.env.JWT_SECRET || 'systum_ott_default_secret_2026';
   return jwt.sign(payload, secret, { expiresIn: '7d' });
 };
@@ -83,7 +85,7 @@ authRouter.post('/signup', async (req, res) => {
       return res.status(201).json({
         success: true,
         token,
-        user: { id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role, phone: newUser.phone },
+        user: { id: newUser._id, name: newUser.name, email: newUser.email, role: newUser.role, phone: newUser.phone, avatar: newUser.avatar },
       });
     }
 
@@ -116,7 +118,7 @@ authRouter.post('/signup', async (req, res) => {
     res.status(201).json({
       success: true,
       token,
-      user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, phone: newUser.phone },
+      user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, phone: newUser.phone, avatar: newUser.avatar },
     });
   } catch (error) {
     console.error('Signup error:', error);
@@ -160,12 +162,13 @@ authRouter.post('/login', async (req, res) => {
         email: user.email,
         role: user.role,
         name: user.name,
+        avatar: user.avatar,
       });
 
       return res.json({
         success: true,
         token,
-        user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone },
+        user: { id: user._id, name: user.name, email: user.email, role: user.role, phone: user.phone, avatar: user.avatar },
       });
     }
 
@@ -192,12 +195,13 @@ authRouter.post('/login', async (req, res) => {
       email: user.email,
       role: user.role,
       name: user.name,
+      avatar: user.avatar,
     });
 
     res.json({
       success: true,
       token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, phone: user.phone },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, phone: user.phone, avatar: user.avatar },
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -353,4 +357,198 @@ authRouter.get('/me', authenticateToken, async (req: AuthRequest, res) => {
     return res.status(401).json({ success: false, message: 'Not authenticated' });
   }
   res.json({ success: true, user: req.user });
+});
+
+// PUT /api/auth/profile - Update user name, phone, email, and avatar
+authRouter.put('/profile', authenticateToken, async (req: AuthRequest, res) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: 'Not authenticated' });
+  }
+
+  const { name, phone, email, avatar } = req.body;
+  const isDbConnected = mongoose.connection.readyState === 1;
+
+  try {
+    const trimmedName = name ? name.trim() : req.user.name;
+    const trimmedPhone = phone !== undefined ? phone.trim() : req.user.phone;
+    const newEmail = email ? email.toLowerCase().trim() : req.user.email;
+    const newAvatar = avatar !== undefined ? avatar.trim() : req.user.avatar;
+
+    if (!trimmedName) {
+      return res.status(400).json({ success: false, message: 'Name cannot be empty.' });
+    }
+
+    if (isDbConnected) {
+      const user = await User.findById(req.user.id);
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found.' });
+      }
+
+      // If email changed, check for uniqueness
+      if (newEmail !== user.email) {
+        const existing = await User.findOne({ email: newEmail, _id: { $ne: user._id } });
+        if (existing) {
+          return res.status(400).json({ success: false, message: 'This email is already in use by another account.' });
+        }
+        user.email = newEmail;
+      }
+
+      user.name = trimmedName;
+      user.phone = trimmedPhone;
+      if (newAvatar) user.avatar = newAvatar;
+      await user.save();
+
+      const updatedUser = {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        avatar: user.avatar,
+        role: user.role,
+      };
+
+      const token = generateToken(updatedUser);
+      return res.json({
+        success: true,
+        message: 'Profile updated successfully! ✨',
+        user: updatedUser,
+        token,
+      });
+    }
+
+    // In-memory fallback
+    const user = inMemoryUsers.find((u) => u.id === req.user?.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    if (newEmail !== user.email) {
+      const existing = inMemoryUsers.find((u) => u.email === newEmail && u.id !== user.id);
+      if (existing) {
+        return res.status(400).json({ success: false, message: 'This email is already in use by another account.' });
+      }
+      user.email = newEmail;
+    }
+
+    user.name = trimmedName;
+    user.phone = trimmedPhone;
+    if (newAvatar) user.avatar = newAvatar;
+
+    const updatedUser = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      avatar: user.avatar,
+      role: user.role,
+    };
+
+    const token = generateToken(updatedUser);
+    res.json({
+      success: true,
+      message: 'Profile updated successfully! ✨',
+      user: updatedUser,
+      token,
+    });
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update profile.' });
+  }
+});
+
+// PUT /api/auth/change-password - Change account password
+authRouter.put('/change-password', authenticateToken, async (req: AuthRequest, res) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: 'Not authenticated' });
+  }
+
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Please provide your current password and new password.' });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ success: false, message: 'New password must be at least 6 characters long.' });
+  }
+
+  const isDbConnected = mongoose.connection.readyState === 1;
+
+  try {
+    if (isDbConnected) {
+      const user = await User.findById(req.user.id);
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found.' });
+      }
+
+      const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!isMatch) {
+        return res.status(400).json({ success: false, message: 'Incorrect current password.' });
+      }
+
+      user.passwordHash = await bcrypt.hash(newPassword, 10);
+      await user.save();
+
+      return res.json({ success: true, message: 'Password changed successfully! 🔒' });
+    }
+
+    // In-memory fallback
+    const user = inMemoryUsers.find((u) => u.id === req.user?.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Incorrect current password.' });
+    }
+
+    user.passwordHash = await bcrypt.hash(newPassword, 10);
+    res.json({ success: true, message: 'Password changed successfully! 🔒' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ success: false, message: 'Failed to change password.' });
+  }
+});
+
+// DELETE /api/auth/delete-account - Permanently delete user account
+authRouter.delete('/delete-account', authenticateToken, async (req: AuthRequest, res) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: 'Not authenticated' });
+  }
+
+  const { confirmation } = req.body;
+  if (!confirmation || confirmation.toUpperCase() !== 'CONFIRM') {
+    return res.status(400).json({
+      success: false,
+      message: 'Please type "CONFIRM" to authorize permanent account deletion.',
+    });
+  }
+
+  // Prevent accidental deletion of primary admin
+  if (req.user.role === 'admin' && req.user.email === 'systumott1@gmail.com') {
+    return res.status(403).json({
+      success: false,
+      message: 'The master administrator account cannot be deleted.',
+    });
+  }
+
+  const isDbConnected = mongoose.connection.readyState === 1;
+
+  try {
+    if (isDbConnected) {
+      await User.findByIdAndDelete(req.user.id);
+      return res.json({ success: true, message: 'Your account has been permanently deleted.' });
+    }
+
+    const idx = inMemoryUsers.findIndex((u) => u.id === req.user?.id);
+    if (idx !== -1) {
+      inMemoryUsers.splice(idx, 1);
+    }
+
+    res.json({ success: true, message: 'Your account has been permanently deleted.' });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete account.' });
+  }
 });

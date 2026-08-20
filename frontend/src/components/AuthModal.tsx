@@ -42,6 +42,11 @@ export const AuthModal: React.FC = () => {
     setLoading(true);
 
     if (authModalTab === 'signup') {
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters long.');
+        setLoading(false);
+        return;
+      }
       const res = await signup(name, email, password, phone);
       if (!res.success) {
         setError(res.message || 'Signup failed');

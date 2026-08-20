@@ -57,7 +57,43 @@ export function usePaymentConfig() {
     (amount: number, overrideUpiId?: string, overridePayee?: string) => {
       const activeUpi = (overrideUpiId || config.upiId || 'systummott@nyes').trim().toLowerCase();
       const activePayee = (overridePayee || config.payeeName || 'Systum OTT India').trim();
-      return `upi://pay?pa=${activeUpi}&pn=${encodeURIComponent(activePayee)}&am=${amount}&cu=INR&tn=Subscription%20Order`;
+      return `upi://pay?pa=${activeUpi}&pn=${encodeURIComponent(activePayee)}&am=${amount}&cu=INR&tn=SystumOTT_Order`;
+    },
+    [config.upiId, config.payeeName]
+  );
+
+  const getGPayUrl = useCallback(
+    (amount: number, overrideUpiId?: string, overridePayee?: string) => {
+      const activeUpi = (overrideUpiId || config.upiId || 'systummott@nyes').trim().toLowerCase();
+      const activePayee = (overridePayee || config.payeeName || 'Systum OTT India').trim();
+      return `tez://upi/pay?pa=${activeUpi}&pn=${encodeURIComponent(activePayee)}&am=${amount}&cu=INR&tn=SystumOTT_Order`;
+    },
+    [config.upiId, config.payeeName]
+  );
+
+  const getPhonePeUrl = useCallback(
+    (amount: number, overrideUpiId?: string, overridePayee?: string) => {
+      const activeUpi = (overrideUpiId || config.upiId || 'systummott@nyes').trim().toLowerCase();
+      const activePayee = (overridePayee || config.payeeName || 'Systum OTT India').trim();
+      return `phonepe://pay?pa=${activeUpi}&pn=${encodeURIComponent(activePayee)}&am=${amount}&cu=INR&tn=SystumOTT_Order`;
+    },
+    [config.upiId, config.payeeName]
+  );
+
+  const getPaytmUrl = useCallback(
+    (amount: number, overrideUpiId?: string, overridePayee?: string) => {
+      const activeUpi = (overrideUpiId || config.upiId || 'systummott@nyes').trim().toLowerCase();
+      const activePayee = (overridePayee || config.payeeName || 'Systum OTT India').trim();
+      return `paytmmp://pay?pa=${activeUpi}&pn=${encodeURIComponent(activePayee)}&am=${amount}&cu=INR&tn=SystumOTT_Order`;
+    },
+    [config.upiId, config.payeeName]
+  );
+
+  const getBhimUrl = useCallback(
+    (amount: number, overrideUpiId?: string, overridePayee?: string) => {
+      const activeUpi = (overrideUpiId || config.upiId || 'systummott@nyes').trim().toLowerCase();
+      const activePayee = (overridePayee || config.payeeName || 'Systum OTT India').trim();
+      return `bhim://pay?pa=${activeUpi}&pn=${encodeURIComponent(activePayee)}&am=${amount}&cu=INR&tn=SystumOTT_Order`;
     },
     [config.upiId, config.payeeName]
   );
@@ -68,5 +104,9 @@ export function usePaymentConfig() {
     refreshPaymentConfig: fetchConfig,
     getDynamicQrUrl,
     getUpiPayUrl,
+    getGPayUrl,
+    getPhonePeUrl,
+    getPaytmUrl,
+    getBhimUrl,
   };
 }

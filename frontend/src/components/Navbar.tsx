@@ -15,11 +15,13 @@ import {
   TrendingUp,
   User, 
   Sliders,
-  ArrowRight
+  ArrowRight,
+  CheckCircle2
 } from 'lucide-react';
 import { useCart, WHATSAPP_PHONE } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { WhatsAppIcon } from './WhatsAppIcon';
+import { getSafeCartoonAvatar } from './ReviewsSection';
 import type { CategoryId, Product } from '../types';
 
 interface NavbarProps {
@@ -44,7 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenOrderHistory,
 }) => {
   const { totalItems, setIsCartOpen } = useCart();
-  const { user, isAdmin, setIsAuthModalOpen, setAuthModalTab, logout } = useAuth();
+  const { user, isAdmin, setIsAuthModalOpen, setAuthModalTab, logout, setIsProfileModalOpen } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   
@@ -366,6 +368,25 @@ export const Navbar: React.FC<NavbarProps> = ({
                 )}
               </div>
 
+              {/* User Profile Pill (Desktop) */}
+              {user && (
+                <button
+                  type="button"
+                  onClick={() => setIsProfileModalOpen(true)}
+                  className="hidden sm:flex items-center gap-2 py-1.5 px-2.5 rounded-xl bg-slate-50 hover:bg-brand-50 border border-slate-200 hover:border-brand-300 transition-all shadow-2xs group shrink-0 cursor-pointer"
+                  title="View Profile & Settings"
+                >
+                  <img
+                    src={getSafeCartoonAvatar(user.avatar, user.name)}
+                    alt={user.name}
+                    className="w-5 h-5 rounded-full object-cover border border-brand-400 bg-white"
+                  />
+                  <span className="text-xs font-extrabold text-slate-800 group-hover:text-brand-700 max-w-[90px] truncate">
+                    {user.name.split(' ')[0]}
+                  </span>
+                </button>
+              )}
+
               {/* 2. Cart Icon Button */}
               <button
                 type="button"
@@ -522,9 +543,47 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span>Open Admin Dashboard</span>
                 </button>
               ) : user ? (
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl text-xs">
-                  <span>Signed in as <strong>{user.name}</strong></span>
-                  <button onClick={logout} className="text-rose-600 font-bold hover:underline">Logout</button>
+                <div className="p-3.5 bg-gradient-to-r from-brand-50 to-indigo-50/60 rounded-2xl border border-brand-200 space-y-3 shadow-2xs">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={getSafeCartoonAvatar(user.avatar, user.name)}
+                      alt={user.name}
+                      className="w-10 h-10 rounded-full border-2 border-brand-400 bg-white object-cover shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-extrabold text-xs text-slate-900 truncate">{user.name}</span>
+                        <span className="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.2 rounded-full border border-emerald-200 flex items-center gap-0.5 shrink-0">
+                          <CheckCircle2 className="w-2.5 h-2.5" /> Verified
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-medium block truncate">{user.email}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-1 border-t border-brand-100">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setIsProfileModalOpen(true);
+                      }}
+                      className="flex-1 py-2 px-3 bg-white hover:bg-slate-50 border border-brand-200 text-brand-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                    >
+                      <User className="w-3.5 h-3.5" />
+                      <span>Edit Profile & PFP</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        logout();
+                      }}
+                      className="py-2 px-3 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-xs rounded-xl flex items-center justify-center transition-all cursor-pointer"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <button

@@ -42,7 +42,15 @@ interface ActiveCoupon {
 
 export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => {
   const toast = useToast();
-  const { paymentConfig, getDynamicQrUrl, getUpiPayUrl } = usePaymentConfig();
+  const { 
+    paymentConfig, 
+    getDynamicQrUrl, 
+    getUpiPayUrl, 
+    getGPayUrl, 
+    getPhonePeUrl, 
+    getPaytmUrl, 
+    getBhimUrl 
+  } = usePaymentConfig();
   const {
     cart,
     checkoutItem,
@@ -891,21 +899,46 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
 
                   {/* Mobile Quick Pay Links */}
                   <div className="space-y-2 pt-2">
-                    <span className="text-xs font-bold text-slate-700 block">Quick Open in UPI App:</span>
-                    <div className="grid grid-cols-2 gap-2">
+                    <span className="text-xs font-bold text-slate-700 block">
+                      Quick Pay ₹{finalAmount} in UPI App:
+                    </span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       <a
-                        href={upiPayUrl}
-                        className="py-2.5 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors"
+                        href={getGPayUrl(finalAmount)}
+                        className="py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs hover:border-blue-300 transition-all text-center"
                       >
-                        <ExternalLink className="w-3.5 h-3.5 text-brand-600" /> Google Pay / PhonePe
+                        <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                        <span>Google Pay</span>
                       </a>
                       <a
-                        href={upiPayUrl}
-                        className="py-2.5 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors"
+                        href={getPhonePeUrl(finalAmount)}
+                        className="py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs hover:border-purple-300 transition-all text-center"
                       >
-                        <ExternalLink className="w-3.5 h-3.5 text-blue-600" /> Paytm / BHIM
+                        <span className="w-2 h-2 rounded-full bg-purple-600 shrink-0" />
+                        <span>PhonePe</span>
+                      </a>
+                      <a
+                        href={getPaytmUrl(finalAmount)}
+                        className="py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs hover:border-sky-300 transition-all text-center"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0" />
+                        <span>Paytm</span>
+                      </a>
+                      <a
+                        href={getBhimUrl(finalAmount)}
+                        className="py-2.5 px-3 bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-2xs hover:border-emerald-300 transition-all text-center"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                        <span>BHIM UPI</span>
                       </a>
                     </div>
+                    <a
+                      href={upiPayUrl}
+                      className="w-full py-2 px-3 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-800 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all text-center"
+                    >
+                      <Zap className="w-3.5 h-3.5 text-brand-600" />
+                      <span>Open Any UPI App (₹{finalAmount})</span>
+                    </a>
                   </div>
                 </div>
 

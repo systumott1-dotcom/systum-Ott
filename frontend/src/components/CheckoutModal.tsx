@@ -22,7 +22,15 @@ import { isAllowedImageFile } from '../utils/imageCompressor';
 
 export const CheckoutModal: React.FC = () => {
   const toast = useToast();
-  const { paymentConfig, getDynamicQrUrl } = usePaymentConfig();
+  const { 
+    paymentConfig, 
+    getDynamicQrUrl, 
+    getUpiPayUrl, 
+    getGPayUrl, 
+    getPhonePeUrl, 
+    getPaytmUrl, 
+    getBhimUrl 
+  } = usePaymentConfig();
   const {
     cart,
     checkoutItem,
@@ -330,6 +338,50 @@ export const CheckoutModal: React.FC = () => {
                     </>
                   )}
                 </button>
+              </div>
+
+              {/* Quick 1-Click Open in UPI App */}
+              <div className="space-y-1.5 pt-1">
+                <span className="text-[11px] font-bold text-slate-700 block">
+                  Quick Pay ₹{finalPrice} in UPI App:
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  <a
+                    href={getGPayUrl(finalPrice)}
+                    className="p-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-800 flex items-center justify-center gap-1 shadow-2xs hover:border-blue-300 transition-all text-center"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                    <span>GPay</span>
+                  </a>
+                  <a
+                    href={getPhonePeUrl(finalPrice)}
+                    className="p-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-800 flex items-center justify-center gap-1 shadow-2xs hover:border-purple-300 transition-all text-center"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-purple-600 shrink-0" />
+                    <span>PhonePe</span>
+                  </a>
+                  <a
+                    href={getPaytmUrl(finalPrice)}
+                    className="p-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-800 flex items-center justify-center gap-1 shadow-2xs hover:border-sky-300 transition-all text-center"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0" />
+                    <span>Paytm</span>
+                  </a>
+                  <a
+                    href={getBhimUrl(finalPrice)}
+                    className="p-2 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-800 flex items-center justify-center gap-1 shadow-2xs hover:border-emerald-300 transition-all text-center"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span>BHIM UPI</span>
+                  </a>
+                </div>
+                <a
+                  href={getUpiPayUrl(finalPrice)}
+                  className="w-full py-1.5 px-3 bg-brand-50 hover:bg-brand-100 border border-brand-200 text-brand-800 font-bold rounded-xl text-[11px] flex items-center justify-center gap-1.5 transition-all text-center"
+                >
+                  <Zap className="w-3 h-3 text-brand-600" />
+                  <span>Open Any UPI App (₹{finalPrice})</span>
+                </a>
               </div>
 
               {/* Mandatory Payment Screenshot Upload */}

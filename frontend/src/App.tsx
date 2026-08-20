@@ -20,6 +20,7 @@ import { PolicyModals } from './components/PolicyModals';
 import type { PolicyType } from './components/PolicyModals';
 import { WhatsAppFloatingButton } from './components/WhatsAppFloatingButton';
 import { AuthModal } from './components/AuthModal';
+import { ProfileModal } from './components/ProfileModal';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { ProductPage } from './pages/ProductPage';
 import { CheckoutPage } from './pages/CheckoutPage';
@@ -145,6 +146,7 @@ function Storefront() {
 
       <CartDrawer />
       <AuthModal />
+      <ProfileModal />
       <PolicyModals
         activePolicy={activePolicy}
         onClose={() => setActivePolicy(null)}
