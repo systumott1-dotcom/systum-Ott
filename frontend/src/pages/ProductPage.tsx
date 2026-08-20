@@ -32,7 +32,8 @@ import {
   X,
   ChevronDown,
   ChevronUp,
-  Loader2
+  Loader2,
+  Sparkles
 } from 'lucide-react';
 import { compressImage, getImageFromPasteEvent, isAllowedImageFile } from '../utils/imageCompressor';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
@@ -558,7 +559,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                         ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
                         : isAdded
                         ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
-                        : 'bg-[#f4f5f8] hover:bg-[#e8eaf0] border-slate-200/90 text-[#1e1435]'
+                        : 'bg-slate-100 hover:bg-slate-200 border-slate-200/90 text-slate-800'
                     }`}
                   >
                     {isAdded ? (
@@ -568,7 +569,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                       </>
                     ) : (
                       <>
-                        <ShoppingBag className="w-5 h-5 text-[#1e1435] fill-[#1e1435] shrink-0" />
+                        <ShoppingBag className="w-5 h-5 text-brand-600 shrink-0" />
                         <span>{product.inStock === false ? 'Out of Stock' : 'Add to Cart'}</span>
                       </>
                     )}
@@ -582,10 +583,10 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                     className={`py-3.5 sm:py-4 px-6 rounded-2xl sm:rounded-3xl text-sm sm:text-base font-black transition-all flex items-center justify-center gap-2.5 active:scale-98 cursor-pointer ${
                       product.inStock === false
                         ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60 shadow-none'
-                        : 'bg-[#e5a93c] hover:bg-[#d89b2e] text-[#111827] shadow-xl shadow-amber-500/25 transform hover:-translate-y-0.5'
+                        : 'bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white shadow-xl shadow-brand-600/30 transform hover:-translate-y-0.5'
                     }`}
                   >
-                    <Zap className="w-5 h-5 fill-[#111827] text-[#111827] shrink-0" />
+                    <Zap className="w-5 h-5 fill-white text-white shrink-0" />
                     <span>{product.inStock === false ? 'Out of Stock' : `Buy Now · ₹${selectedPlan.discountedPrice}`}</span>
                   </button>
                 </div>
@@ -1133,11 +1134,13 @@ export const ProductPage: React.FC<ProductPageProps> = ({
         {/* ================= YOU MIGHT ALSO LIKE CAROUSEL ================= */}
         {relatedProducts.length > 0 && (
           <div className="mt-16 pt-10 border-t border-slate-200">
-            {/* Header with Title and Controls */}
-            <div className="flex items-center justify-between gap-4 mb-6">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                  You Might <span className="text-[#a82424]">Also Like</span>
+                 {/* Section Header */}
+            <div className="flex items-center justify-between gap-4 mb-5">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-6 bg-brand-600 rounded-full" />
+                <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5">
+                  <Sparkles className="w-5 h-5 text-brand-600 shrink-0" />
+                  <span>You Might <span className="text-brand-600">Also Like</span></span>
                 </h2>
               </div>
 
@@ -1166,7 +1169,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                 <button
                   type="button"
                   onClick={onBackToHome}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs transition-all cursor-pointer active:scale-95"
+                  className="px-3.5 py-1.5 rounded-xl border border-slate-200 hover:border-brand-300 hover:bg-brand-50 bg-white text-xs font-bold text-slate-700 hover:text-brand-700 shadow-xs transition-all cursor-pointer active:scale-95"
                 >
                   View All
                 </button>
@@ -1200,13 +1203,13 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                   <div
                     key={relProduct.id}
                     onClick={() => onNavigateProduct(relProduct.slug || relProduct.id)}
-                    className="w-44 sm:w-52 shrink-0 bg-white rounded-2xl border border-slate-200/90 p-2.5 sm:p-3 flex flex-col justify-between hover:shadow-xl hover:border-brand-300 transition-all duration-300 group cursor-pointer"
+                    className="w-44 sm:w-52 shrink-0 bg-white rounded-3xl border border-slate-200 p-3 sm:p-3.5 flex flex-col justify-between hover:shadow-xl hover:border-brand-300 transition-all duration-300 group cursor-pointer"
                   >
                     <div>
                       {/* Image / Thumbnail Container */}
-                      <div className="relative h-28 sm:h-32 rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center mb-2.5 border border-slate-100">
+                      <div className="relative h-28 sm:h-32 rounded-2xl overflow-hidden bg-slate-900 flex items-center justify-center mb-2.5 border border-slate-100/80 shadow-xs">
                         {discount > 0 && (
-                          <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md bg-[#8c1c28] text-white font-black text-[9px] sm:text-[10px] uppercase shadow-xs">
+                          <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md bg-[#E50914] text-white font-black text-[9px] sm:text-[10px] uppercase shadow-xs tracking-wider">
                             {discount}% OFF
                           </span>
                         )}
@@ -1226,7 +1229,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                       </div>
 
                       {/* Category Label */}
-                      <span className="text-[9px] sm:text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block truncate">
+                      <span className="text-[9px] sm:text-[10px] font-extrabold text-[#9C7A4A] uppercase tracking-wider block truncate">
                         {categoryLabel}
                       </span>
 
@@ -1255,7 +1258,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                         e.stopPropagation();
                         buyNow(relProduct, primaryPlan);
                       }}
-                      className="w-full py-2 sm:py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#7a1c28] via-[#8c2330] to-[#63141f] hover:from-[#8c2330] hover:to-[#7a1c28] text-white text-xs font-black flex items-center justify-center gap-1.5 shadow-md shadow-red-950/20 active:scale-95 transition-all cursor-pointer"
+                      className="w-full py-2.5 sm:py-3 px-3 rounded-xl bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white text-xs font-black flex items-center justify-center gap-1.5 shadow-md shadow-brand-600/25 active:scale-95 transition-all cursor-pointer"
                     >
                       <Zap className="w-3.5 h-3.5 fill-white shrink-0" />
                       <span>Buy Now</span>
@@ -1266,16 +1269,16 @@ export const ProductPage: React.FC<ProductPageProps> = ({
             </div>
 
             {/* Bottom Colorful Gradient Accent Bar */}
-            <div className="h-1 w-full bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 rounded-full mt-6 opacity-75" />
+            <div className="h-1 w-full bg-gradient-to-r from-brand-500 via-indigo-500 to-purple-600 rounded-full mt-6 opacity-75" />
           </div>
         )}
 
       </div>
 
-      {/* ================= FIXED STICKY ACTION BAR (MATCHES REFERENCE EXACTLY) ================= */}
+      {/* ================= FIXED STICKY ACTION BAR (BRAND THEMED) ================= */}
       <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-2xl px-4 py-2.5 sm:py-3 transition-all">
         <div className="max-w-xl mx-auto space-y-1.5 sm:space-y-2">
-          {/* Top Line: Title */}
+          {/* Top Line: Title & Plan Selector */}
           <div className="flex items-center justify-between gap-2">
             <h3 className="font-extrabold text-xs sm:text-sm md:text-base text-slate-900 truncate">
               {product.title}
@@ -1298,7 +1301,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
 
           {/* Second Line: Price & Discount % OFF Tag */}
           <div className="flex items-baseline gap-2">
-            <span className="font-black text-base sm:text-xl text-[#7a1c28]">
+            <span className="font-black text-base sm:text-xl text-slate-900">
               ₹{selectedPlan.discountedPrice}
             </span>
             {selectedPlan.originalPrice > selectedPlan.discountedPrice && (
@@ -1307,7 +1310,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
               </span>
             )}
             {discountPercent > 0 && (
-              <span className="text-[10px] sm:text-xs font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+              <span className="text-[10px] sm:text-xs font-black text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200">
                 {discountPercent}% OFF
               </span>
             )}
@@ -1325,7 +1328,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                   ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
                   : isAdded
                   ? 'bg-emerald-50 border-emerald-400 text-emerald-700'
-                  : 'bg-[#f4f5f8] hover:bg-[#e8eaf0] border-slate-200/90 text-[#1e1435]'
+                  : 'bg-slate-100 hover:bg-slate-200 border-slate-200/90 text-slate-800'
               }`}
             >
               {isAdded ? (
@@ -1335,7 +1338,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                 </>
               ) : (
                 <>
-                  <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-[#1e1435] fill-[#1e1435] shrink-0" />
+                  <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-brand-600 shrink-0" />
                   <span>{product.inStock === false ? 'Out of Stock' : 'Add to Cart'}</span>
                 </>
               )}
@@ -1349,10 +1352,10 @@ export const ProductPage: React.FC<ProductPageProps> = ({
               className={`w-full py-3 sm:py-3.5 px-3 rounded-2xl text-xs sm:text-sm md:text-base font-black transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer ${
                 product.inStock === false
                   ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60 shadow-none'
-                  : 'bg-[#e5a93c] hover:bg-[#d89b2e] text-[#111827] shadow-lg shadow-amber-500/25 transform hover:-translate-y-0.5'
+                  : 'bg-gradient-to-r from-brand-600 via-brand-700 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white shadow-xl shadow-brand-600/25 transform hover:-translate-y-0.5'
               }`}
             >
-              <Zap className="w-4 h-4 sm:w-5 sm:h-5 fill-[#111827] text-[#111827] shrink-0" />
+              <Zap className="w-4 h-4 sm:w-5 sm:h-5 fill-white text-white shrink-0" />
               <span>{product.inStock === false ? 'Out of Stock' : 'Buy Now'}</span>
             </button>
           </div>
