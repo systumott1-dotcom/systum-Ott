@@ -116,7 +116,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
 
   const finalAmount = Math.max(0, rawSubtotal - calculatedDiscount);
   const upiId = 'systummott@nyes';
-  const officialQrImageUrl = 'https://res.cloudinary.com/juvd58wl/image/upload/v1787203998/systum_ott_assets/systum_ott_official_qr.jpg';
+  const officialQrImageUrl = 'https://res.cloudinary.com/juvd58wl/image/upload/v1787206357/systum_ott_assets/systum_ott_official_qr_v2.jpg';
   const localFallbackQrUrl = '/images/systum_ott_official_qr.jpg';
   const upiPayUrl = `upi://pay?pa=${upiId}&pn=Systum%20OTT%20India&am=${finalAmount}&cu=INR&tn=Order%20Subscription`;
 
@@ -843,14 +843,14 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
 
                   {/* QR Code Container */}
                   <div className="text-center space-y-3">
-                    <div className="p-2 sm:p-3 bg-slate-950 rounded-2xl border-2 border-slate-900 shadow-xl inline-block relative group max-w-[280px] sm:max-w-[320px]">
+                    <div className="p-3.5 bg-white rounded-3xl border-2 border-slate-200 shadow-md inline-block relative group max-w-[260px] sm:max-w-[290px]">
                       <img
                         src={officialQrImageUrl}
                         onError={(e) => {
                           e.currentTarget.src = localFallbackQrUrl;
                         }}
-                        alt="Systum OTT Official UPI QR Code"
-                        className="w-full h-auto object-contain mx-auto rounded-xl shadow-md"
+                        alt="Systum OTT UPI QR Code"
+                        className="w-full h-auto object-contain mx-auto rounded-2xl"
                       />
                     </div>
                     <span className="text-xs text-slate-500 font-bold block">
