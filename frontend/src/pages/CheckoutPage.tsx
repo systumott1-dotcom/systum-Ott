@@ -58,7 +58,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
   const [name, setName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
-  const [utrNumber, setUtrNumber] = useState('');
   const [paymentScreenshot, setPaymentScreenshot] = useState<string>('');
   const [screenshotPreview, setScreenshotPreview] = useState<string>('');
   const [screenshotError, setScreenshotError] = useState<string>('');
@@ -285,7 +284,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onBackToStore }) => 
             quantity: i.quantity,
           })),
           totalAmount: finalAmount,
-          utrNumber: utrNumber.trim() || undefined,
           paymentScreenshot,
         }),
       });
@@ -968,21 +966,6 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
                         <span>{screenshotError}</span>
                       </p>
                     )}
-                  </div>
-
-                  {/* UTR / Ref Number Field */}
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 block mb-1.5 flex items-center justify-between">
-                      <span>UPI Reference / UTR Number</span>
-                      <span className="text-[10px] text-slate-400">12-digit number (Optional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={utrNumber}
-                      onChange={(e) => setUtrNumber(e.target.value.replace(/\s+/g, ''))}
-                      placeholder="e.g. 423891029381"
-                      className="w-full px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
-                    />
                   </div>
 
                   {/* Place Order CTA */}
