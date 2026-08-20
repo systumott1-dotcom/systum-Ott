@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Product, ProductPlan } from '../types';
 import { useCart, WHATSAPP_PHONE } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { ProductCard } from '../components/ProductCard';
 import { 
@@ -52,6 +53,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
   onNavigateProduct,
 }) => {
   const { addToCart, buyNow } = useCart();
+  const { user, isAdmin, token, setIsAuthModalOpen, setAuthModalTab } = useAuth();
   const toast = useToast();
   const [isAdded, setIsAdded] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -73,6 +75,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
     productId: string;
     productTitle?: string;
     authorName: string;
+    userEmail?: string;
     rating: number;
     comment: string;
     avatar?: string;
@@ -87,7 +90,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
   const [newRating, setNewRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
-  const [authorName, setAuthorName] = useState('');
+  const [authorName, setAuthorName] = useState(user?.name || '');
   const [reviewComment, setReviewComment] = useState('');
   const [screenshotBase64, setScreenshotBase64] = useState<string>('');
   const [screenshotPreview, setScreenshotPreview] = useState<string>('');
@@ -98,6 +101,13 @@ export const ProductPage: React.FC<ProductPageProps> = ({
   const [lightboxImage, setLightboxImage] = useState<{ url: string; author: string } | null>(null);
 
   useBodyScrollLock(Boolean(lightboxImage));
+
+  // Sync authorName when logged in user changes
+  useEffect(() => {
+    if (user?.name) {
+      setAuthorName(user.name);
+    }
+  }, [user]);
 
   // Reset plan index & fetch reviews when product changes
   useEffect(() => {
@@ -152,19 +162,24 @@ export const ProductPage: React.FC<ProductPageProps> = ({
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!product || !authorName.trim() || !reviewComment.trim()) {
-      toast.warning('Please enter your name and review comment.');
+    const displayName = (user?.name || authorName).trim();
+    if (!product || !displayName || !reviewComment.trim()) {
+      toast.warning('Please enter your review comment.');
       return;
     }
     setSubmittingReview(true);
     try {
       const res = await fetch('/api/reviews', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           productId: product.slug || product.id,
           productTitle: product.title,
-          authorName: authorName.trim(),
+          authorName: displayName,
+          userEmail: user?.email,
           rating: newRating,
           comment: reviewComment.trim(),
           screenshot: screenshotBase64 || undefined,
@@ -173,7 +188,6 @@ export const ProductPage: React.FC<ProductPageProps> = ({
       const data = await res.json();
       if (data.success && data.review) {
         setReviews((prev) => [data.review, ...prev]);
-        setAuthorName('');
         setReviewComment('');
         setScreenshotBase64('');
         setScreenshotPreview('');
@@ -194,13 +208,16 @@ export const ProductPage: React.FC<ProductPageProps> = ({
   const handleDeleteReview = async (reviewId: string) => {
     if (!confirm('Are you sure you want to delete this review?')) return;
     try {
-      const res = await fetch(`/api/reviews/${reviewId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/reviews/${reviewId}`, { 
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
       const data = await res.json();
       if (data.success) {
         setReviews((prev) => prev.filter((r) => r.id !== reviewId));
-        toast.success('Review deleted successfully.');
+        toast.success('Review deleted successfully! 🗑️');
       } else {
-        toast.error('Failed to delete review.');
+        toast.error(data.message || 'Failed to delete review.');
       }
     } catch {
       toast.error('Error deleting review.');
@@ -718,21 +735,59 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Your Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={authorName}
-                      onChange={(e) => setAuthorName(e.target.value)}
-                      placeholder="e.g. Rahul S."
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-brand-500 focus:outline-none"
-                    />
+                {/* User Profile Info */}
+                {user ? (
+                  <div className="flex items-center justify-between p-3.5 bg-gradient-to-r from-brand-50 to-indigo-50/60 rounded-2xl border border-brand-200">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <img
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`}
+                        alt={user.name}
+                        className="w-10 h-10 rounded-full ring-2 ring-brand-400 bg-white shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-extrabold text-xs text-slate-900 truncate">{user.name}</span>
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-0.5">
+                            <CheckCircle2 className="w-2.5 h-2.5" /> Verified Profile
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-medium block truncate">{user.email}</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-brand-700 font-extrabold bg-white px-2.5 py-1 rounded-xl border border-brand-200 shrink-0">
+                      Posting as You
+                    </span>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                      <span className="text-xs text-slate-600">
+                        Have an account? Log in to post with your verified account badge.
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => { setAuthModalTab('login'); setIsAuthModalOpen(true); }}
+                        className="text-xs font-bold text-brand-600 hover:text-brand-700 hover:underline shrink-0"
+                      >
+                        Log In Now
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        Your Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={authorName}
+                        onChange={(e) => setAuthorName(e.target.value)}
+                        placeholder="e.g. Rahul S."
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-brand-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -901,15 +956,17 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                           </div>
                         </div>
 
-                        {/* Delete Review Button */}
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteReview(rev.id)}
-                          className="text-slate-300 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
-                          title="Delete Review"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {/* Delete Review Button (Author or Admin only) */}
+                        {(isAdmin || (user && (user.email === rev.userEmail || user.name === rev.authorName))) && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteReview(rev.id)}
+                            className="text-slate-300 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                            title="Delete Review"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-1 text-amber-400">

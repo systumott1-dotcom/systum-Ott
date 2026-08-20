@@ -11,16 +11,19 @@ import {
   Upload, 
   Loader2, 
   Check, 
-  Sparkles
+  Sparkles,
+  Trash2
 } from 'lucide-react';
 import { REVIEWS as INITIAL_REVIEWS } from '../data/reviews';
 import { compressImage, getImageFromPasteEvent } from '../utils/imageCompressor';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 interface ReviewItem {
   id: string;
   author: string;
+  userEmail?: string;
   avatar: string;
   rating: number;
   date: string;
@@ -47,13 +50,14 @@ const POPULAR_PRODUCTS = [
 
 export const ReviewsSection: React.FC = () => {
   const toast = useToast();
+  const { user, isAdmin, token, setIsAuthModalOpen, setAuthModalTab } = useAuth();
   const [reviews, setReviews] = useState<ReviewItem[]>(INITIAL_REVIEWS);
   const [totalCount, setTotalCount] = useState<number>(4500 + INITIAL_REVIEWS.length);
   const [visibleCount, setVisibleCount] = useState<number>(6);
 
   // Review Form Modal State
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
-  const [authorName, setAuthorName] = useState('');
+  const [authorName, setAuthorName] = useState(user?.name || '');
   const [selectedProduct, setSelectedProduct] = useState(POPULAR_PRODUCTS[0]);
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
@@ -70,6 +74,13 @@ export const ReviewsSection: React.FC = () => {
   // Lock body scroll when modals are open
   useBodyScrollLock(isWriteModalOpen || Boolean(lightboxImage));
 
+  // Sync authorName when logged-in user changes
+  useEffect(() => {
+    if (user?.name) {
+      setAuthorName(user.name);
+    }
+  }, [user]);
+
   const fetchReviews = () => {
     fetch('/api/reviews')
       .then((r) => r.json())
@@ -78,7 +89,8 @@ export const ReviewsSection: React.FC = () => {
           const mapped: ReviewItem[] = d.reviews.map((r: any, idx: number) => ({
             id: r.id || `api-rev-${idx}`,
             author: r.authorName || r.author || 'Verified Buyer',
-            avatar: r.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(r.authorName || 'Buyer')}`,
+            userEmail: r.userEmail,
+            avatar: r.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(r.authorName || r.author || 'Buyer')}`,
             rating: r.rating || 5,
             date: r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent',
             location: r.location || 'India',
@@ -135,8 +147,9 @@ export const ReviewsSection: React.FC = () => {
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!authorName.trim() || !comment.trim()) {
-      toast.warning('Please enter your name and review message.');
+    const displayName = (user?.name || authorName).trim();
+    if (!displayName || !comment.trim()) {
+      toast.warning('Please enter your review message.');
       return;
     }
 
@@ -144,11 +157,15 @@ export const ReviewsSection: React.FC = () => {
     try {
       const res = await fetch('/api/reviews', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           productId: selectedProduct.toLowerCase().replace(/\s+/g, '-'),
           productTitle: selectedProduct,
-          authorName: authorName.trim(),
+          authorName: displayName,
+          userEmail: user?.email,
           rating,
           comment: comment.trim(),
           screenshot: screenshotBase64 || undefined,
@@ -159,7 +176,6 @@ export const ReviewsSection: React.FC = () => {
       if (data.success) {
         toast.success('Thank you! Your verified review has been published 🎉');
         setIsWriteModalOpen(false);
-        setAuthorName('');
         setComment('');
         setScreenshotBase64('');
         setScreenshotPreview('');
@@ -172,6 +188,25 @@ export const ReviewsSection: React.FC = () => {
       toast.error('Network error submitting review');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!confirm('Are you sure you want to delete this review?')) return;
+    try {
+      const res = await fetch(`/api/reviews/${reviewId}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      const data = await res.json();
+      if (data.success) {
+        setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+        toast.success('Review deleted successfully! 🗑️');
+      } else {
+        toast.error(data.message || 'Failed to delete review.');
+      }
+    } catch {
+      toast.error('Error deleting review.');
     }
   };
 
@@ -226,12 +261,26 @@ export const ReviewsSection: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                {/* Stars */}
-                <div className="flex items-center gap-1 text-amber-400">
-                  {[...Array(review.rating)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
-                  ))}
-                  <span className="text-xs font-bold text-slate-700 ml-1.5">{review.rating}.0</span>
+                {/* Header with Stars and Delete Button */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-amber-400">
+                    {[...Array(review.rating)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    ))}
+                    <span className="text-xs font-bold text-slate-700 ml-1.5">{review.rating}.0</span>
+                  </div>
+
+                  {/* Delete button (Author or Admin only) */}
+                  {(isAdmin || (user && (user.email === review.userEmail || user.name === review.author))) && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteReview(review.id)}
+                      className="text-slate-300 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                      title="Delete Review"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
 
                 {/* Purchased product pill */}
@@ -353,13 +402,67 @@ export const ReviewsSection: React.FC = () => {
               </div>
               <button 
                 onClick={() => setIsWriteModalOpen(false)}
-                className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors"
+                className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSubmitReview} className="space-y-4 mt-5">
+              {/* User Profile Card or Log In Banner */}
+              {user ? (
+                <div className="flex items-center justify-between p-3.5 bg-gradient-to-r from-brand-50 to-indigo-50/60 rounded-2xl border border-brand-200">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.name)}`}
+                      alt={user.name}
+                      className="w-10 h-10 rounded-full ring-2 ring-brand-400 bg-white shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-extrabold text-xs text-slate-900 truncate">{user.name}</span>
+                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-0.5">
+                          <CheckCircle2 className="w-2.5 h-2.5" /> Verified Profile
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-medium block truncate">{user.email}</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-brand-700 font-extrabold bg-white px-2.5 py-1 rounded-xl border border-brand-200 shrink-0">
+                    Posting as You
+                  </span>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                    <span className="text-xs text-slate-600">
+                      Have an account? Log in to post with your verified account badge.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => { setAuthModalTab('login'); setIsAuthModalOpen(true); }}
+                      className="text-xs font-bold text-brand-600 hover:text-brand-700 hover:underline shrink-0"
+                    >
+                      Log In Now
+                    </button>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Your Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={authorName}
+                      onChange={(e) => setAuthorName(e.target.value)}
+                      placeholder="e.g. Aman Verma"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-brand-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Star Rating Selector */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -373,7 +476,7 @@ export const ReviewsSection: React.FC = () => {
                       onClick={() => setRating(star)}
                       onMouseEnter={() => setHoverRating(star)}
                       onMouseLeave={() => setHoverRating(0)}
-                      className="p-1 hover:scale-115 transition-transform"
+                      className="p-1 hover:scale-115 transition-transform cursor-pointer"
                     >
                       <Star
                         className={`w-7 h-7 transition-colors ${
@@ -390,36 +493,20 @@ export const ReviewsSection: React.FC = () => {
                 </div>
               </div>
 
-              {/* Name & Product */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Your Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={authorName}
-                    onChange={(e) => setAuthorName(e.target.value)}
-                    placeholder="e.g. Aman Verma"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-brand-500 focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Subscription Purchased *
-                  </label>
-                  <select
-                    value={selectedProduct}
-                    onChange={(e) => setSelectedProduct(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-brand-500 focus:outline-none"
-                  >
-                    {POPULAR_PRODUCTS.map((prod) => (
-                      <option key={prod} value={prod}>{prod}</option>
-                    ))}
-                  </select>
-                </div>
+              {/* Subscription Purchased Selector */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Subscription Purchased *
+                </label>
+                <select
+                  value={selectedProduct}
+                  onChange={(e) => setSelectedProduct(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-brand-500 focus:outline-none"
+                >
+                  {POPULAR_PRODUCTS.map((prod) => (
+                    <option key={prod} value={prod}>{prod}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Review Text */}
@@ -494,7 +581,7 @@ export const ReviewsSection: React.FC = () => {
                         setScreenshotPreview('');
                         setCompressionInfo(null);
                       }}
-                      className="text-xs text-rose-600 hover:text-rose-700 font-bold hover:underline shrink-0"
+                      className="text-xs text-rose-600 hover:text-rose-700 font-bold hover:underline shrink-0 cursor-pointer"
                     >
                       Remove
                     </button>
@@ -551,7 +638,7 @@ export const ReviewsSection: React.FC = () => {
               </span>
               <button 
                 onClick={() => setLightboxImage(null)}
-                className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>

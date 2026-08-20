@@ -177,30 +177,21 @@ reviewsRouter.delete('/:id', async (req, res) => {
 
   try {
     if (isDbConnected) {
-      const deleted = await Review.findOneAndDelete({ $or: [{ id }, { _id: id }] });
-      if (!deleted) {
-        return res.status(404).json({ success: false, message: 'Review not found' });
-      }
-
-      const totalSubmittedCount = await Review.countDocuments();
-      const totalReviewsCount = BASE_REVIEW_COUNT + totalSubmittedCount;
-
-      return res.json({
-        success: true,
-        message: 'Review deleted successfully',
-        totalReviewsCount,
-      });
+      const isObjectId = mongoose.Types.ObjectId.isValid(id);
+      const query = isObjectId ? { $or: [{ id }, { _id: id }] } : { id };
+      await Review.findOneAndDelete(query);
     }
 
+    // Also remove from in-memory fallback list if present
     const index = inMemoryReviews.findIndex((r) => r.id === id);
-    if (index === -1) {
-      return res.status(404).json({ success: false, message: 'Review not found' });
+    if (index !== -1) {
+      inMemoryReviews.splice(index, 1);
     }
 
-    inMemoryReviews.splice(index, 1);
-    const totalReviewsCount = BASE_REVIEW_COUNT + inMemoryReviews.length;
+    const totalSubmittedCount = isDbConnected ? await Review.countDocuments() : inMemoryReviews.length;
+    const totalReviewsCount = BASE_REVIEW_COUNT + totalSubmittedCount;
 
-    res.json({
+    return res.json({
       success: true,
       message: 'Review deleted successfully',
       totalReviewsCount,
