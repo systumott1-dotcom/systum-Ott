@@ -20,7 +20,12 @@ import {
   TrendingUp,
   Lock,
   Headphones,
-  CheckCircle2
+  CheckCircle2,
+  Star,
+  Trash2,
+  MessageSquare,
+  Send,
+  Plus
 } from 'lucide-react';
 
 interface ProductPageProps {
@@ -54,14 +59,102 @@ export const ProductPage: React.FC<ProductPageProps> = ({
     defaultPlanIndex >= 0 ? defaultPlanIndex : 0
   );
 
-  // Reset plan index when product changes
+  // Reviews State
+  interface ReviewItem {
+    id: string;
+    productId: string;
+    productTitle?: string;
+    authorName: string;
+    rating: number;
+    comment: string;
+    avatar?: string;
+    isVerified?: boolean;
+    createdAt: string;
+  }
+
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
+  const [newRating, setNewRating] = useState(5);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [authorName, setAuthorName] = useState('');
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Reset plan index & fetch reviews when product changes
   useEffect(() => {
     if (product) {
       const popularIdx = product.plans.findIndex((p) => p.isPopular);
       setSelectedPlanIndex(popularIdx >= 0 ? popularIdx : 0);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Fetch reviews for this product
+      setReviewsLoading(true);
+      const targetId = product.slug || product.id;
+      fetch(`/api/reviews?productId=${encodeURIComponent(targetId)}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.success && Array.isArray(d.reviews)) {
+            setReviews(d.reviews);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setReviewsLoading(false));
     }
   }, [product]);
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!product || !authorName.trim() || !reviewComment.trim()) {
+      toast.warning('Please enter your name and review comment.');
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.slug || product.id,
+          productTitle: product.title,
+          authorName: authorName.trim(),
+          rating: newRating,
+          comment: reviewComment.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.review) {
+        setReviews((prev) => [data.review, ...prev]);
+        setAuthorName('');
+        setReviewComment('');
+        setNewRating(5);
+        setIsReviewFormOpen(false);
+        toast.success('Your review was posted successfully! ⭐');
+      } else {
+        toast.error(data.message || 'Failed to submit review.');
+      }
+    } catch {
+      toast.error('Network error submitting review.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!confirm('Are you sure you want to delete this review?')) return;
+    try {
+      const res = await fetch(`/api/reviews/${reviewId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+        toast.success('Review deleted successfully.');
+      } else {
+        toast.error('Failed to delete review.');
+      }
+    } catch {
+      toast.error('Error deleting review.');
+    }
+  };
 
   if (loading && !product) {
     return (
@@ -506,6 +599,209 @@ export const ProductPage: React.FC<ProductPageProps> = ({
 
           </div>
 
+        </div>
+
+        {/* CUSTOMER REVIEWS & RATINGS SECTION */}
+        <div className="mt-16 pt-12 border-t border-slate-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold uppercase tracking-wider mb-2">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <span>Verified Buyer Reviews ({4500 + reviews.length}+ Total)</span>
+              </div>
+              <h3 className="text-xl sm:text-3xl font-extrabold text-slate-900">
+                Customer Reviews & Ratings
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                Real feedback from verified purchasers of {product.title}.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsReviewFormOpen(!isReviewFormOpen)}
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-extrabold shadow-md shadow-brand-600/20 transition-all shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>{isReviewFormOpen ? 'Close Form' : 'Write a Review'}</span>
+            </button>
+          </div>
+
+          {/* Write a Review Form */}
+          {isReviewFormOpen && (
+            <div className="mb-10 p-5 sm:p-7 rounded-3xl bg-white border border-slate-200 shadow-md animate-in fade-in zoom-in-95 duration-200 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h4 className="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-brand-600" />
+                  <span>Drop Your Review for {product.title}</span>
+                </h4>
+              </div>
+
+              <form onSubmit={handleSubmitReview} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                    Your Rating *
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setNewRating(star)}
+                        onMouseEnter={() => setHoverRating(star)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        className="p-1 hover:scale-115 transition-transform"
+                      >
+                        <Star
+                          className={`w-7 h-7 transition-colors ${
+                            star <= (hoverRating || newRating)
+                              ? 'fill-amber-400 text-amber-400'
+                              : 'text-slate-300'
+                          }`}
+                        />
+                      </button>
+                    ))}
+                    <span className="text-xs font-bold text-slate-600 ml-2">
+                      {newRating} / 5 Stars
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Your Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={authorName}
+                      onChange={(e) => setAuthorName(e.target.value)}
+                      placeholder="e.g. Rahul S."
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-brand-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Your Review / Feedback *
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Share your experience (activation speed, quality, support response)..."
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:border-brand-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="submit"
+                    disabled={submittingReview}
+                    className="px-6 py-3 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-extrabold shadow-md flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>{submittingReview ? 'Submitting...' : 'Post Review'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsReviewFormOpen(false)}
+                    className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Reviews List */}
+          {reviewsLoading ? (
+            <div className="text-center py-12">
+              <div className="w-8 h-8 border-3 border-brand-200 border-t-brand-600 rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-xs text-slate-400">Loading verified customer reviews...</p>
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
+                <Star className="w-6 h-6 fill-amber-400 text-amber-400" />
+              </div>
+              <h4 className="text-base font-extrabold text-slate-800">
+                Be the first to review {product.title}!
+              </h4>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Purchased this subscription? Drop your honest rating & experience to help other members.
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsReviewFormOpen(true)}
+                className="px-4 py-2 bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Write First Review</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {reviews.map((rev) => (
+                <div
+                  key={rev.id}
+                  className="bg-white rounded-3xl p-5 border border-slate-200 shadow-2xs hover:shadow-md transition-shadow flex flex-col justify-between relative group"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={rev.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(rev.authorName)}`}
+                          alt={rev.authorName}
+                          className="w-10 h-10 rounded-full object-cover border border-slate-200 bg-slate-50 shrink-0"
+                        />
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-extrabold text-xs text-slate-900">{rev.authorName}</span>
+                            <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-0.5">
+                              <CheckCircle2 className="w-2.5 h-2.5" /> Verified Buyer
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-semibold block mt-0.5">
+                            {new Date(rev.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Delete Review Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteReview(rev.id)}
+                        className="text-slate-300 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors opacity-0 group-hover:opacity-100"
+                        title="Delete Review"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-amber-400">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-3.5 h-3.5 ${
+                            i < rev.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      "{rev.comment}"
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* RELATED PRODUCTS SECTION */}

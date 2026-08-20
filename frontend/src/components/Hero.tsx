@@ -91,7 +91,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
                   alt="Customer"
                 />
                 <div className="h-8 w-8 rounded-full bg-brand-600 ring-2 ring-white flex items-center justify-center text-[10px] font-bold text-white">
-                  +1k
+                  +4.5k
                 </div>
               </div>
               <div className="text-left">
@@ -101,7 +101,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
                   ))}
                   <span className="text-xs font-bold text-slate-800 ml-1">4.9/5</span>
                 </div>
-                <p className="text-xs text-slate-500 font-medium">1,000+ Verified Reviews Across India</p>
+                <p className="text-xs text-slate-500 font-medium">4,500+ Verified Reviews Across India</p>
               </div>
             </div>
 

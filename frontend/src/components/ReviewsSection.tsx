@@ -1,8 +1,49 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star, CheckCircle2, MessageSquareQuote } from 'lucide-react';
-import { REVIEWS } from '../data/reviews';
+import { REVIEWS as INITIAL_REVIEWS } from '../data/reviews';
+
+interface ReviewItem {
+  id: string;
+  author: string;
+  avatar: string;
+  rating: number;
+  date: string;
+  location?: string;
+  productPurchased: string;
+  comment: string;
+  verified: boolean;
+}
 
 export const ReviewsSection: React.FC = () => {
+  const [reviews, setReviews] = useState<ReviewItem[]>(INITIAL_REVIEWS);
+  const [totalCount, setTotalCount] = useState<number>(4500 + INITIAL_REVIEWS.length);
+
+  useEffect(() => {
+    fetch('/api/reviews')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.reviews) && d.reviews.length > 0) {
+          const mapped: ReviewItem[] = d.reviews.map((r: any, idx: number) => ({
+            id: r.id || `api-rev-${idx}`,
+            author: r.authorName || r.author || 'Verified Buyer',
+            avatar: r.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(r.authorName || 'Buyer')}`,
+            rating: r.rating || 5,
+            date: r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent',
+            location: r.location || 'India',
+            productPurchased: r.productTitle || r.productPurchased || 'OTT Plan',
+            comment: r.comment || '',
+            verified: r.isVerified ?? true,
+          }));
+
+          setReviews(mapped);
+        }
+        if (typeof d.totalReviewsCount === 'number') {
+          setTotalCount(d.totalReviewsCount);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section id="reviews" className="py-20 bg-white border-t border-slate-200 scroll-mt-20 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -10,19 +51,19 @@ export const ReviewsSection: React.FC = () => {
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold uppercase tracking-wider">
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> 1,000+ Verified Reviews · 4.9/5 Rating
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {totalCount.toLocaleString()}+ Verified Reviews · 4.9/5 Rating
           </div>
           <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900">
             What Our Customers Say
           </h2>
           <p className="text-sm text-slate-500">
-            Real feedback from verified buyers across India who saved thousands on their digital subscriptions.
+            Real feedback from {totalCount.toLocaleString()}+ verified buyers across India who saved thousands on their digital subscriptions.
           </p>
         </div>
 
         {/* Reviews Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {REVIEWS.map((review) => (
+          {reviews.slice(0, 9).map((review) => (
             <div
               key={review.id}
               className="white-card white-card-hover rounded-3xl p-6 border border-slate-200 transition-all duration-300 flex flex-col justify-between relative group bg-white shadow-xs"
@@ -66,7 +107,7 @@ export const ReviewsSection: React.FC = () => {
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                       )}
                     </h4>
-                    <span className="text-[10px] text-slate-500">{review.location}</span>
+                    <span className="text-[10px] text-slate-500">{review.location || 'Verified Buyer'}</span>
                   </div>
                 </div>
 

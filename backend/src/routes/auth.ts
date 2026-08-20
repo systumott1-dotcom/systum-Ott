@@ -14,14 +14,20 @@ export const authRouter = Router();
 authRouter.use(authLimiter);
 
 // In-memory fallback users
-const inMemoryUsers: Array<{
+export interface InMemoryUserType {
   id: string;
   name: string;
   email: string;
   passwordHash: string;
   phone?: string;
   role: 'customer' | 'admin';
-}> = [
+  isBanned?: boolean;
+  bannedAt?: Date;
+  banReason?: string;
+  createdAt: string;
+}
+
+export const inMemoryUsers: InMemoryUserType[] = [
   {
     id: 'admin-default-1',
     name: 'Systum Admin',
@@ -29,6 +35,8 @@ const inMemoryUsers: Array<{
     passwordHash: bcrypt.hashSync('admin1234', 10),
     phone: '9306022703',
     role: 'admin',
+    isBanned: false,
+    createdAt: new Date('2025-01-01').toISOString(),
   },
 ];
 
@@ -86,13 +94,15 @@ authRouter.post('/signup', async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const newUser = {
+    const newUser: InMemoryUserType = {
       id: `usr-${Date.now()}`,
       name,
       email: normalizedEmail,
       passwordHash,
       phone,
       role: 'customer' as const,
+      isBanned: false,
+      createdAt: new Date().toISOString(),
     };
     inMemoryUsers.push(newUser);
 
@@ -133,6 +143,13 @@ authRouter.post('/login', async (req, res) => {
         return res.status(401).json({ success: false, message: 'Invalid email or password' });
       }
 
+      if (user.isBanned) {
+        return res.status(403).json({
+          success: false,
+          message: 'Your account has been banned by the administrator. Please contact WhatsApp support at +91 93060 22703.',
+        });
+      }
+
       const isMatch = await bcrypt.compare(password, user.passwordHash);
       if (!isMatch) {
         return res.status(401).json({ success: false, message: 'Invalid email or password' });
@@ -156,6 +173,13 @@ authRouter.post('/login', async (req, res) => {
     const user = inMemoryUsers.find((u) => u.email === normalizedEmail);
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
+    }
+
+    if (user.isBanned) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been banned by the administrator. Please contact WhatsApp support at +91 93060 22703.',
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);

@@ -6,6 +6,9 @@ export interface IUser extends Document {
   passwordHash: string;
   phone?: string;
   role: 'customer' | 'admin';
+  isBanned?: boolean;
+  bannedAt?: Date;
+  banReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,6 +20,9 @@ const UserSchema: Schema = new Schema(
     passwordHash: { type: String, required: true },
     phone: { type: String, trim: true },
     role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
+    isBanned: { type: Boolean, default: false },
+    bannedAt: { type: Date },
+    banReason: { type: String },
   },
   { timestamps: true }
 );

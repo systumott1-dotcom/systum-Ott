@@ -3,6 +3,8 @@ import { requireAdmin } from '../middleware/auth.js';
 import { Product } from '../models/Product.js';
 import { Order } from '../models/Order.js';
 import { Coupon } from '../models/Coupon.js';
+import { User } from '../models/User.js';
+import { inMemoryUsers } from './auth.js';
 import { PRODUCTS } from '../data/mockData.js';
 import { uploadImageToCloudinary } from '../services/cloudinary.js';
 import { sendOrderEmail, sendTestEmail } from '../services/email.js';
@@ -416,5 +418,124 @@ adminRouter.post('/test-email', async (req, res) => {
     res.json({ success: true, message: `Test email sent to ${targetEmail}`, data: result.data });
   } else {
     res.status(500).json({ success: false, message: result.error });
+  }
+});
+
+// GET /api/admin/users - List all registered users
+adminRouter.get('/users', async (_req, res) => {
+  try {
+    const isDbConnected = mongoose.connection.readyState === 1;
+
+    if (isDbConnected) {
+      const users = await User.find().sort({ createdAt: -1 }).select('-passwordHash').lean();
+      return res.json({ success: true, count: users.length, users });
+    }
+
+    // In-memory fallback
+    const sanitized = inMemoryUsers.map((u) => ({
+      _id: u.id,
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      phone: u.phone,
+      role: u.role,
+      isBanned: u.isBanned ?? false,
+      bannedAt: u.bannedAt,
+      banReason: u.banReason,
+      createdAt: u.createdAt,
+    }));
+
+    res.json({ success: true, count: sanitized.length, users: sanitized });
+  } catch (error) {
+    console.error('Fetch users error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch users' });
+  }
+});
+
+// PATCH /api/admin/users/:id/ban - Ban or unban a user
+adminRouter.patch('/users/:id/ban', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isBanned, reason } = req.body;
+    const isDbConnected = mongoose.connection.readyState === 1;
+
+    if (isDbConnected) {
+      const user = await User.findOne({ $or: [{ _id: id }, { id }] });
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      user.isBanned = Boolean(isBanned);
+      user.bannedAt = isBanned ? new Date() : undefined;
+      user.banReason = isBanned ? (reason || 'Violation of terms & policies') : undefined;
+      await user.save();
+
+      return res.json({
+        success: true,
+        message: isBanned ? `User ${user.name} has been banned successfully.` : `User ${user.name} unbanned.`,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          isBanned: user.isBanned,
+          banReason: user.banReason,
+        },
+      });
+    }
+
+    // In-memory fallback
+    const user = inMemoryUsers.find((u) => u.id === id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    user.isBanned = Boolean(isBanned);
+    user.bannedAt = isBanned ? new Date() : undefined;
+    user.banReason = isBanned ? (reason || 'Violation of terms & policies') : undefined;
+
+    res.json({
+      success: true,
+      message: isBanned ? `User ${user.name} has been banned successfully.` : `User ${user.name} unbanned.`,
+      user,
+    });
+  } catch (error) {
+    console.error('Ban user error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update user ban status' });
+  }
+});
+
+// DELETE /api/admin/users/:id - Permanently delete a user account
+adminRouter.delete('/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isDbConnected = mongoose.connection.readyState === 1;
+
+    if (isDbConnected) {
+      const deleted = await User.findOneAndDelete({ $or: [{ _id: id }, { id }] });
+      if (!deleted) {
+        return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      return res.json({
+        success: true,
+        message: `Account of ${deleted.name} (${deleted.email}) deleted permanently.`,
+      });
+    }
+
+    // In-memory fallback
+    const index = inMemoryUsers.findIndex((u) => u.id === id);
+    if (index === -1) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const removed = inMemoryUsers.splice(index, 1)[0];
+    res.json({
+      success: true,
+      message: `Account of ${removed.name} (${removed.email}) deleted permanently.`,
+    });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete user account' });
   }
 });

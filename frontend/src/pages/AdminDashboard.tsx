@@ -23,7 +23,11 @@ import {
   Copy,
   Check,
   ExternalLink,
-  Camera
+  Camera,
+  Users,
+  UserX,
+  UserCheck,
+  Ban
 } from 'lucide-react';
 import type { Product, ProductPlan } from '../types';
 import { CATEGORIES } from '../data/products';
@@ -64,6 +68,19 @@ interface CouponData {
   isActive: boolean;
 }
 
+interface AdminUserData {
+  id: string;
+  _id?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: 'customer' | 'admin';
+  isBanned: boolean;
+  bannedAt?: string;
+  banReason?: string;
+  createdAt: string;
+}
+
 interface AdminDashboardProps {
   onBackToStore: () => void;
 }
@@ -71,13 +88,18 @@ interface AdminDashboardProps {
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore }) => {
   const { user, logout, token } = useAuth();
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'stats' | 'products' | 'orders' | 'coupons'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'products' | 'orders' | 'coupons' | 'users'>('stats');
   const [saving, setSaving] = useState(false);
 
   // Stats State
   const [stats, setStats] = useState<AdminStats>({
     totalRevenue: 0, totalOrders: 0, pendingOrders: 0, deliveredOrders: 0, productsCount: 0,
   });
+
+  // Users State
+  const [usersList, setUsersList] = useState<AdminUserData[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
 
   // Products State
   const [products, setProducts] = useState<Product[]>([]);
@@ -165,6 +187,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
       .then((r) => r.json())
       .then((d) => { if (d.success && d.coupons) setCoupons(d.coupons); })
       .catch(() => {});
+
+    // Fetch registered users
+    setUsersLoading(true);
+    fetch('/api/admin/users', { headers: apiHeaders() })
+      .then((r) => r.json())
+      .then((d) => { if (d.success && d.users) setUsersList(d.users); })
+      .catch(() => {})
+      .finally(() => setUsersLoading(false));
   }, [token, apiHeaders]);
 
   // Handle image file selection
@@ -500,11 +530,66 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
     }
   };
 
+  // Ban or Unban User
+  const handleToggleBan = async (targetUser: AdminUserData) => {
+    const newBanStatus = !targetUser.isBanned;
+    const confirmMsg = newBanStatus
+      ? `Are you sure you want to BAN "${targetUser.name}" (${targetUser.email})? They will not be able to log in or make purchases.`
+      : `Are you sure you want to UNBAN "${targetUser.name}"?`;
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const targetId = targetUser.id || targetUser._id;
+      const res = await fetch(`/api/admin/users/${targetId}/ban`, {
+        method: 'PATCH',
+        headers: apiHeaders(),
+        body: JSON.stringify({ isBanned: newBanStatus }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUsersList((prev) =>
+          prev.map((u) =>
+            (u.id === targetId || u._id === targetId) ? { ...u, isBanned: newBanStatus } : u
+          )
+        );
+        toast.success(newBanStatus ? `User ${targetUser.name} has been banned! 🚫` : `User ${targetUser.name} unbanned! ✅`);
+      } else {
+        toast.error(data.message || 'Failed to update ban status');
+      }
+    } catch {
+      toast.error('Network error updating ban status');
+    }
+  };
+
+  // Permanently Delete User Account
+  const handleDeleteUser = async (targetUser: AdminUserData) => {
+    const confirmMsg = `⚠️ PERMANENT ACTION: Are you sure you want to DELETE the account of "${targetUser.name}" (${targetUser.email})? All user data will be permanently removed.`;
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const targetId = targetUser.id || targetUser._id;
+      const res = await fetch(`/api/admin/users/${targetId}`, {
+        method: 'DELETE',
+        headers: apiHeaders(),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUsersList((prev) => prev.filter((u) => u.id !== targetId && u._id !== targetId));
+        toast.success(`Account of ${targetUser.name} deleted permanently.`);
+      } else {
+        toast.error(data.message || 'Failed to delete user account');
+      }
+    } catch {
+      toast.error('Network error deleting user account');
+    }
+  };
+
   const tabs = [
     { id: 'stats' as const, label: 'Dashboard', icon: TrendingUp },
     { id: 'products' as const, label: 'Products', icon: Package },
     { id: 'orders' as const, label: 'Orders', icon: ShoppingBag },
     { id: 'coupons' as const, label: 'Coupons', icon: Tag },
+    { id: 'users' as const, label: 'Users & Bans', icon: Users },
   ];
 
   return (
@@ -1206,6 +1291,193 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     </span>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* USERS & BANS TAB */}
+        {activeTab === 'users' && (
+          <div>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-900">User Management & Moderation</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  View registered users, restrict malicious accounts, ban users or permanently delete accounts.
+                </p>
+              </div>
+
+              {/* User Search Input */}
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
+                  placeholder="Search by name, email, phone..."
+                  className="w-full pl-9 pr-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:border-brand-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Users Summary Cards */}
+            <div className="grid grid-cols-3 gap-3.5 mb-6">
+              <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs">
+                <div className="flex items-center gap-2 text-brand-600 mb-1">
+                  <Users className="w-4 h-4" />
+                  <span className="text-xs font-bold text-slate-500">Total Registered</span>
+                </div>
+                <div className="text-xl sm:text-2xl font-black text-slate-900">{usersList.length}</div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-4 border border-emerald-200 shadow-2xs bg-emerald-50/20">
+                <div className="flex items-center gap-2 text-emerald-600 mb-1">
+                  <UserCheck className="w-4 h-4" />
+                  <span className="text-xs font-bold text-slate-500">Active Accounts</span>
+                </div>
+                <div className="text-xl sm:text-2xl font-black text-emerald-700">
+                  {usersList.filter((u) => !u.isBanned).length}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-4 border border-rose-200 shadow-2xs bg-rose-50/20">
+                <div className="flex items-center gap-2 text-rose-600 mb-1">
+                  <UserX className="w-4 h-4" />
+                  <span className="text-xs font-bold text-slate-500">Banned Accounts</span>
+                </div>
+                <div className="text-xl sm:text-2xl font-black text-rose-700">
+                  {usersList.filter((u) => u.isBanned).length}
+                </div>
+              </div>
+            </div>
+
+            {/* Users Table / List */}
+            {usersLoading ? (
+              <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
+                <Loader2 className="w-8 h-8 animate-spin text-brand-600 mx-auto mb-3" />
+                <p className="text-sm text-slate-500 font-medium">Loading user directory...</p>
+              </div>
+            ) : usersList.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
+                <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                <h4 className="text-lg font-bold text-slate-600 mb-1">No users found</h4>
+                <p className="text-sm text-slate-400">Registered customers and admins will appear here.</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+                <div className="divide-y divide-slate-100">
+                  {usersList
+                    .filter((u) => {
+                      if (!userSearchQuery.trim()) return true;
+                      const q = userSearchQuery.toLowerCase();
+                      return (
+                        u.name.toLowerCase().includes(q) ||
+                        u.email.toLowerCase().includes(q) ||
+                        (u.phone && u.phone.includes(q))
+                      );
+                    })
+                    .map((usr) => {
+                      const isCurrentUser = usr.email === user?.email;
+                      return (
+                        <div
+                          key={usr.id || usr._id}
+                          className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${
+                            usr.isBanned ? 'bg-rose-50/30' : 'hover:bg-slate-50/60'
+                          }`}
+                        >
+                          {/* User Info */}
+                          <div className="flex items-center gap-3.5 min-w-0">
+                            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-extrabold text-sm shrink-0 ${
+                              usr.isBanned
+                                ? 'bg-rose-100 text-rose-700 border border-rose-200'
+                                : usr.role === 'admin'
+                                ? 'bg-brand-100 text-brand-700 border border-brand-200'
+                                : 'bg-slate-100 text-slate-700 border border-slate-200'
+                            }`}>
+                              {usr.name.charAt(0).toUpperCase()}
+                            </div>
+
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-extrabold text-slate-900 text-sm truncate">{usr.name}</h4>
+                                
+                                {/* Role Badge */}
+                                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                                  usr.role === 'admin'
+                                    ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                                    : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                }`}>
+                                  {usr.role.toUpperCase()}
+                                </span>
+
+                                {/* Ban Status Badge */}
+                                {usr.isBanned ? (
+                                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-300 flex items-center gap-1">
+                                    <Ban className="w-3 h-3" /> BANNED
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                                    <UserCheck className="w-3 h-3" /> ACTIVE
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-3 text-xs text-slate-500 font-medium mt-1 flex-wrap">
+                                <span>{usr.email}</span>
+                                {usr.phone && (
+                                  <>
+                                    <span>·</span>
+                                    <span>+91 {usr.phone}</span>
+                                  </>
+                                )}
+                                <span>·</span>
+                                <span className="text-slate-400">
+                                  Joined {new Date(usr.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          {!isCurrentUser && (
+                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                              {/* Toggle Ban */}
+                              <button
+                                onClick={() => handleToggleBan(usr)}
+                                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                                  usr.isBanned
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                                    : 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100'
+                                }`}
+                              >
+                                {usr.isBanned ? (
+                                  <>
+                                    <UserCheck className="w-3.5 h-3.5" />
+                                    <span>Unban User</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Ban className="w-3.5 h-3.5" />
+                                    <span>Ban User</span>
+                                  </>
+                                )}
+                              </button>
+
+                              {/* Delete Account */}
+                              <button
+                                onClick={() => handleDeleteUser(usr)}
+                                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 flex items-center gap-1.5 transition-all"
+                                title="Permanently delete user account"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
               </div>
             )}
           </div>
