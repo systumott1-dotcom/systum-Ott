@@ -4,7 +4,7 @@ import { X, Lock, Mail, User as UserIcon, Phone, ShieldCheck, ArrowRight, AlertC
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, setIsAuthModalOpen, authModalTab, setAuthModalTab, login, signup } = useAuth();
+  const { isAuthModalOpen, setIsAuthModalOpen, authModalTab, setAuthModalTab, login, signup, logout } = useAuth();
   useBodyScrollLock(isAuthModalOpen);
 
   const [email, setEmail] = useState('');
@@ -50,6 +50,17 @@ export const AuthModal: React.FC = () => {
       const res = await login(email, password);
       if (!res.success) {
         setError(res.message || 'Invalid email or password');
+      } else if (authModalTab === 'admin') {
+        const savedUser = localStorage.getItem('systum_ott_user');
+        if (savedUser) {
+          try {
+            const parsed = JSON.parse(savedUser);
+            if (parsed.role !== 'admin') {
+              logout();
+              setError('Access Denied: This account does not have Administrator privileges.');
+            }
+          } catch {}
+        }
       }
     }
     setLoading(false);
