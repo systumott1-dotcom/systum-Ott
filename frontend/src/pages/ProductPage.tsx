@@ -116,6 +116,22 @@ export const ProductPage: React.FC<ProductPageProps> = ({
 
   useBodyScrollLock(Boolean(lightboxImage));
 
+  // Enable side-to-side mouse wheel scrolling on carousel
+  useEffect(() => {
+    const el = relatedScrollRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+        el.scrollBy({ left: e.deltaY * 1.5, behavior: 'auto' });
+      }
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [relatedProducts]);
+
   // Sync authorName when logged in user changes
   useEffect(() => {
     if (user?.name) {
@@ -729,11 +745,10 @@ export const ProductPage: React.FC<ProductPageProps> = ({
           <div className="mt-16 pt-10 border-t border-slate-200">
             {/* Section Header */}
             <div className="flex items-center justify-between gap-4 mb-5">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <div className="w-2.5 h-6 bg-brand-600 rounded-full" />
-                <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-1.5">
-                  <Sparkles className="w-5 h-5 text-brand-600 shrink-0" />
-                  <span>You Might <span className="text-brand-600">Also Like</span></span>
+                <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">
+                  You Might <span className="text-brand-600">Also Like</span>
                 </h2>
               </div>
 
@@ -772,7 +787,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
             {/* Horizontal Carousel */}
             <div
               ref={relatedScrollRef}
-              className="flex gap-3.5 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-4 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0"
+              className="flex gap-3.5 sm:gap-4 overflow-x-auto scroll-smooth pb-3.5 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0"
             >
               {relatedProducts.map((relProduct) => {
                 const primaryPlan = relProduct.plans[0] || { discountedPrice: 99, originalPrice: 199 };

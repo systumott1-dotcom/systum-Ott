@@ -174,8 +174,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </div>
               </div>
               <div className="flex items-baseline">
-                <span className="font-black text-xl sm:text-2xl tracking-tight gradient-text">
-                  Systum OTT
+                <span className="font-black text-xl sm:text-2xl tracking-tight text-slate-900">
+                  Systum <span className="gradient-text">OTT</span>
                 </span>
               </div>
             </a>
