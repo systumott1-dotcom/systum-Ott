@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { Product, ProductPlan } from '../types';
 import { useCart, WHATSAPP_PHONE } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { ProductCard } from '../components/ProductCard';
 import { 
   ShieldCheck, 
   Zap, 
@@ -16,6 +15,7 @@ import {
   Flame, 
   BadgeCheck,
   ChevronRight,
+  ChevronLeft,
   Package,
   Heart,
   TrendingUp,
@@ -293,10 +293,22 @@ export const ProductPage: React.FC<ProductPageProps> = ({
     buyNow(product, selectedPlan);
   };
 
-  // Related products from same category
-  const relatedProducts = products
-    .filter((p) => p.id !== product.id && (p.category === product.category || product.category === 'all'))
-    .slice(0, 4);
+  const relatedScrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollRelated = (direction: 'left' | 'right') => {
+    if (relatedScrollRef.current) {
+      const scrollAmount = direction === 'left' ? -350 : 350;
+      relatedScrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
+  // Related products from same category + popular catalog products (up to 12 items for full carousel)
+  const relatedProducts = useMemo(() => {
+    if (!product) return [];
+    const sameCategory = products.filter((p) => p.id !== product.id && p.category === product.category);
+    const otherProducts = products.filter((p) => p.id !== product.id && p.category !== product.category);
+    return [...sameCategory, ...otherProducts].slice(0, 12);
+  }, [products, product]);
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-32 relative">
@@ -1102,37 +1114,143 @@ export const ProductPage: React.FC<ProductPageProps> = ({
           </div>
         )}
 
-        {/* RELATED PRODUCTS SECTION */}
+        {/* ================= YOU MIGHT ALSO LIKE CAROUSEL ================= */}
         {relatedProducts.length > 0 && (
-          <div className="mt-16 pt-12 border-t border-slate-200">
-            <div className="flex items-center justify-between mb-8">
+          <div className="mt-16 pt-10 border-t border-slate-200">
+            {/* Header with Title and Controls */}
+            <div className="flex items-center justify-between gap-4 mb-6">
               <div>
-                <span className="inline-block text-xs font-bold uppercase tracking-wider text-brand-700 bg-brand-50 px-3 py-1 rounded-full border border-brand-200 mb-2">
-                  Similar Subscriptions
-                </span>
-                <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900">
-                  You May Also Like
-                </h3>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  You Might <span className="text-[#a82424]">Also Like</span>
+                </h2>
               </div>
-              <button
-                onClick={onBackToHome}
-                className="text-xs font-bold text-brand-600 hover:text-brand-700 hover:underline flex items-center gap-1"
-              >
-                <span>View All Store</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+
+              <div className="flex items-center gap-2">
+                {/* Scroll Left */}
+                <button
+                  type="button"
+                  onClick={() => scrollRelated('left')}
+                  className="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 shadow-xs transition-all cursor-pointer active:scale-95"
+                  aria-label="Previous items"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {/* Scroll Right */}
+                <button
+                  type="button"
+                  onClick={() => scrollRelated('right')}
+                  className="w-8 h-8 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-slate-900 shadow-xs transition-all cursor-pointer active:scale-95"
+                  aria-label="Next items"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+
+                {/* View All */}
+                <button
+                  type="button"
+                  onClick={onBackToHome}
+                  className="px-3.5 py-1.5 rounded-xl border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs transition-all cursor-pointer active:scale-95"
+                >
+                  View All
+                </button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
-              {relatedProducts.map((relProduct) => (
-                <div
-                  key={relProduct.id}
-                  onClick={() => onNavigateProduct(relProduct.slug || relProduct.id)}
-                >
-                  <ProductCard product={relProduct} />
-                </div>
-              ))}
+            {/* Horizontal Carousel */}
+            <div
+              ref={relatedScrollRef}
+              className="flex gap-3.5 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-4 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0"
+            >
+              {relatedProducts.map((relProduct) => {
+                const primaryPlan = relProduct.plans[0] || { discountedPrice: 99, originalPrice: 199 };
+                const discount = primaryPlan.originalPrice > primaryPlan.discountedPrice
+                  ? Math.round(((primaryPlan.originalPrice - primaryPlan.discountedPrice) / primaryPlan.originalPrice) * 100)
+                  : 0;
+
+                const categoryLabel = relProduct.category === 'ott'
+                  ? 'OTT APPS'
+                  : relProduct.category === 'music'
+                  ? 'MUSIC APPS'
+                  : relProduct.category === 'software'
+                  ? 'SOFTWARE & TOOLS'
+                  : relProduct.category === 'combo'
+                  ? 'ALL-IN-ONE COMBO'
+                  : relProduct.category === 'adult'
+                  ? 'ADULT 18+'
+                  : 'PREMIUM ACCESS';
+
+                return (
+                  <div
+                    key={relProduct.id}
+                    onClick={() => onNavigateProduct(relProduct.slug || relProduct.id)}
+                    className="w-44 sm:w-52 shrink-0 bg-white rounded-2xl border border-slate-200/90 p-2.5 sm:p-3 flex flex-col justify-between hover:shadow-xl hover:border-brand-300 transition-all duration-300 group cursor-pointer"
+                  >
+                    <div>
+                      {/* Image / Thumbnail Container */}
+                      <div className="relative h-28 sm:h-32 rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center mb-2.5 border border-slate-100">
+                        {discount > 0 && (
+                          <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md bg-[#8c1c28] text-white font-black text-[9px] sm:text-[10px] uppercase shadow-xs">
+                            {discount}% OFF
+                          </span>
+                        )}
+
+                        {relProduct.imageUrl ? (
+                          <img
+                            src={relProduct.imageUrl}
+                            alt={relProduct.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-white font-black text-xl bg-gradient-to-br from-slate-900 to-indigo-950">
+                            {relProduct.title.slice(0, 2)}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Category Label */}
+                      <span className="text-[9px] sm:text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block truncate">
+                        {categoryLabel}
+                      </span>
+
+                      {/* Product Title */}
+                      <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 line-clamp-1 mt-0.5 group-hover:text-brand-600 transition-colors">
+                        {relProduct.title}
+                      </h4>
+
+                      {/* Pricing Row */}
+                      <div className="flex items-baseline gap-1.5 mt-1.5 mb-2.5">
+                        <span className="text-sm sm:text-base font-black text-slate-900">
+                          ₹{primaryPlan.discountedPrice}
+                        </span>
+                        {primaryPlan.originalPrice > primaryPlan.discountedPrice && (
+                          <span className="text-[10px] sm:text-xs text-slate-400 line-through font-medium">
+                            ₹{primaryPlan.originalPrice}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Buy Now Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        buyNow(relProduct, primaryPlan);
+                      }}
+                      className="w-full py-2 sm:py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#7a1c28] via-[#8c2330] to-[#63141f] hover:from-[#8c2330] hover:to-[#7a1c28] text-white text-xs font-black flex items-center justify-center gap-1.5 shadow-md shadow-red-950/20 active:scale-95 transition-all cursor-pointer"
+                    >
+                      <Zap className="w-3.5 h-3.5 fill-white shrink-0" />
+                      <span>Buy Now</span>
+                    </button>
+                  </div>
+                );
+              })}
             </div>
+
+            {/* Bottom Colorful Gradient Accent Bar */}
+            <div className="h-1 w-full bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 rounded-full mt-6 opacity-75" />
           </div>
         )}
 
