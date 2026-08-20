@@ -63,7 +63,7 @@ export const TrustFeatures: React.FC = () => {
             Why Systum OTT
           </span>
           <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900">
-            Why 50,000+ Indian Streamers Trust Us
+            Why 1,000+ Verified Customers Trust Us
           </h2>
           <p className="text-sm text-slate-500">
             Enjoy premium entertainment and pro creative tools at retail fractions with bulletproof safety.

@@ -24,7 +24,7 @@ export const Footer: React.FC<FooterProps> = ({ onSelectCategory, onOpenPolicy }
               Still Paying Full Price? Stop Now.
             </h3>
             <p className="text-xs sm:text-sm text-slate-100 font-medium">
-              Join 50,000+ smart Indians saving up to 90% on OTT, software licenses, and AI tools every month.
+              Join 1,000+ smart customers saving up to 90% on OTT, software licenses, and AI tools every month.
             </p>
           </div>
 

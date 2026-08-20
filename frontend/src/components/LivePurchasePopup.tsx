@@ -6,24 +6,8 @@ interface PurchaseItem {
   name: string;
   product: string;
   plan: string;
-  timestamp: number; // Unix timestamp in milliseconds for real-time calculation
+  timestamp: number; // Unix timestamp in milliseconds
 }
-
-// Fallback pool with relative minute offsets within the last 2 hours (2m to 110m ago)
-const SEED_OFFSETS = [
-  { name: 'Sneha', product: 'Spotify Premium', plan: '6M', offsetMins: 112 },
-  { name: 'Ishaan', product: 'Spotify Premium', plan: '1Y', offsetMins: 48 },
-  { name: 'Aarav', product: 'Netflix 4K UHD', plan: '3M', offsetMins: 6 },
-  { name: 'Pooja', product: 'Canva Pro', plan: '1Y', offsetMins: 19 },
-  { name: 'Rohan', product: 'YouTube Premium', plan: '1Y', offsetMins: 32 },
-  { name: 'Ananya', product: 'Disney+ Hotstar', plan: '1Y', offsetMins: 58 },
-  { name: 'Karan', product: 'ChatGPT Plus 4o', plan: '1M', offsetMins: 11 },
-  { name: 'Priya', product: 'Prime Video 4K', plan: '6M', offsetMins: 74 },
-  { name: 'Vikram', product: 'Adobe Creative Cloud', plan: '1Y', offsetMins: 39 },
-  { name: 'Ayush', product: 'SonyLIV + Zee5 Combo', plan: '1Y', offsetMins: 95 },
-  { name: 'Neha', product: 'MS Office 365 Pro', plan: 'Lifetime', offsetMins: 23 },
-  { name: 'Aditya', product: 'Netflix 4K Screen PIN', plan: '1M', offsetMins: 3 },
-];
 
 // Helper to compute exact real-time relative time ago
 const formatRealTimeAgo = (timestamp: number): string => {
@@ -55,73 +39,104 @@ export const LivePurchasePopup: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
-  // Initialize seed timestamps based on current clock time
-  const seedPurchases = useMemo<PurchaseItem[]>(() => {
-    const baseTime = Date.now();
-    return SEED_OFFSETS.map((item, idx) => ({
-      id: `seed-${idx}`,
-      name: item.name,
-      product: item.product,
-      plan: item.plan,
-      timestamp: baseTime - item.offsetMins * 60 * 1000,
-    }));
-  }, []);
-
   // Fetch real order activity from backend & local storage
-  useEffect(() => {
-    const fetchRecentActivity = async () => {
+  const fetchRecentActivity = async () => {
+    try {
+      const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+      const combined: PurchaseItem[] = [];
+
+      // 1. Fetch from backend API
       try {
         const res = await fetch('/api/orders/recent-activity');
         const data = await res.json();
-        if (data.success && Array.isArray(data.orders) && data.orders.length > 0) {
-          const apiOrders: PurchaseItem[] = data.orders.map((o: any, idx: number) => ({
-            id: o.id || `real-${idx}`,
-            name: o.name || 'Customer',
-            product: o.product || 'Subscription',
-            plan: o.plan || 'Plan',
-            timestamp: typeof o.timestamp === 'number' ? o.timestamp : new Date(o.createdAt || Date.now()).getTime(),
-          }));
-
-          setRealOrders(apiOrders);
+        if (data.success && Array.isArray(data.orders)) {
+          data.orders.forEach((o: any, idx: number) => {
+            const ts = typeof o.timestamp === 'number' ? o.timestamp : new Date(o.createdAt || Date.now()).getTime();
+            if (ts >= twoHoursAgo) {
+              combined.push({
+                id: o.id || `api-${idx}`,
+                name: o.name || 'Customer',
+                product: o.product || 'Subscription',
+                plan: o.plan || 'Plan',
+                timestamp: ts,
+              });
+            }
+          });
         }
       } catch {
-        // Fallback gracefully
+        // API offline or empty
       }
-    };
 
+      // 2. Check customer's local storage for real recent orders
+      try {
+        const localSaved = JSON.parse(localStorage.getItem('systum_ott_user_orders_v1') || '[]');
+        if (Array.isArray(localSaved)) {
+          localSaved.forEach((lo: any, idx: number) => {
+            const ts = new Date(lo.createdAt || lo.purchaseDate || Date.now()).getTime();
+            if (ts >= twoHoursAgo && !combined.some((c) => c.id === lo.id)) {
+              const item = lo.items?.[0] || {};
+              combined.push({
+                id: lo.id || `local-${idx}`,
+                name: (lo.customerName || lo.name || 'Customer').split(' ')[0],
+                product: item.title || item.productTitle || 'Subscription',
+                plan: item.plan || item.planName || item.validity || '30 Days',
+                timestamp: ts,
+              });
+            }
+          });
+        }
+      } catch {
+        // ignore parse error
+      }
+
+      // Sort by newest first
+      combined.sort((a, b) => b.timestamp - a.timestamp);
+      setRealOrders(combined);
+    } catch {
+      setRealOrders([]);
+    }
+  };
+
+  useEffect(() => {
     fetchRecentActivity();
+
+    // Poll for real orders every 30 seconds
+    const pollInterval = setInterval(() => {
+      fetchRecentActivity();
+    }, 30000);
+
+    return () => clearInterval(pollInterval);
   }, []);
 
-  // Combined pool prioritizing real orders
+  // Filter active pool strictly within 2 hours
   const activePool = useMemo(() => {
-    if (realOrders.length > 0) {
-      return [...realOrders, ...seedPurchases];
-    }
-    return seedPurchases;
-  }, [realOrders, seedPurchases]);
+    const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+    return realOrders.filter((o) => o.timestamp >= twoHoursAgo);
+  }, [realOrders]);
 
   // Timed popup sequence: Visible for 5s, delayed 15s before next popup
   useEffect(() => {
-    if (isDismissed || activePool.length === 0) return;
+    if (isDismissed || activePool.length === 0) {
+      setIsVisible(false);
+      return;
+    }
 
-    // Initial popup 4 seconds after page load
+    // Initial popup 4 seconds after real order detected
     const initialTimer = setTimeout(() => {
       setIsVisible(true);
     }, 4000);
 
     let delayTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // When popup becomes visible, auto-hide after 5 seconds
-    // Then wait 15 seconds before triggering the next one
+    // Cycle when there are real orders: 5s display, then 15s delay
     const intervalTimer = setInterval(() => {
       setIsVisible(false);
 
-      // 15 seconds delay before showing the next popup
       delayTimer = setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % activePool.length);
         setIsVisible(true);
       }, 15000);
-    }, 20000); // Total cycle: 5s display + 15s delay = 20s
+    }, 20000); // 5s visible + 15s delay = 20s total cycle
 
     return () => {
       clearTimeout(initialTimer);
@@ -130,9 +145,12 @@ export const LivePurchasePopup: React.FC = () => {
     };
   }, [isDismissed, activePool.length]);
 
+  // If no real orders within the last 2 hours, do not show any popup!
   if (isDismissed || activePool.length === 0) return null;
 
   const current = activePool[currentIndex % activePool.length];
+  if (!current) return null;
+
   const liveTimeAgo = formatRealTimeAgo(current.timestamp);
 
   return (
@@ -146,7 +164,7 @@ export const LivePurchasePopup: React.FC = () => {
     >
       <div className="bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-2xl p-3 sm:p-3.5 flex items-center justify-between gap-3 group relative hover:shadow-3xl transition-shadow">
         
-        {/* Left Side: Checkmark Icon & Text */}
+        {/* Left Side: Checkmark Icon & Real Purchase Text */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-center shrink-0">
             <Check className="w-5 h-5 text-emerald-600 stroke-[2.5]" />

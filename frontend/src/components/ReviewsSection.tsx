@@ -10,7 +10,7 @@ export const ReviewsSection: React.FC = () => {
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold uppercase tracking-wider">
-            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> 4.9/5 Average Rating
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> 1,000+ Verified Reviews · 4.9/5 Rating
           </div>
           <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900">
             What Our Customers Say

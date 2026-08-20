@@ -178,7 +178,7 @@ export const AuthModal: React.FC = () => {
                 ? 'Enter your registered email to receive a recovery code'
                 : 'Enter the 6-digit code sent to your email and set a new password'
               : authModalTab === 'signup'
-              ? 'Join 50,000+ members saving on subscriptions'
+              ? 'Join 1,000+ customers saving on subscriptions'
               : authModalTab === 'admin'
               ? 'Secure admin dashboard for managing orders & products'
               : 'Sign in to access your digital subscriptions & warranty'}

@@ -258,20 +258,25 @@ ordersRouter.get('/user/:phoneOrEmail', async (req, res) => {
   }
 });
 
-// GET /api/orders/recent-activity - public recent purchases feed with real-time timestamps
+// GET /api/orders/recent-activity - public real-time recent purchases within the last 2 hours only
 ordersRouter.get('/recent-activity', async (_req, res) => {
   try {
     const isDbConnected = mongoose.connection.readyState === 1;
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
     let rawOrders: any[] = [];
 
     if (isDbConnected) {
-      rawOrders = await Order.find()
+      rawOrders = await Order.find({
+        createdAt: { $gte: twoHoursAgo },
+      })
         .sort({ createdAt: -1 })
-        .limit(15)
+        .limit(20)
         .select('customerName items createdAt totalAmount')
         .lean();
     } else {
-      rawOrders = inMemoryOrders.slice(-15).reverse();
+      rawOrders = inMemoryOrders
+        .filter((o) => new Date(o.createdAt).getTime() >= twoHoursAgo.getTime())
+        .reverse();
     }
 
     const realOrders = rawOrders
