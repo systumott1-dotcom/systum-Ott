@@ -502,7 +502,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                         onClick={() => setSelectedPlanIndex(idx)}
                         className={`px-4 py-2.5 rounded-2xl border text-center transition-all ${
                           isSelected
-                            ? 'bg-[#FAF5EE] border-[#D4AF37] ring-2 ring-[#D4AF37]/30 shadow-sm scale-105'
+                            ? 'bg-brand-50 border-brand-500 ring-2 ring-brand-500/20 shadow-sm'
                             : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
                         }`}
                       >
@@ -510,7 +510,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                           {plan.validity || plan.name}
                         </span>
                         {planDiscount > 0 && (
-                          <span className={`text-[10px] font-bold block ${isSelected ? 'text-emerald-700' : 'text-slate-500'}`}>
+                          <span className={`text-[10px] font-bold block ${isSelected ? 'text-brand-700' : 'text-slate-500'}`}>
                             {planDiscount}% off
                           </span>
                         )}

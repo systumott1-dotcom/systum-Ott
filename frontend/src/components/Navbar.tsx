@@ -173,12 +173,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </span>
                 </div>
               </div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="font-black text-lg sm:text-xl tracking-tight text-slate-900 group-hover:text-brand-600 transition-colors">
-                  Systum <span className="text-brand-600">OTT</span>
-                </span>
-                <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200/80">
-                  Seller
+              <div className="flex items-baseline">
+                <span className="font-black text-xl sm:text-2xl tracking-tight gradient-text">
+                  Systum OTT
                 </span>
               </div>
             </a>

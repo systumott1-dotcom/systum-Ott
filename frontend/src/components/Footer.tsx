@@ -62,8 +62,8 @@ export const Footer: React.FC<FooterProps> = ({ onSelectCategory, onOpenPolicy }
                 </div>
               </div>
               <div>
-                <span className="font-extrabold text-xl text-white">
-                  Systum <span className="text-brand-400">OTT</span> India
+                <span className="font-extrabold text-xl gradient-text">
+                  Systum OTT India
                 </span>
                 <span className="block text-[11px] text-slate-400">Digital Subscription Store</span>
               </div>
