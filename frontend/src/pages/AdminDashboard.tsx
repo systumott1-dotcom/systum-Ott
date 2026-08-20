@@ -1351,31 +1351,167 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToStore })
                     </div>
 
                     {/* Plans Editor */}
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="text-xs font-bold text-slate-700">Pricing Plans</label>
-                        <button type="button" onClick={() => setProductForm({...productForm, plans: [...productForm.plans, { name: '', validity: '30 Days', originalPrice: 0, discountedPrice: 0 }]})}
-                          className="text-[11px] text-brand-600 font-bold hover:underline">+ Add Plan</button>
-                      </div>
-                      {productForm.plans.map((plan, i) => (
-                        <div key={i} className="grid grid-cols-5 gap-2 mb-2 items-end">
-                          <input placeholder="Plan Name" value={plan.name} onChange={(e) => {
-                            const updated = [...productForm.plans]; updated[i] = {...updated[i], name: e.target.value}; setProductForm({...productForm, plans: updated});
-                          }} className="px-2 py-2 border border-slate-200 rounded-lg text-xs" />
-                          <input placeholder="Validity" value={plan.validity} onChange={(e) => {
-                            const updated = [...productForm.plans]; updated[i] = {...updated[i], validity: e.target.value}; setProductForm({...productForm, plans: updated});
-                          }} className="px-2 py-2 border border-slate-200 rounded-lg text-xs" />
-                          <input type="number" placeholder="MRP" value={plan.originalPrice || ''} onChange={(e) => {
-                            const updated = [...productForm.plans]; updated[i] = {...updated[i], originalPrice: Number(e.target.value)}; setProductForm({...productForm, plans: updated});
-                          }} className="px-2 py-2 border border-slate-200 rounded-lg text-xs" />
-                          <input type="number" placeholder="Price" value={plan.discountedPrice || ''} onChange={(e) => {
-                            const updated = [...productForm.plans]; updated[i] = {...updated[i], discountedPrice: Number(e.target.value)}; setProductForm({...productForm, plans: updated});
-                          }} className="px-2 py-2 border border-slate-200 rounded-lg text-xs" />
-                          <button type="button" onClick={() => {
-                            const updated = productForm.plans.filter((_, idx) => idx !== i); setProductForm({...productForm, plans: updated});
-                          }} className="py-2 text-red-500 hover:text-red-700 text-xs font-bold">Remove</button>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <label className="text-xs font-bold text-slate-700 block">Pricing & Validity Plans</label>
+                          <span className="text-[10px] text-slate-400">Set custom durations like "1 Month 21 Days", "1 Year 2 Months", "3 Days"</span>
                         </div>
-                      ))}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setProductForm({
+                              ...productForm,
+                              plans: [
+                                ...productForm.plans,
+                                { name: '', validity: '1 Month 21 Days', originalPrice: 649, discountedPrice: 99, isPopular: false },
+                              ],
+                            })
+                          }
+                          className="px-2.5 py-1 bg-brand-50 hover:bg-brand-100 border border-brand-200 rounded-lg text-xs text-brand-700 font-extrabold flex items-center gap-1 cursor-pointer transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add Plan</span>
+                        </button>
+                      </div>
+
+                      <div className="space-y-3">
+                        {productForm.plans.map((plan, i) => (
+                          <div key={i} className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[11px] font-black text-brand-700 bg-brand-50 px-2.5 py-0.5 rounded-md border border-brand-200">
+                                Plan #{i + 1}
+                              </span>
+                              <div className="flex items-center gap-2.5">
+                                <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={Boolean(plan.isPopular)}
+                                    onChange={(e) => {
+                                      const updated = [...productForm.plans];
+                                      updated[i] = { ...updated[i], isPopular: e.target.checked };
+                                      setProductForm({ ...productForm, plans: updated });
+                                    }}
+                                    className="rounded text-brand-600 focus:ring-brand-500"
+                                  />
+                                  <span>Popular / Best Value</span>
+                                </label>
+                                {productForm.plans.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = productForm.plans.filter((_, idx) => idx !== i);
+                                      setProductForm({ ...productForm, plans: updated });
+                                    }}
+                                    className="text-rose-500 hover:text-rose-700 text-xs font-bold px-2 py-0.5 hover:bg-rose-50 rounded transition-colors"
+                                  >
+                                    Remove
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                              <div>
+                                <label className="text-[10px] font-bold text-slate-500 block mb-1">Plan Title</label>
+                                <input
+                                  placeholder="e.g. 1 Month 21 Days Access"
+                                  value={plan.name}
+                                  onChange={(e) => {
+                                    const updated = [...productForm.plans];
+                                    updated[i] = { ...updated[i], name: e.target.value };
+                                    setProductForm({ ...productForm, plans: updated });
+                                  }}
+                                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-brand-500"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="text-[10px] font-bold text-slate-500 block mb-1">
+                                  Custom Validity (e.g. 1 Month 21 Days, 1 Year 2 Months, 3 Days) *
+                                </label>
+                                <input
+                                  required
+                                  placeholder="e.g. 1 Month 21 Days"
+                                  value={plan.validity}
+                                  onChange={(e) => {
+                                    const updated = [...productForm.plans];
+                                    updated[i] = { ...updated[i], validity: e.target.value };
+                                    setProductForm({ ...productForm, plans: updated });
+                                  }}
+                                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black text-brand-700 focus:ring-1 focus:ring-brand-500"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Quick Validity Presets */}
+                            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                              <span className="text-[10px] font-bold text-slate-400">Quick Presets:</span>
+                              {[
+                                '3 Days',
+                                '7 Days',
+                                '15 Days',
+                                '1 Month 21 Days',
+                                '1 Month',
+                                '3 Months',
+                                '6 Months',
+                                '1 Year 2 Months',
+                                '1 Year',
+                                'Lifetime'
+                              ].map((preset) => (
+                                <button
+                                  key={preset}
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = [...productForm.plans];
+                                    updated[i] = {
+                                      ...updated[i],
+                                      validity: preset,
+                                      name: updated[i].name || `${preset} Access`,
+                                    };
+                                    setProductForm({ ...productForm, plans: updated });
+                                  }}
+                                  className="px-2 py-0.5 bg-white hover:bg-brand-50 border border-slate-200 hover:border-brand-300 rounded text-[10px] font-bold text-slate-600 hover:text-brand-700 transition-colors shadow-2xs cursor-pointer"
+                                >
+                                  {preset}
+                                </button>
+                              ))}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2.5 pt-1">
+                              <div>
+                                <label className="text-[10px] font-bold text-slate-500 block mb-1">Original Price / MRP (₹)</label>
+                                <input
+                                  type="number"
+                                  placeholder="649"
+                                  value={plan.originalPrice || ''}
+                                  onChange={(e) => {
+                                    const updated = [...productForm.plans];
+                                    updated[i] = { ...updated[i], originalPrice: Number(e.target.value) };
+                                    setProductForm({ ...productForm, plans: updated });
+                                  }}
+                                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] font-bold text-slate-500 block mb-1">Discounted Selling Price (₹) *</label>
+                                <input
+                                  type="number"
+                                  required
+                                  placeholder="99"
+                                  value={plan.discountedPrice || ''}
+                                  onChange={(e) => {
+                                    const updated = [...productForm.plans];
+                                    updated[i] = { ...updated[i], discountedPrice: Number(e.target.value) };
+                                    setProductForm({ ...productForm, plans: updated });
+                                  }}
+                                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-black text-brand-700"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="flex gap-3 pt-4 border-t border-slate-200">
