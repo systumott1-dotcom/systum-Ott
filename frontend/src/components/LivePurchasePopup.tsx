@@ -33,11 +33,21 @@ const formatRealTimeAgo = (timestamp: number): string => {
   return `${hours} hr ago`;
 };
 
-export const LivePurchasePopup: React.FC = () => {
+interface LivePurchasePopupProps {
+  isElevated?: boolean;
+}
+
+export const LivePurchasePopup: React.FC<LivePurchasePopupProps> = ({ isElevated = false }) => {
   const [realOrders, setRealOrders] = useState<PurchaseItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+
+  // Fallback auto-detection for product / checkout routes if prop not passed
+  const shouldElevate = isElevated || (typeof window !== 'undefined' && (
+    window.location.pathname.startsWith('/product') ||
+    window.location.pathname.startsWith('/checkout')
+  ));
 
   // Fetch real order activity from backend & local storage
   const fetchRecentActivity = async () => {
@@ -155,7 +165,9 @@ export const LivePurchasePopup: React.FC = () => {
 
   return (
     <div
-      className={`fixed bottom-20 sm:bottom-6 left-4 sm:left-6 z-30 max-w-[290px] sm:max-w-[320px] transition-all duration-700 ease-out transform ${
+      className={`fixed ${
+        shouldElevate ? 'bottom-28 sm:bottom-8' : 'bottom-6'
+      } left-4 sm:left-6 z-50 max-w-[290px] sm:max-w-[320px] transition-all duration-700 ease-out transform ${
         isVisible
           ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
           : 'opacity-0 translate-y-4 scale-95 pointer-events-none'

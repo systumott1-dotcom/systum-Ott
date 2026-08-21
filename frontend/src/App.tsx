@@ -156,7 +156,7 @@ function Storefront() {
         onClose={() => setIsOrderHistoryOpen(false)}
       />
       <WhatsAppFloatingButton isElevated={router.route === 'product' || router.route === 'checkout'} />
-      <LivePurchasePopup />
+      <LivePurchasePopup isElevated={router.route === 'product' || router.route === 'checkout'} />
     </div>
   );
 }
