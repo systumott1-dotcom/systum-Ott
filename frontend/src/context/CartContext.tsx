@@ -40,6 +40,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_STORAGE_KEY = 'systum_ott_cart_v1';
 export const WHATSAPP_PHONE = '919306022703'; // +91 93060 22703
+export const WHATSAPP_COMMUNITY_URL = 'https://chat.whatsapp.com/HHIk5Z1oDJ6H1vC14xcfQP';
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>(() => {

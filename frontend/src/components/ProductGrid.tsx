@@ -2,7 +2,8 @@ import React, { useMemo, useState } from 'react';
 import type { Product, CategoryId } from '../types';
 import { CATEGORIES } from '../data/products';
 import { ProductCard } from './ProductCard';
-import { Search, ArrowUpDown, X, Loader2, Package } from 'lucide-react';
+import { Search, ArrowUpDown, X, Loader2, Package, Share2, Check } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 
 interface ProductGridProps {
   products: Product[];
@@ -23,7 +24,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   searchQuery,
   onSearchChange,
 }) => {
+  const toast = useToast();
   const [sortBy, setSortBy] = useState<SortOption>('popular');
+  const [copiedCategory, setCopiedCategory] = useState(false);
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
@@ -63,6 +66,43 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
 
   const activeCategoryObj = CATEGORIES.find((c) => c.id === activeCategory);
 
+  const handleShareCategory = async () => {
+    const isAll = activeCategory === 'all';
+    const catName = activeCategoryObj?.name || 'Digital Subscriptions';
+    const shareUrl = isAll
+      ? window.location.origin
+      : `${window.location.origin}/category/${activeCategory}`;
+
+    const shareData = {
+      title: `${catName} — Systum OTT India`,
+      text: isAll
+        ? 'Explore all digital subscriptions & software licenses at up to 90% OFF on Systum OTT! 🔥'
+        : `Check out ${catName} plans starting at unbelievable prices with instant delivery on Systum OTT! 🔥`,
+      url: shareUrl,
+    };
+
+    if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
+      try {
+        await navigator.share(shareData);
+        setCopiedCategory(true);
+        toast.success(`${catName} link shared! 🚀`);
+        setTimeout(() => setCopiedCategory(false), 2500);
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopiedCategory(true);
+      toast.success(`${catName} share link copied to clipboard! 📋`);
+      setTimeout(() => setCopiedCategory(false), 2500);
+    } catch {
+      toast.error('Failed to copy link.');
+    }
+  };
+
   return (
     <section id="shop-section" className="py-16 scroll-mt-20 bg-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -85,8 +125,22 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             </p>
           </div>
 
-          {/* Sort Dropdown */}
-          <div className="flex items-center gap-3">
+          {/* Sort & Share Controls */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Share Category Button */}
+            {activeCategory !== 'all' && (
+              <button
+                type="button"
+                onClick={handleShareCategory}
+                className="flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 shadow-xs hover:text-brand-600 hover:border-brand-300 transition-all cursor-pointer"
+                title={`Share ${activeCategoryObj?.name} link`}
+              >
+                {copiedCategory ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5 text-brand-600" />}
+                <span>{copiedCategory ? 'Link Copied!' : 'Share Category'}</span>
+              </button>
+            )}
+
+            {/* Sort Dropdown */}
             <div className="flex items-center gap-2 bg-white border border-slate-200 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-slate-700 shadow-xs">
               <ArrowUpDown className="w-3.5 h-3.5 text-brand-600" />
               <span>Sort by:</span>
@@ -139,12 +193,20 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
 
         {/* Active Search/Filter Pill notification */}
         {(searchQuery || activeCategory !== 'all') && (
-          <div className="flex items-center gap-2 mb-6 text-xs text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200 max-w-fit shadow-xs">
+          <div className="flex items-center gap-2 mb-6 text-xs text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200 max-w-fit shadow-xs flex-wrap">
             <span>Filtering by:</span>
             {activeCategory !== 'all' && (
-              <span className="bg-brand-50 text-brand-700 px-2 py-0.5 rounded-md font-bold flex items-center gap-1 border border-brand-200">
-                Category: {activeCategoryObj?.name}
-                <button onClick={() => onSelectCategory('all')}>
+              <span className="bg-brand-50 text-brand-700 px-2.5 py-1 rounded-lg font-bold flex items-center gap-2 border border-brand-200">
+                <span>Category: {activeCategoryObj?.name}</span>
+                <button
+                  type="button"
+                  onClick={handleShareCategory}
+                  className="hover:text-brand-900 text-brand-600 transition-colors"
+                  title="Copy shareable category link"
+                >
+                  <Share2 className="w-3 h-3" />
+                </button>
+                <button onClick={() => onSelectCategory('all')} title="Clear category filter">
                   <X className="w-3 h-3 hover:text-slate-900" />
                 </button>
               </span>

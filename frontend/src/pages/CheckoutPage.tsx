@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useCart, WHATSAPP_PHONE } from '../context/CartContext';
+import { useCart, WHATSAPP_PHONE, WHATSAPP_COMMUNITY_URL } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
 import confetti from 'canvas-confetti';
@@ -401,7 +401,7 @@ Product: ${productListStr}
 *Let us know if u want any other OTT or SOFTWARE in lowest price 😊*
 
 Don’t forget to join our community for latest updates, offers, and support 👉
-https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
+${WHATSAPP_COMMUNITY_URL}`;
 
     const handleCopyFullReceipt = () => {
       navigator.clipboard.writeText(formattedReceiptText);
@@ -474,7 +474,7 @@ https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle`;
 
           {/* Join WhatsApp Community Card */}
           <a
-            href="https://chat.whatsapp.com/HbyJSeVgJT9EdGpuJAZLle"
+            href={WHATSAPP_COMMUNITY_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-brand-50 to-indigo-50 border border-brand-200 text-slate-800 hover:shadow-md transition-all group text-left"

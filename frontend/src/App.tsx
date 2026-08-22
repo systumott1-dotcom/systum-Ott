@@ -32,10 +32,46 @@ function Storefront() {
   const { products, loading: productsLoading } = useProducts();
   const router = useRouter();
 
-  const [activeCategory, setActiveCategory] = useState<CategoryId>('all');
+  const [activeCategory, setActiveCategory] = useState<CategoryId>(() => {
+    const validCat = router.categoryId as CategoryId;
+    return (validCat && ['all', 'ott', 'software', 'combo', 'music', 'adult', 'other'].includes(validCat))
+      ? validCat
+      : 'all';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [activePolicy, setActivePolicy] = useState<PolicyType>(null);
   const [isOrderHistoryOpen, setIsOrderHistoryOpen] = useState(false);
+
+  // Sync category from URL (e.g. /category/ott or ?category=software) and smooth scroll to shop
+  useEffect(() => {
+    if (router.categoryId) {
+      const catId = router.categoryId as CategoryId;
+      setActiveCategory(catId);
+      // Wait slightly for DOM to settle, then scroll to shop section
+      const timer = setTimeout(() => {
+        const shop = document.getElementById('shop-section');
+        if (shop) shop.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [router.categoryId]);
+
+  const handleCategoryChange = (cat: CategoryId) => {
+    setActiveCategory(cat);
+    if (cat === 'all') {
+      if (router.route !== 'home') {
+        router.navigate('/');
+      } else {
+        window.history.pushState({}, '', '/');
+      }
+    } else {
+      if (router.route !== 'home') {
+        router.navigate(`/category/${cat}`);
+      } else {
+        window.history.pushState({}, '', `/category/${cat}`);
+      }
+    }
+  };
 
   // Immediate pre-warm ping on initial site visit so Render backend is fully awake
   useEffect(() => {
@@ -80,10 +116,7 @@ function Storefront() {
       <Navbar
         products={products}
         activeCategory={activeCategory}
-        onSelectCategory={(cat) => {
-          setActiveCategory(cat);
-          if (router.route !== 'home') router.navigate('/');
-        }}
+        onSelectCategory={handleCategoryChange}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onOpenPolicy={(policy) => setActivePolicy(policy)}
@@ -115,14 +148,14 @@ function Storefront() {
 
             <CategoryBrowser
               activeCategory={activeCategory}
-              onSelectCategory={setActiveCategory}
+              onSelectCategory={handleCategoryChange}
             />
 
             <ProductGrid
               products={products}
               loading={productsLoading}
               activeCategory={activeCategory}
-              onSelectCategory={setActiveCategory}
+              onSelectCategory={handleCategoryChange}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
             />
@@ -137,10 +170,7 @@ function Storefront() {
       </main>
 
       <Footer
-        onSelectCategory={(cat) => {
-          setActiveCategory(cat);
-          if (router.route !== 'home') router.navigate('/');
-        }}
+        onSelectCategory={handleCategoryChange}
         onOpenPolicy={(policy) => setActivePolicy(policy)}
       />
 

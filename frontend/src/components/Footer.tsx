@@ -1,6 +1,6 @@
 import React from 'react';
 import { MessageCircle, Mail, Clock, ShieldCheck, Heart, Flame, ExternalLink } from 'lucide-react';
-import { WHATSAPP_PHONE } from '../context/CartContext';
+import { WHATSAPP_PHONE, WHATSAPP_COMMUNITY_URL } from '../context/CartContext';
 import type { CategoryId } from '../types';
 import type { PolicyType } from './PolicyModals';
 
@@ -196,7 +196,7 @@ export const Footer: React.FC<FooterProps> = ({ onSelectCategory, onOpenPolicy }
               </a>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-slate-500" />
-                <span>support@systumott.in</span>
+                <span>support@systumott.com</span>
               </div>
               <div className="flex items-center gap-2 text-slate-400">
                 <Clock className="w-4 h-4 text-amber-400" />
@@ -206,7 +206,7 @@ export const Footer: React.FC<FooterProps> = ({ onSelectCategory, onOpenPolicy }
 
             <div className="pt-2">
               <a
-                href="https://chat.whatsapp.com/sample-group"
+                href={WHATSAPP_COMMUNITY_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-[11px] font-bold text-slate-200 hover:text-white hover:border-brand-500/40 transition-colors"

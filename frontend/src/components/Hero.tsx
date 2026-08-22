@@ -8,7 +8,7 @@ import {
   Star, 
   Flame
 } from 'lucide-react';
-import { WHATSAPP_PHONE } from '../context/CartContext';
+import { WHATSAPP_COMMUNITY_URL } from '../context/CartContext';
 import { WhatsAppIcon } from './WhatsAppIcon';
 
 interface HeroProps {
@@ -61,7 +61,7 @@ export const Hero: React.FC<HeroProps> = ({ onExploreClick }) => {
               </button>
 
               <a
-                href={`https://wa.me/${WHATSAPP_PHONE}?text=Hello!+I+want+to+buy+a+subscription+from+Systum+OTT.`}
+                href={WHATSAPP_COMMUNITY_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto px-6 py-4 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold text-base transition-all duration-300 flex items-center justify-center gap-2.5 shadow-sm group"

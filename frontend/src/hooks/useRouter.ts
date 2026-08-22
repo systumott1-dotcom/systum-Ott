@@ -6,6 +6,7 @@ export interface RouteInfo {
   path: string;
   route: RouteType;
   productIdOrSlug: string | null;
+  categoryId: string | null;
 }
 
 const parsePath = (path: string): RouteInfo => {
@@ -18,12 +19,19 @@ const parsePath = (path: string): RouteInfo => {
     cleanPath = '/' + cleanPath;
   }
 
+  // Extract query param if any (?category=ott or ?cat=ott)
+  let queryCategory: string | null = null;
+  if (typeof window !== 'undefined' && window.location.search) {
+    const params = new URLSearchParams(window.location.search);
+    queryCategory = params.get('category') || params.get('cat');
+  }
+
   if (cleanPath.startsWith('/admin')) {
-    return { path: cleanPath, route: 'admin', productIdOrSlug: null };
+    return { path: cleanPath, route: 'admin', productIdOrSlug: null, categoryId: null };
   }
 
   if (cleanPath.startsWith('/checkout')) {
-    return { path: cleanPath, route: 'checkout', productIdOrSlug: null };
+    return { path: cleanPath, route: 'checkout', productIdOrSlug: null, categoryId: null };
   }
 
   const productMatch = cleanPath.match(/^\/product\/(.+)$/);
@@ -32,10 +40,21 @@ const parsePath = (path: string): RouteInfo => {
       path: cleanPath,
       route: 'product',
       productIdOrSlug: decodeURIComponent(productMatch[1]),
+      categoryId: null,
     };
   }
 
-  return { path: '/', route: 'home', productIdOrSlug: null };
+  const categoryMatch = cleanPath.match(/^\/category\/(.+)$/);
+  if (categoryMatch) {
+    return {
+      path: cleanPath,
+      route: 'home',
+      productIdOrSlug: null,
+      categoryId: decodeURIComponent(categoryMatch[1]),
+    };
+  }
+
+  return { path: cleanPath, route: 'home', productIdOrSlug: null, categoryId: queryCategory };
 };
 
 export const useRouter = () => {
